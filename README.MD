@@ -20,21 +20,21 @@
 
 ## 全体像（2 部構成）
 
-本教材は「**第1部：環境構築**（作る）」→「**第2部：A365 ハンズオン**（管理センター/Entra で確認・統制する）」の 2 部で進みます。
+本教材は「**第1部：環境構築**（作る）」→「**第2部：Agent 365 ハンズオン**（管理センター/Entra で確認・統制する）」の 2 部で進みます。
 
 ```mermaid
 flowchart LR
     subgraph P1["第1部：環境構築 ｜ 開発者（VS Code / ターミナル）"]
         direction TB
-        A1["作業端末への必要ツール導入"] --> A2["Agent 365 向け便利ツール（Skills） 導入"] --> A3["Blueprint / Agent ID 作成"]
-        A3 --> A4["BYO MCP を建てる<br/>(Azure Functions)"] --> A5["アプリ実装<br/>(LLM / OBO / 観測)"]
-        A5 --> A6["Azure にデプロイ & 公開"]
+        A1["作業端末への必要ツール導入"] --> A2["作業端末への便利ツール（Skills） 導入"] --> A3["Blueprint / Agent ID 作成"]
+        A3 --> A4["自作 MCP サーバ作成<br/>(Azure Functions)"] --> A5["AI エージェント"]
+        A5 --> A6["Azure にデプロイ"]
     end
-    subgraph P2["第2部：A365 ハンズオン ｜ AI 管理者（M365 / Entra 管理センター）"]
+    subgraph P2["第2部：Agent 365 ハンズオン ｜ AI 管理者（M365 / Entra 管理センター）"]
         direction TB
         B1["Ai エージェントの承認"] --> B2["Entra Agent ID 確認"]
         B2 --> B3["Agent Registry を確認"] --> B4["Single Agent Map で関係性の可視化"]
-        B4 --> B5["ガバナンス<br/>(Block=Kill Switch / CA / 削除)"]
+        B4 --> B5["ガバナンス制御"]
     end
     A6 ==> B1
 ```
@@ -43,7 +43,7 @@ flowchart LR
 | 部 | ゴール | 主な担当・画面 |
 |----|--------|---------------|
 | 第1部 環境構築 | エージェントが Agent 365 に登録され、Azure（クラウド）で動く | 開発者：VS Code・ターミナル・Azure |
-| 第2部 A365 ハンズオン | 登録内容・アクティビティ・ガバナンスを実機で確認できる | AI 管理者：M365 管理センター・Entra 管理センター |
+| 第2部 Agent 365 ハンズオン | 登録内容・アクティビティ・ガバナンスを実機で確認できる | AI 管理者：M365 管理センター・Entra 管理センター |
 
 ---
 
@@ -51,7 +51,7 @@ flowchart LR
 
 | 項目 | 内容 | ライセンス / 要件 |
 |------|------|------------------|
-| Microsoft Agent 365 テナント | エージェント登録・観測・ガバナンスの基盤 | **Microsoft Agent 365** または **Microsoft 365 E7**（前提として E5、または Business Premium + Defender/Purview） |
+| Microsoft Agent 365 テナント | エージェント登録・観測・ガバナンスの基盤 | **Microsoft Agent 365** または **Microsoft 365 E7** |
 | Azure サブスクリプション | App Service（+ ACR）で自前ホスト。outbound HTTPS 必須 | 従量課金 |
 | 開発ツール | Node.js 18+ / Python 3.11+ / a365 CLI / Azure CLI / Azure Functions Core Tools | 無料 |
 | Agent 365 Skills | Copilot / Claude Code 用の自動化スキル集 | 無料（`microsoft/agent365-skills`） |
@@ -82,7 +82,7 @@ flowchart LR
 ├── app.py                           # AgentApplication 本体（on_message で LLM 呼び出し）
 ├── llm.py                           # OSS LLM（Ollama sidecar, OpenAI 互換）クライアント
 ├── obo.py                           # OBO トークン交換（jwt-bearer）
-├── observability_setup.py           # A365 Observability 配線（use_s2s_endpoint=False）
+├── observability_setup.py           # Agent 365 Observability 配線（use_s2s_endpoint=False）
 ├── start_server.py                  # aiohttp ホスティング層（Skills 生成）
 ├── function_app.py                  # BYO MCP サーバー（echo / now） ※別プロジェクトでも可
 ├── .env                             # a365 setup all がスタンプ（← .gitignore）
@@ -223,7 +223,7 @@ a365 develop-mcp register-external-mcp-server `
 ---
 ---
 
-# 第2部：A365 ハンズオン（管理センター / Entra で確認・統制する）
+# 第2部：Agent 365 ハンズオン（管理センター / Entra で確認・統制する）
 
 > このパートは **AI 管理者**の作業。[Microsoft 365 管理センター](https://admin.microsoft.com/)（Copilot Control System）と [Microsoft Entra 管理センター](https://entra.microsoft.com/) で、第1部で作った内容を確認し、ガバナンスを効かせる。
 > 参考: [a365handson Step 4（登録・Entra Agent ID・Block）](https://github.com/ninjyanaka/a365handson/blob/main/04-register.md)
