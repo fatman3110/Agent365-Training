@@ -46,36 +46,37 @@
 
 > **エージェント（§1-1）と MCP（§1-2）は別々に承認する**。両方を Approve して初めて、エージェントが道具を呼べる状態になる。
 
-### 1-3. Entra Agent ID を実体化する
+### 1-3. Teams / Copilot チャネルに接続する
 
-承認済みの blueprint を「使える実体」にすると（instance 化）、**Entra Agent ID が「—」から実値の GUID に変わる**。
+承認しただけでは、まだ Teams からメッセージは届かない。**Teams 開発者ポータルで「宛先（Notification URL）」を設定**して、エージェントを Microsoft 365 のメッセージ基盤に繋ぐ。
 
-1. 管理センター › **Agents** で対象 blueprint を開く → **`+ Add instance`**（または対象の登録を有効化）
-2. 作成後、blueprint / instance の **Overview の Entra agent ID** が実値化することを確認
-3. [Entra 管理センター](https://entra.microsoft.com/) › **Agent identities**（Enterprise apps）で同じ Agent ID が見えることを確認
+1. 第1部で生成された `a365.generated.config.json` の `agentBlueprintId` をコピー
+2. ブラウザで開く：`https://dev.teams.microsoft.com/tools/agent-blueprint/<agentBlueprintId>/configuration`
+3. **Agent Type = API Based**、**Notification URL = messagingEndpoint**（`a365.generated.config.json` の値）を設定 → **Save**
+4. Teams › **Apps** でエージェント名を検索 → **Request Instance / Add**。要求はテナント管理者の承認に回る（[管理センター Requested Agents](https://admin.cloud.microsoft/#/agents/all/requested)）
+5. 承認後、Teams でエージェントとチャットできるようになる（→ §2 で実際に動かす）
 
-<!-- ![Entra Agent ID 実値化](../assets/09-agentid.png) -->
+出典: [Learn: エージェントインスタンスの作成](https://learn.microsoft.com/microsoft-agent-365/developer/create-instance)
 
-> **本教材は非 AI Teammate** のため、**agent user（UPN）や Teams の `@mention` は作られない**（それは AI Teammate 専用）。本エージェントの呼び出しは Copilot Studio カスタムエンジン / REST（App Service の `/chat`）/ OBO クライアント経由で行う。
-> この Entra agent ID の値が、そのまま Observability の `agentId` になる（Single Agent Map の突き合わせキー）。
+<!-- ![Teams Developer Portal 設定](../assets/09-devportal.png) -->
+
+> **AI Teammate との違い**：`@mention`・専用メールボックス・組織図掲載まで行う「AI Teammate」は **Frontier Preview 限定**（[Learn](https://learn.microsoft.com/microsoft-agent-365/developer/get-started#types-of-agents)）。本教材の非 AI Teammate エージェントは **API ベースの bot として Teams で会話**できるところまで。
+> この blueprint の Entra agent ID（`agentBlueprintId`）が、そのまま Observability の `agentId` になる（Single Agent Map の突き合わせキー）。
 
 ## 2. エージェントを実際に動かす（観測データを作る）
 
 **この節が §3 以降の前提**。Observe（§3）以降の画面は、エージェントを一度も動かしていないと**何も表示されない**。まずクラウド上のエージェントを実際に呼び出し、観測データ（Run）を作る。
 
-### 2-1. エージェントを呼び出す
+### 2-1. エージェントに話しかける（Teams）
 
-最短は **REST で App Service の `/chat` を叩く**方法。第1部 §0 の `$APP` を使う。
+§1-3 で Teams に接続したエージェントに、**Teams のチャットで話しかける**（これが現実の利用チャネル）。
 
-```powershell
-curl -X POST "https://$APP.azurewebsites.net/chat" `
-  -H "Content-Type: application/json" `
-  -d '{"message":"echo こんにちは"}'
-```
+1. Teams › **Apps** で追加した自分のエージェントを開く
+2. `echo こんにちは` や `今何時？`（`now`）などと送る
+3. 応答が返れば、**受信（Teams→エージェント）と送信（エージェント→Teams）の両方**が通っている
 
-- **OBO（委任）で「ユーザーの代理」として動かしたい**場合は、ユーザーのアクセストークンを付けて呼ぶ OBO クライアントを使う（監査ログに「誰の代理か」が残る）。
-- Copilot Studio のカスタムエンジンとして繋いでいる場合は、そのチャット UI から発話しても同じ Run が作られる。
-- 応答（`now` なら現在時刻、`echo` なら復唱）が返れば成功。
+> OBO（委任）なので、エージェントは**話しかけたユーザーの代理**として動く。監査ログにも「誰の代理か」が残る。
+> 開発中のローカル確認だけなら、App Service の `/chat` に直接 REST してもよい：`curl -X POST "https://$APP.azurewebsites.net/chat" -H "Content-Type: application/json" -d '{"message":"echo hi"}'`（ただし Teams 経由と違い、観測のユーザー属性は付かない場合がある）。
 
 ### 2-2. 観測データを厚くするコツ
 

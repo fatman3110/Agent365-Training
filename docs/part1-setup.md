@@ -2,7 +2,7 @@
 
  完了すると、エージェントが Agent 365 に登録され、Azure（クラウド）で動く状態になる。
 
-> ⚠️ Microsoft Agent 365 は Preview を多く含む。コマンド・API は変わり得るので、詰まったら各節のリンク先（Microsoft Learn）で最新を確認すること。
+> ⚠️ Microsoft Agent 365 は Preview を多く含む。コマンド・API は変わり得るので、Microsoft Learn で最新情報を確認すること。
 
 ## 0. 最初に「名前」を決める（1 回だけ）
 
@@ -170,13 +170,14 @@ App Service の **sidecar コンテナ**機能で `ollama/ollama` を横に足�
 - 参考：[App Service の sidecar コンテナー](https://learn.microsoft.com/azure/app-service/tutorial-custom-container-sidecar)
 
 
-### 6-3. エージェントの endpoint  Agent 365 に登録する
+### 6-3. エージェントの endpoint を Agent 365 に登録する
 
 ここまでで、エージェント本体はクラウド（App Service）で動く URL を持った。最後に、その **URL（＝メッセージの届け先＝messaging endpoint）を Agent 365 に教え**、エージェントと道具（MCP）を**登録**する。
 
 ```powershell
-# ① デプロイ後の実 URL を messaging endpoint に反映（＝エージェントの住所を最新化。冪等・再実行安全）
-a365 setup all
+# ① デプロイ後の実 URL を messaging endpoint に反映（＝エージェントの住所を最新化。）
+#    --m365 を付けると Teams / Microsoft 365 Copilot チャネル用に messaging endpoint を登録する
+a365 setup all --m365
 
 # ② エージェントを登録申請（Agents › Requests に Pending で出る）
 a365 publish
@@ -189,7 +190,8 @@ a365 develop-mcp register-external-mcp-server `
   --tools       "echo,now"
 ```
 
-登録すると、**エージェントは Agents › Requests、道具（MCP）は Tools › Requests** に `Pending` として現れる。
+- **`--m365`** … Teams / Copilot から話しかけられる「M365 エージェント」として messaging endpoint を登録する（[Learn: setup](https://learn.microsoft.com/microsoft-agent-365/developer/registration)）。
+- 登録すると、**エージェントは Agents › Requests、道具（MCP）は Tools › Requests** に `Pending` として現れる。**承認と Teams への接続は [第2部](./part2-handson.md)** で行う。
 
 ---
 
