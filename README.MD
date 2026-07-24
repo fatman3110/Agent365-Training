@@ -4,9 +4,9 @@
 
 この教材でやることは、大きく次の 4 点です。
 
-1. 🤖 **自分の AI エージェントを用意する** — AI エージェントを、クラウドにデプロイします。
-2. 🧩 **エージェントに「道具（ツール）」を持たせる** — エージェントが「**どこと通信し・何を実行するか**」を把握するには**道具（MCP）**の把握が不可欠です。ここでは自作の小さな道具（`echo` / `now`）を**作ります**（登録・承認は次の #3 でまとめて行います）。
-3. 🏢 **会社のシステムに登録して“管理下”に置く** — エージェント**と道具（MCP）**を **Microsoft Agent 365** に登録し、**管理者が承認（＝管理下に配置）** します。**管理画面（Microsoft 365 / Entra 管理センター）** で可視化します
+1. 🤖 **エージェントの“土台”を用意する** — 開発ツールをそろえ、Agent 365 の **Blueprint / Agent ID**（エージェントの ID と、アプリの骨格・接続情報）を作ります。
+2. 🧩 **道具（MCP）を作る** — エージェントが「**どこと通信し・何を実行するか**」の実体になる、自作の小さな道具（`echo` / `now`）を作ります。
+3. 🏢 **本体を実装 → クラウドに載せて“管理下”に置く** — 応答ロジックを実装して Azure にデプロイし、エージェント**と道具（MCP）**を **Microsoft Agent 365** に登録 → **管理者が承認（＝管理下に配置）**します。**管理画面（Microsoft 365 / Entra 管理センター）** で可視化されます。
 4. 🛡️ **管理者として統制する** — 管理者がエージェントを**ワンクリックで止める（Kill Switch）**など、ガバナンス（統制）が効くことを確認します。
 
 >
@@ -32,14 +32,13 @@ flowchart LR
     end
     subgraph P2["第2部：A365 ハンズオン ｜ AI 管理者（M365 / Entra 管理センター）"]
         direction TB
-        B1["管理者承認 (Requests)"] --> B2["Entra Agent ID 確認"]
-        B2 --> B3["Agent Registry を確認"] --> B4["Single Agent Map で可視化"]
+        B1["Ai エージェントの承認"] --> B2["Entra Agent ID 確認"]
+        B2 --> B3["Agent Registry を確認"] --> B4["Single Agent Map で関係性の可視化"]
         B4 --> B5["ガバナンス<br/>(Block=Kill Switch / CA / 削除)"]
     end
     A6 ==> B1
 ```
 
-> 上の図は GitHub 上で自動的に図（ダイアグラム）として表示されます。
 
 | 部 | ゴール | 主な担当・画面 |
 |----|--------|---------------|
@@ -138,6 +137,8 @@ node <clone>/scripts/install.js   # VS Code の chat.agentSkillsLocations に登
 > 導入後、VS Code は **Reload Window** で反映。7 スキル（`a365-setup` / `make-a365-agent` / `instrument-observability` / `add-workiq-tools` / `test-local` / `make-ai-teammate` / `a365-code-validator`）が使える。
 
 ## 3. Blueprint と Agent ID を作る（非 AI Teammate / OBO）
+
+> **なぜアプリ実装（§5）より先か**：この `a365 setup all` は **エージェントの ID（Blueprint / Agent ID）に加え、アプリの骨格（ホスティング層）と `.env`（接続情報）を生成**する。§5 はこの骨格に応答ロジックを実装する段階なので、**土台となる本節を先に実行する必要がある**（アプリ実装後には回せない）。
 
 Copilot / Claude Code に次のトリガーフレーズを投げる。
 
