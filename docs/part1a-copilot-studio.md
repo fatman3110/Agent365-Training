@@ -21,25 +21,23 @@
 2. 左ペインの **Agents** → 上部の **+ Create blank agent（空のエージェントを作成）**
 3. 名前の入力を求められたら **`Learn Helper`** と入力して **Create**
 4. プロビジョニング（数十秒）の後、エージェントの **Overview（概要）** ページが開く
-5. **詳細（Details）** セクションの **Edit（編集）** を開き、説明に「Microsoft / Azure の質問に Microsoft Learn の公式情報で答えるアシスタント」と入力し、そのダイアログ内の **保存** で確定（Name は手順 3 の `Learn Helper` のまま）
-6. **Model（モデル）** セクションで言語モデルを選ぶ（テスト用途なので GPT-4.1）。選択は自動で反映される
-
-出典: [Create and delete agents](https://learn.microsoft.com/microsoft-copilot-studio/authoring-first-bot)
-
-> ここで作るのは Copilot Studio 製のエージェント。第2部で組織に公開すると、Microsoft 365 管理センター（Copilot Control System）の**エージェントレジストリに載り、Agent 365 のガバナンス対象**になる。
+5. **詳細（Details）** セクションの **Edit（編集）** を開き、説明に「Microsoft / Azure の質問に Microsoft Learn の公式情報で答えるアシスタント」と入力して保存
+6. **Model（モデル）** セクションで言語モデルを選ぶ（テスト用途なので GPT-4.1）
 
 ## 2. 無償の Microsoft MCP を道具として足す
 
 Microsoft 提供の **Microsoft Learn Docs MCP Server**（無償・認定コネクター）を道具として追加する。これで「Learn を検索する」という道具呼び出しが発生し、第2部の Observability に残る。
 
-1. 上部タブ **Tools** → **+ Add tool**
-2. 検索欄に `Microsoft Learn Docs MCP` と入力して検索
-3. **Microsoft Learn Docs MCP Server** を選ぶ → **Add and Configure**
-4. 上部タブ **Overview** に戻り、**Instructions** に道具の使いどきを書く：
+1. 上部タブ **ツール** → **+ ツールを追加する**
+2. フィルタリング対象を ”モデルコンテキストプロトコル” にしたうえで、 検索欄に `Microsoft Learn Docs MCP` と入力して検索
+3. **Microsoft Learn Docs MCP Server** を選ぶ → **追加と構成**
+4. 接続（Connection）の作成を求められる。**新しい接続を追加**（Create new connection）を選び、接続を作成する（Microsoft Learn Docs MCP は認証不要のため、そのまま **作成／接続** できる）
+5. 接続が「接続済み」になったら、**エージェントに追加**（Add to agent）で道具を確定する
+6. 上部タブ **Overview** に戻り、**Instructions** に道具の使いどきを書く：
    ```text
    Microsoft の製品・サービスに関する質問には、Microsoft Learn Docs MCP Server を使って回答を検索すること。
    ```
-5. **Save** → **Test** ペインで「Microsoft Entra の条件付きアクセスとは？」などと質問。Learn を検索して答えれば成功
+7. **Save** → **Test** ペインで「Microsoft Entra の条件付きアクセスとは？」などと質問。Learn を検索して答えれば成功
 
 出典: [Get started with Microsoft Learn MCP Server in Copilot Studio](https://learn.microsoft.com/training/support/mcp-get-started-copilot-studio)
 
