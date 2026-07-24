@@ -84,11 +84,9 @@ Get-Content a365.generated.config.json | ConvertFrom-Json | Select-Object comple
 
 エージェントが使う「道具」を、Azure Functions として建てる。コードは [../src/mcp/](../src/mcp)（`echo` / `now` の 2 ツール）。
 
-作業は 2 ステップ。**4-1 で Azure に空の入れ物（Function App リソース）を作り**、**4-2 でそこに自作コードをアップロード**する。引っ越しに例えるなら 4-1 が「家を建てる」、4-2 が「家具を搬び入れる」。
-
 ### 4-1. Azure に空の Function App（入れ物）を作る
 
-まだコードは入っていない。Functions を動かすための Azure リソース（リソースグループ・ストレージ・空の Function App）だけを作る。
+Functions を動かすための Azure リソース（リソースグループ・ストレージ・空の Function App）だけを作る。
 
 ```powershell
 az group create -n $RG -l $LOC
@@ -172,22 +170,30 @@ App Service の **sidecar コンテナ**機能で `ollama/ollama` を横に足�
 - 参考：[App Service の sidecar コンテナー](https://learn.microsoft.com/azure/app-service/tutorial-custom-container-sidecar)
 
 
-### 6-3. messaging endpoint を更新して「登録」する
+### 6-3. エージェントの「住所」を伝えて Agent 365 に登録する
+
+ここまでで、エージェント本体はクラウド（App Service）で動く URL を持った。最後に、その **URL（＝メッセージの届け先＝messaging endpoint）を Agent 365 に教え**、エージェントと道具（MCP）を**登録**する。
+
+> **messaging endpoint とは**：Agent 365 が「このエージェントに話しかけるときはここへ送る」という**宛先 URL**（App Service のアドレス）。§3 の時点ではまだデプロイ前で仮の値だったので、実 URL に更新する必要がある。
 
 ```powershell
-# デプロイ後の実 URL を messaging endpoint に反映（冪等・再実行安全）
+# ① デプロイ後の実 URL を messaging endpoint に反映（＝エージェントの住所を最新化。冪等・再実行安全）
 a365 setup all
 
-# ① エージェントを登録（Agents › Requests に Pending で出る）
+# ② エージェントを登録申請（Agents › Requests に Pending で出る）
 a365 publish
 
-# ② 道具（MCP）を登録（Tools › Requests に Pending で出る）
+# ③ 道具（MCP）を登録申請（Tools › Requests に Pending で出る）
 a365 develop-mcp register-external-mcp-server `
   --server-name "$MCP" `
   --server-url  "https://$FUNC.azurewebsites.net/runtime/webhooks/mcp" `
   --auth-type   "NoAuth" `
   --tools       "echo,now"
 ```
+
+- **①** … §3 で作った登録情報の「宛先」を、6-1 でデプロイした App Service の実 URL に更新する
+- **②** … エージェントを組織のカタログに載せる**申請**を出す（この時点では `Pending`＝承認待ち）
+- **③** … 自作 MCP（`echo` / `now`）も同様に登録**申請**を出す
 
 登録すると、**エージェントは Agents › Requests、道具（MCP）は Tools › Requests** に `Pending` として現れる。
 
