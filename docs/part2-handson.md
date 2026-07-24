@@ -1,10 +1,11 @@
 # 第2部：Agent 365 ハンズオン（AI 管理者）
 
-> このパートは **AI 管理者**の作業。[第1部](./part1-setup.md)で作ったエージェントを、Microsoft の管理画面から **観察（Observe）→ 管理（Govern）→ 保護（Secure）** の 3 本柱で扱う。
+ このパートは **AI 管理者**の作業。[第1部](./part1-setup.md)で作ったエージェントを、Microsoft の管理画面から **観察（Observe）→ 管理（Govern）→ 保護（Secure）** の 3 本柱で扱う。
+
 > この 3 本柱は Microsoft Learn の [Agent 365 概要](https://learn.microsoft.com/ja-jp/microsoft-agent-365/overview) が定義する構成に沿う。
-> 参考ラボ: [a365handson Step 4（登録）](https://github.com/ninjyanaka/a365handson/blob/main/04-register.md) ｜ [Step 7 実習ラボ（観測）](https://github.com/ninjyanaka/a365handson/blob/main/07-observability-lab.md) ｜ [Step 8 実習ラボ（ガバナンス）](https://github.com/ninjyanaka/a365handson/blob/main/08-governance-lab.md)
->
-> ⚠️ Agent 365 は Preview を多く含む（Agent risk 条件・Single Agent Map・ラベル配置など）。UI 名や提供条件は変わり得るので、詰まったら各節のリンク先で最新を確認すること。
+
+
+> ⚠️ Microsoft Agent 365 は Preview を多く含む。コマンド・API は変わり得るので、Microsoft Learn で最新情報を確認すること。
 
 ## 3 本柱の全体像
 
@@ -13,8 +14,6 @@
 | **Observe（観察する）** | 一元レジストリで可視化し、使用状況・アクティビティ・正常性を把握。リスクシグナルを早期特定 | §2 | M365 管理センター |
 | **Govern（管理）** | ライフサイクル管理・アクセス制御・コンプライアンスを一元化し、一貫したガードレールを確立 | §3 | M365 管理センター / Entra |
 | **Secure（保護）** | Entra（リスクベースアクセス）・Purview（情報保護/DLP）・Defender（脅威防御）でエンドツーエンド保護 | §4 | Entra / Purview / Defender |
-
-処理の順序は **①管理下に置く（§1）→ ②観察（§2）→ ③管理（§3）→ ④保護（§4）**。まず承認して ID を実体化しないと、観察も統制も保護も始まらない。
 
 ---
 
@@ -33,24 +32,31 @@
    3. **Review permissions** — エージェントが要求する権限を確認し、必要なら管理者同意
    4. **Review and finish → Publish**
 
-<!-- ![Requests タブ](../assets/08-requests.png) -->
 
 > **BYO MCP の承認も同様**：**Agents › Tools › Requests (preview)** で `<MCP_NAME>` を開き **Approve** →（`-A365Proxy` / `-BYO` / ランタイムの）管理者同意 → Status が **Available**（承認まで利用不可）。
 
 ✅ 承認が完了するとエージェントは `Pending review` から外れ、利用可能になる。
 
-## 1.2 Entra Agent ID を実体化する
+## 1.2 自作 MCP（道具）を承認する
+
+エージェント本体（§1.1）とは**別の承認**が必要。第1部で登録申請した自作 MCP（`echo` / `now`）を、管理者が承認して初めてエージェントから呼べるようになる。
+
+1. [Microsoft 365 管理センター](https://admin.microsoft.com/) › **Agents › Tools › Requests (preview)** を開く
+2. 対象の MCP（第1部 §0 で決めた `$MCP` の表示名）を開く → **Approve**
+3. 求められた管理者同意を付与する（`-A365Proxy` / `-BYO` / ランタイム用のアプリ登録に対する同意）
+4. Status が **Available** に変われば承認完了（承認まではエージェントから呼び出せない）
+
+<!-- ![Tools Requests](../assets/08b-tools-requests.png) -->
+
+> **エージェント（§1.1）と MCP（§1.2）は別々に承認する**。両方を Approve して初めて、エージェントが道具を呼べる状態になる。
+
+## 1.3 Entra Agent ID を実体化する
 
 承認済みの blueprint を「使える実体」にすると（instance 化）、**Entra Agent ID が「—」から実値の GUID に変わる**。
 
 1. 管理センター › **Agents** で対象 blueprint を開く → **`+ Add instance`**（または対象の登録を有効化）
 2. 作成後、blueprint / instance の **Overview の Entra agent ID** が実値化することを確認
 3. [Entra 管理センター](https://entra.microsoft.com/) › **Agent identities**（Enterprise apps）で同じ Agent ID が見えることを確認
-
-<!-- ![Entra Agent ID 実値化](../assets/09-agentid.png) -->
-
-> **本教材は非 AI Teammate** のため、**agent user（UPN）や Teams の `@mention` は作られない**（それは AI Teammate 専用）。本エージェントの呼び出しは Copilot Studio カスタムエンジン / REST（App Service の `/chat`）/ OBO クライアント経由で行う。
-> この Entra agent ID の値が、そのまま Observability の `agentId` になる（Single Agent Map の突き合わせキー）。
 
 ---
 
@@ -70,8 +76,6 @@
 | **Security** | Microsoft Purview（活動監視・機密データ保護）＋ Microsoft Entra（ID 保護・Agent ID）。右上に **Block** |
 | **Permissions** | 付与権限（Granted / Delegated） |
 | **Activity** | Active users / Sessions / Exceptions と時系列グラフ |
-
-<!-- ![Registry タブ](../assets/10-registry.png) -->
 
 ## 2.2 観察用のアクティビティを作る（クラウドのエージェントを呼ぶ）
 
@@ -101,7 +105,6 @@ Map や観測画面は、**実際にエージェントを呼び出して活動�
 - **線の太さ** = interaction volume、**exception >1% の線は赤**
 - 空表示なら [第1部 §5](./part1-setup.md)（観測配線）と §2.2（アクティビティ生成）を見直す
 
-<!-- ![Single Agent Map](../assets/11-single-agent-map.png) -->
 
 > Single Agent Map は「1 エージェント ↔ ユーザー ↔ ツール」に限定で、**agent-to-agent の線は描かれない**。マルチエージェント化は**テナント全体の Agent Map（クラスタ表示）**を豊かにする用途。
 
@@ -208,8 +211,6 @@ AgentsInfo
 2. **Block agent** にチェック、任意で Reason を記入 → **Save**
 3. ステータスが **Blocked** に。「removed from all users in your organization」。ボタンは **Unblock** に変化
 4. 解除は **Unblock** → チェック → Save で `Available` に復帰
-
-<!-- ![Block / Kill Switch](../assets/12-block.png) -->
 
 > **ID 遮断 ≠ プロセス停止（重要）**：Block は「エージェント **ID としての認証**」を止める。出口（LLM/MCP 呼び出し）が **Agent ID トークン（`fmi_path`）** 依存なら egress も止まり応答生成が失敗する（＝キルスイッチ成立）。出口が SAMI/UAMI のままだと **ID は止まってもプロセスは動き続ける** → 完全停止はホスト側（App Service を停止、または Container Apps の操作）が必要。
 >

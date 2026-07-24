@@ -170,11 +170,9 @@ App Service の **sidecar コンテナ**機能で `ollama/ollama` を横に足�
 - 参考：[App Service の sidecar コンテナー](https://learn.microsoft.com/azure/app-service/tutorial-custom-container-sidecar)
 
 
-### 6-3. エージェントの「住所」を伝えて Agent 365 に登録する
+### 6-3. エージェントの endpoint  Agent 365 に登録する
 
 ここまでで、エージェント本体はクラウド（App Service）で動く URL を持った。最後に、その **URL（＝メッセージの届け先＝messaging endpoint）を Agent 365 に教え**、エージェントと道具（MCP）を**登録**する。
-
-> **messaging endpoint とは**：Agent 365 が「このエージェントに話しかけるときはここへ送る」という**宛先 URL**（App Service のアドレス）。§3 の時点ではまだデプロイ前で仮の値だったので、実 URL に更新する必要がある。
 
 ```powershell
 # ① デプロイ後の実 URL を messaging endpoint に反映（＝エージェントの住所を最新化。冪等・再実行安全）
@@ -190,10 +188,6 @@ a365 develop-mcp register-external-mcp-server `
   --auth-type   "NoAuth" `
   --tools       "echo,now"
 ```
-
-- **①** … §3 で作った登録情報の「宛先」を、6-1 でデプロイした App Service の実 URL に更新する
-- **②** … エージェントを組織のカタログに載せる**申請**を出す（この時点では `Pending`＝承認待ち）
-- **③** … 自作 MCP（`echo` / `now`）も同様に登録**申請**を出す
 
 登録すると、**エージェントは Agents › Requests、道具（MCP）は Tools › Requests** に `Pending` として現れる。
 
