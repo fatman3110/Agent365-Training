@@ -33,8 +33,6 @@
    4. **Review and finish → Publish**
 
 
-> **BYO MCP の承認も同様**：**Agents › Tools › Requests (preview)** で `<MCP_NAME>` を開き **Approve** →（`-A365Proxy` / `-BYO` / ランタイムの）管理者同意 → Status が **Available**（承認まで利用不可）。
-
 ✅ 承認が完了するとエージェントは `Pending review` から外れ、利用可能になる。
 
 ## 1.2 自作 MCP（道具）を承認する
@@ -45,8 +43,6 @@
 2. 対象の MCP（第1部 §0 で決めた `$MCP` の表示名）を開く → **Approve**
 3. 求められた管理者同意を付与する（`-A365Proxy` / `-BYO` / ランタイム用のアプリ登録に対する同意）
 4. Status が **Available** に変われば承認完了（承認まではエージェントから呼び出せない）
-
-<!-- ![Tools Requests](../assets/08b-tools-requests.png) -->
 
 > **エージェント（§1.1）と MCP（§1.2）は別々に承認する**。両方を Approve して初めて、エージェントが道具を呼べる状態になる。
 
