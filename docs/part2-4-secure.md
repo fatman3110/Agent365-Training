@@ -17,6 +17,8 @@ Agent 365 の 3 本柱の 3 つ目。Learn の Secure は、**Purview（情報�
   - [1. 全体像](#1-全体像)
   - [2. Purview — 機密データの保護（情報保護 / DLP）](#2-purview--機密データの保護情報保護--dlp)
   - [3. 脅威とリスクを確認する](#3-脅威とリスクを確認する)
+    - [3-1. リスクのあるエージェントを把握する（M365 管理センター レジストリ）](#3-1-リスクのあるエージェントを把握するm365-管理センター-レジストリ)
+    - [3-2. AI に関するアラートを確認する（Defender ポータル）](#3-2-ai-に関するアラートを確認するdefender-ポータル)
 
 ## 1. 全体像
 
@@ -33,21 +35,14 @@ Agent 365 の 3 本柱の 3 つ目。Learn の Secure は、**Purview（情報�
 
 ### 3-1. リスクのあるエージェントを把握する（M365 管理センター レジストリ）
 
-- [Microsoft 365 管理センター](https://admin.microsoft.com/) › **Agents › Overview**（または **Registry**）の **Agents at risk（リスクのあるエージェント）** で、セキュリティプラットフォームが検出した高リスクなエージェントを確認できる
-- **Manage agent risks** から対象を開き、リスクの詳細と推奨対応を確認する
-- 出典: [Agent registry — Agents at risk](https://learn.microsoft.com/microsoft-365/admin/manage/agent-registry?view=o365-worldwide#agents-at-risk)
+- [Microsoft 365 管理センター](https://admin.microsoft.com/) › **エージェント › 概要** の **Agents at risk（リスクのあるエージェント）** (または、すべてのエージェントのリスク列)で、セキュリティプラットフォームが検出した高リスクなエージェントを確認できる
+- 対象エージェントの**Security** タブから Defender 画面l （もしくは Purview 画面）を開き、リスクの詳細と推奨対応を確認可能
 
 ### 3-2. AI に関するアラートを確認する（Defender ポータル）
 
-Defender は Agent 365 管理下のエージェント活動を常時監視し、**jailbreak／プロンプトインジェクション（XPIA）／資格情報の漏えい／回避手法／不審なユーザーアクセス** などの疑わしい振る舞いを、**Defender ポータルの準リアルタイムのアラート**として上げる（Preview）。アラートはインシデントに相関され、AI Assets ページや各エージェントの **Incidents and alerts** タブから調査できる。
+Defender は Agent 365 管理下のエージェント活動を常時監視し、**jailbreak／プロンプトインジェクション（XPIA）／資格情報の漏えい／回避手法／不審なユーザーアクセス** などの疑わしい振る舞いを、**Defender ポータルの準リアルタイムのアラート**として上げる。アラートはインシデントに相関され、**インシデントとアラート** メニューから調査できる。
 
 - [Defender ポータル](https://security.microsoft.com/) でエージェント関連のアラート／インシデントを確認
-- 出典: [Detect and investigate threats to AI agents（Defender）](https://learn.microsoft.com/defender-xdr/security-for-ai/ai-agent-detection-protection)
-
-> 詳細なログ分析（Advanced Hunting / KQL によるハンティング）は補足的な調査手段のため、本教材では扱わない。
-
-✅ **Secure 完了条件**：Purview で機密データ面、M365 管理センターのレジストリでリスク、Defender ポータルで AI アラートを確認できる。
-
 
 
 

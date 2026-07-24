@@ -1,42 +1,33 @@
 # 第2部：Govern（管理）｜AI 管理者
 
-Agent 365 の 3 本柱の 2 つ目。ライフサイクル管理と一貫したガードレール。**設定して終わりにせず、ログ・KQL で「効いた」ことを裏取り**する。
-参考: [a365handson Step 8 実習ラボ](https://github.com/ninjyanaka/a365handson/blob/main/08-governance-lab.md)
+Agent 365 の 3 本柱の 2 つ目。ライフサイクル管理と一貫したガードレール。**設定して終わりにせず、画面・ログで「効いた」ことを裏取り**する。
 
-> ▶ **前提**：[第2部 A](./part2-1a-copilotstudio.md) / [B](./part2-1b-custom.md) で承認済み、[Observe](./part2-2-observe.md) で可視化を確認済みであること。
->
-> ⚠️ Microsoft Agent 365 は Preview を多く含む（Agent risk 条件など）。UI・提供条件は変わり得る。
+> ⚠️ Microsoft Agent 365 / Copilot Studio は Preview を多く含む。UI 名やメニュー位置は変わり得るので、詰まったら Microsoft Learn で最新を確認すること。
 
 **目次**
 
-- [1. 統制対象を棚卸しする（AgentsInfo を KQL で）](#1-統制対象を棚卸しするagentsinfo-を-kql-で)
-- [2. Block（Kill Switch）](#2-blockkill-switch構成保持のまま即時停止)
-- [3. 削除（リタイア）と後片付け](#3-削除リタイアと後片付け)
-- [4. ガードレールの限界](#4-ガードレールの限界agent-id-が無いと統制は効かない)
-- [5. カスタムポリシーテンプレートを作る](#5-カスタムポリシーテンプレートを作る)
-- [6. 条件付きアクセス — Agent risk = High を Block](#6-条件付きアクセス--agent-risk--high-を-blockreport-only--on)
+- [第2部：Govern（管理）｜AI 管理者](#第2部govern管理ai-管理者)
+  - [1. 統制対象を棚卸しする（M365 管理センター）](#1-統制対象を棚卸しするm365-管理センター)
+  - [2. Block（Kill Switch）— 構成保持のまま即時停止](#2-blockkill-switch-構成保持のまま即時停止)
+  - [3. 削除（リタイア）と後片付け](#3-削除リタイアと後片付け)
+  - [4. ガードレールの限界（Agent ID が無いと統制は効かない）](#4-ガードレールの限界agent-id-が無いと統制は効かない)
+  - [5. カスタムポリシーテンプレートを作る](#5-カスタムポリシーテンプレートを作る)
+    - [5-1. 前提](#5-1-前提)
+    - [5-2. Entra で 3 種のポリシーを作る（必要なものだけ）](#5-2-entra-で-3-種のポリシーを作る必要なものだけ)
+    - [5-3. M365 管理センターでテンプレートを作る](#5-3-m365-管理センターでテンプレートを作る)
+  - [6. 条件付きアクセス — Agent risk = High を Block（Report-only → On）](#6-条件付きアクセス--agent-risk--high-を-blockreport-only--on)
 
-## 1. 統制対象を棚卸しする（AgentsInfo を KQL で）
+## 1. 統制対象を棚卸しする（M365 管理センター）
 
-UI で名前を探すのではなく、**クエリで機械的に**レビュー対象を絞る。[Defender](https://security.microsoft.com/) › **Advanced hunting**：
+まず「どのエージェントを統制するか」を絞る。KQL は不要で、[Microsoft 365 管理センター](https://admin.microsoft.com/) の画面で一覧・フィルタできる。
 
-```kusto
-// 最新スナップショット（AgentsInfo は時系列なので arg_max で最新化）
-AgentsInfo
-| summarize arg_max(Timestamp, *) by AgentId
-| where LifecycleStatus != "Deleted"
-| project AgentName, Platform, Owners, SharedWith, PublishedStatus, LifecycleStatus
-```
+1. **Agents › All agents › Registry** で全エージェントを一覧
+2. **Status / Publisher type / Platform / Channel** のフィルタで対象を絞る
+3. **Agents › Overview › Top actions for you** の **Agents without owners（所有者不在）** / **Agents at risk（リスクあり）** から、要対応のエージェントを直接開く
+4. 必要なら **Export** で一覧を Excel / CSV に出し、棚卸し記録にする
 
-```kusto
-// 所有者不在（ownerless）— 一括再割当の候補
-AgentsInfo
-| summarize arg_max(Timestamp, *) by AgentId
-| where array_length(Owners) == 0
-| project AgentName, Platform, PublishedStatus, LastUpdatedDateTime
-```
-
-> `Owners` / `Endpoints` / `DeclaredTools` は dynamic（JSON）列。ここで得た **高リスク／ownerless リスト**が [条件付きアクセス](#6-条件付きアクセス--agent-risk--high-を-blockreport-only--on)や一括統制の入力になる。管理センター **Agents › Overview › Top actions for you › Manage agent risks** とも突き合わせる。
+> ここで絞った **高リスク／所有者不在リスト**が [条件付きアクセス](#6-条件付きアクセス--agent-risk--high-を-blockreport-only--on) や一括統制の入力になる。
+> 補足：一括処理・自動化したい場合は [Defender](https://security.microsoft.com/) › Advanced hunting の `AgentsInfo` テーブルを KQL で引く方法もある（本教材では補足扱い）。
 
 ## 2. Block（Kill Switch）— 構成保持のまま即時停止
 
@@ -69,7 +60,7 @@ AgentsInfo
 - orphan アプリ確認: `az ad app list --display-name "<blueprint名>" -o table` → `az ad app delete --id <appId>`
 
 > ⚠️ **後片づけ必須**：学習が終わったら Block ではなく `a365 cleanup` で消し、Azure リソース（App Service / Functions / ACR / ストレージ、まとめて `az group delete -n $RG`）も削除する。連鎖クリーンアップは非同期で数時間〜数日かかることがある。
-> **削除後の確認**：1 節 の `AgentsInfo` KQL で `LifecycleStatus == "Deleted"` に遷移したことを確認（反映にタイムラグあり）。
+> **削除後の確認**：レジストリの一覧から対象が消える（`LifecycleStatus` が `Deleted` に遷移する）ことを確認（反映にタイムラグあり）。
 
 ## 4. ガードレールの限界（Agent ID が無いと統制は効かない）
 
@@ -137,7 +128,7 @@ AgentsInfo
 > 条件付きアクセスはリスクベースのアクセス制御（[Secure](./part2-4-secure.md) の考え方）でもあるが、テンプレートに束ねる前提ポリシーとして本節（Govern）でまとめて扱う。
 > 出典: [エージェント向け条件付きアクセス](https://learn.microsoft.com/entra/identity/conditional-access/agent-id)
 
-✅ **Govern 完了条件**：Block → 実際に停止（サインイン Failure）、Unblock → 復帰、を確認。`AgentsInfo` で対象を機械抽出できる。カスタムテンプレートを使う場合は承認ウィザードに自作テンプレートが並び、CA は Report-only で「Would block」まで評価されることを確認。
+✅ **Govern 完了条件**：Block → 実際に停止（サインイン Failure）、Unblock → 復帰、を確認。レジストリで統制対象を絞り込める。カスタムテンプレートを使う場合は承認ウィザードに自作テンプレートが並び、CA は Report-only で「Would block」まで評価されることを確認。
 
 ---
 
