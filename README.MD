@@ -2,14 +2,12 @@
 
 **「 AI エージェント」を自分で作り、Agent 365 などの管理画面から管理できるようにするまで**を体験する、初学者向けの教材である。
 
-この教材でやることは、大きく次の 5 ステップである。
+この教材は、エージェントの**作り方を 2 ルート**用意している。どちらを選んでも、第2部で承認 → 観察（Observe）→ 管理（Govern）→ 保護（Secure）へ進む。
 
-1. **【第1部】エージェントの“土台”を用意する** — 開発ツールをそろえ、Agent 365 の **Blueprint / Agent ID**（エージェントの ID と、アプリの骨格・接続情報）を作る。
-2. **【第1部】エージェントが使う道具（MCP）を作る** — エージェントが活用するツール（本教材では `echo` / `now` といった疑似的なもの）を自作する。
-3. **【第1部】本体を実装してクラウドにデプロイする** — ロジックを実装し、Azure にデプロイする。
-4. **【第1部】Agent 365 に登録する** — エージェントと道具（MCP）を登録する。
-5. **【第2部】エージェントを承認して管理下に置く** — 管理者がエージェントの組織としての利用を承認する。
-6. **【第2部】管理者として統制する** — 管理者がエージェントを **ワンクリックで止める（Kill Switch）** など、ガバナンス（統制）が効くことを確認する。
+- **第1部 A：Copilot Studio で作る** — ノーコード／ローコードで最短。コードも Azure も不要。
+- **第1部 B：独自エージェント＋独自 MCP を作る** — 自前ホストの LLM（Qwen）＋自作 MCP をフルコードで実装し Azure にデプロイ。
+
+**第2部（AI 管理者・A/B 共通）** — 申請されたエージェントを承認して Teams に接続し、実際に動かして観測データを作り、Learn の 3 本柱 **Observe / Govern / Secure** で確認・統制・保護する。
 
 > ⚠️ **教育目的の教材である。** 自前ホスト LLM・BYO MCP（クラウド公開）を含むため、本番環境では使用しないこと。使い終わったら後片づけ（`a365 cleanup` / リソース削除）を行うこと。
 
@@ -23,26 +21,27 @@
 
 ```mermaid
 flowchart LR
-    subgraph P1["第1部：環境構築 ｜ 開発者（VS Code / ターミナル）"]
+    subgraph P1["第1部：作成と申請 ｜ 開発者"]
         direction TB
-        A1["作業端末への必要ツール導入"] --> A2["作業端末への便利ツール（Skills） 導入"] --> A3["Blueprint / Agent ID 作成"]
-        A3 --> A4["自作 MCP サーバ作成<br/>(Azure Functions)"] --> A5["AI エージェント作成"]
-        A5 --> A6["Azure への AI エージェントデプロイ"]
+        A0{"作り方を選ぶ"}
+        A0 -->|"A：ノーコード"| AA["Copilot Studio で作成 → 組織に申請"]
+        A0 -->|"B：フルコード"| AB["ツール導入 → Blueprint → 独自MCP → 本体実装 → Azure デプロイ → 登録申請"]
     end
     subgraph P2["第2部：Agent 365 ハンズオン ｜ AI 管理者（M365 / Entra 管理センター）"]
         direction TB
-        B1["承認して管理下に置く<br/>（Agent ID を実体化）"] --> B2["エージェントを実際に動かす<br/>（観測データを作る）"]
+        B1["承認して管理下に置く<br/>（A/B 共通）"] --> B2["エージェントを実際に動かす<br/>（観測データを作る）"]
         B2 --> B3["Observe：観察<br/>Registry / Map / 観測4画面"]
         B3 --> B4["Govern：管理<br/>棚卸し / Block / 削除"]
         B4 --> B5["Secure：保護<br/>CA / Purview / Defender"]
     end
-    A6 ==> B1
+    AA ==> B1
+    AB ==> B1
 ```
 
 
 | 部 | ゴール | 主な担当・画面 |
 |----|--------|---------------|
-| 第1部 環境構築 | エージェントが Agent 365 に登録され、Azure（クラウド）で動く | 開発者：VS Code・ターミナル・Azure |
+| 第1部 作成と申請（A/B の 2 ルート） | エージェントを作って Agent 365 に登録申請する（A: Copilot Studio ／ B: 独自＋独自MCP） | 開発者：Copilot Studio ／ VS Code・Azure |
 | 第2部 Agent 365 ハンズオン | Learn の 3 本柱（**Observe / Govern / Secure**）で登録内容・アクティビティ・ガバナンスを実機確認できる | AI 管理者：M365 管理センター・Entra・Purview・Defender |
 
 ---
@@ -82,10 +81,12 @@ flowchart LR
 
 ### 構成ファイル
 
-必要なファイルは **① 自作コード**、**② `a365 setup all` / Skills が自動生成するもの**、**③ シークレット** の 3 種に分かれる。
-本リポジトリの [`src/`](./src) は ① に相当する。②・③ は各自の環境で生成されるためリポジトリには含まれない点に注意。
+> このファイル構成は **第1部 B（独自エージェント）** のもの。第1部 A（Copilot Studio）はコード・Azure リソースを持たない。
 
-> 💡 ①＝エージェントの“頭脳”（何を答え・どの道具を呼ぶか）、②＝“受付と起動”（外部からのメッセージを受け取り①に渡すサーバー部分）の役割。②は定型の認証・ルーティング等で SDK に紐づくため、Skills に自動生成させる。
+必要なファイルは **(1) 自作コード**、**(2) `a365 setup all` / Skills が自動生成するもの**、**(3) シークレット** の 3 種に分かれる。
+本リポジトリの [`src/`](./src) は (1) に相当する。(2)・(3) は各自の環境で生成されるためリポジトリには含まれない点に注意。
+
+> 💡 (1)＝エージェントの“頭脳”（何を答え・どの道具を呼ぶか）、(2)＝“受付と起動”（外部からのメッセージを受け取り (1) に渡すサーバー部分）の役割。(2) は定型の認証・ルーティング等で SDK に紐づくため、Skills に自動生成させる。
 
 ```text
 Agent365-Training/
@@ -101,7 +102,7 @@ Agent365-Training/
 │       ├── function_app.py          #     道具の中身（echo / now）
 │       ├── host.json                #     Functions 設定（MCP 拡張）
 │       └── requirements.txt         #     必要な Python ライブラリ
-├── start_server.py                  # ２ Skills が自動生成：受付と起動（外部からのメッセージを①へ橋渡し）
+├── start_server.py                  # ２ Skills が自動生成：受付と起動（外部からのメッセージを (1) へ橋渡し）
 ├── appPackage/manifest.json         # ２ Skills が自動生成：エージェントを登録するための情報（名前など）
 ├── a365.config.json                 # ２ `a365 setup all` に渡す設定ファイル
 ├── .env                             # ３ 秘密情報：接続キー等。`a365 setup all` が自動で書き込む（共有・コミット禁止）
@@ -112,8 +113,8 @@ Agent365-Training/
 | 用語 | 意味 |
 |------|------|
 | **Blueprint** | エージェントの「テンプレート」。ここから Agent ID を発行する。これ自体は実体ではない |
-| **Entra Agent ID** | エージェントに付与される Entra 上の ID。**instance 化して初めて実値になる** |
-| **instance 化** | Blueprint（テンプレート）から、実際に使えるエージェントの実体を 1 つ払い出すこと。これで初めて Entra Agent ID が実値の GUID になり、利用可能になる |
+| **Entra Agent ID** | エージェントに付与される Entra 上の ID（blueprint の `agentBlueprintId`）。Observability の突き合わせキーになる |
+| **instance 化** | Blueprint（テンプレート）から実際に使えるエージェントの実体を払い出すこと。組織図に載る「エージェントユーザー」を伴う本格的な instance 化は **AI Teammate（Frontier Preview）** の概念。本教材の非 AI Teammate では Teams 開発者ポータルでの接続で足りる |
 | **BYO MCP** | 自作の外部 MCP サーバーを Agent 365 に登録して使う仕組み |
 | **Kill Switch** | 管理センターの Block。構成を保持したまま即時停止（Unblock で復帰） |
 
@@ -121,9 +122,26 @@ Agent365-Training/
 
 # 手順（第1部・第2部）
 
-## 第1部：環境構築（開発者）　→ [docs/part1-setup.md](./docs/part1-setup.md)
+## 第1部：エージェントの作成と申請（開発者）
 
-## 第2部：Agent 365 ハンズオン（AI 管理者）　→ [docs/part2-handson.md](./docs/part2-handson.md)
+作り方を 2 つから選ぶ：
+
+- **A：Copilot Studio で作る（ノーコード）** → [docs/part1a-copilot-studio.md](./docs/part1a-copilot-studio.md)
+- **B：独自エージェント＋独自 MCP（フルコード）** → [docs/part1b-custom-agent.md](./docs/part1b-custom-agent.md)
+
+## 第2部：承認・観察・管理・保護（AI 管理者）
+
+まず承認と観測データ作成（作成ルートに対応する方）：
+
+- **A：Copilot Studio 版** → [docs/part2-1a-copilotstudio.md](./docs/part2-1a-copilotstudio.md)
+- **B：独自エージェント版** → [docs/part2-1b-custom.md](./docs/part2-1b-custom.md)
+
+続いて 3 本柱（A/B 共通）：
+
+- **Observe（観察）** → [docs/part2-2-observe.md](./docs/part2-2-observe.md)
+- **Govern（管理）** → [docs/part2-3-govern.md](./docs/part2-3-govern.md)
+- **Secure（保護）** → [docs/part2-4-secure.md](./docs/part2-4-secure.md)
+
 ---
 
 ## 参考リンク

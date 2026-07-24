@@ -1,26 +1,22 @@
-# 第1部：環境構築（開発者）
+# 第1部 B：独自エージェント＋独自 MCP を作る（開発者）
 
- 完了すると、エージェントが Agent 365 に登録され、Azure（クラウド）で動く状態になる。
+自前ホストの LLM（Qwen）で動く**独自エージェント**と、自作の道具（**独自 MCP**）をコードから作って Azure にデプロイし、Agent 365 に登録申請するまで。完了すると、エージェントが Agent 365 に登録され、Azure（クラウド）で動く状態になる。
 
+> 💡 ノーコードで手早く作りたいなら **[第1部 A：Copilot Studio で作る](./part1a-copilot-studio.md)** もある。本ファイル（B）は「フルコードで自前ホスト＋独自 MCP」を学ぶ上級ルート。
+>
 > ⚠️ Microsoft Agent 365 は Preview を多く含む。コマンド・API は変わり得るので、Microsoft Learn で最新情報を確認すること。
 
 **目次**
 
-- [第1部：環境構築（開発者）](#第1部環境構築開発者)
-  - [0. 最初に「名前」を決める（1 回だけ）](#0-最初に名前を決める1-回だけ)
-  - [1. ツールを用意して Azure にログインする](#1-ツールを用意して-azure-にログインする)
-  - [2. Agent 365 Skills を導入する](#2-agent-365-skills-を導入する)
-  - [3. エージェントの「土台」を作る（Blueprint / Agent ID）](#3-エージェントの土台を作るblueprint--agent-id)
-  - [4. 道具（MCP）を作ってクラウドに置く](#4-道具mcpを作ってクラウドに置く)
-    - [4-1. Azure に空の Function App（入れ物）を作る](#4-1-azure-に空の-function-app入れ物を作る)
-    - [4-2. 作った入れ物に MCP コードをアップロードする](#4-2-作った入れ物に-mcp-コードをアップロードする)
-  - [5. エージェント本体を実装する](#5-エージェント本体を実装する)
-  - [6. Azure にデプロイして「登録」する](#6-azure-にデプロイして登録する)
-    - [6-1. コンテナレジストリと App Service を作る](#6-1-コンテナレジストリと-app-service-を作る)
-    - [6-2. Ollama（LLM）を sidecar で追加](#6-2-ollamallmを-sidecar-で追加)
-    - [6-3. エージェントの endpoint を Agent 365 に登録する](#6-3-エージェントの-endpoint-を-agent-365-に登録する)
+- [0. 名前（変数）を決める](#0-最初に名前を決める1-回だけ)
+- [1. ツール導入と Azure ログイン](#1-ツールを用意して-azure-にログインする)
+- [2. Agent 365 Skills を導入](#2-agent-365-skills-を導入する)
+- [3. 土台（Blueprint / Agent ID）を作る](#3-エージェントの土台を作るblueprint--agent-id)
+- [4. 道具（MCP）を作ってクラウドに置く](#4-道具mcpを作ってクラウドに置く)
+- [5. エージェント本体を実装する](#5-エージェント本体を実装する)
+- [6. デプロイして登録](#6-azure-にデプロイして登録する)
 
-完了後は **[第2部：Agent 365 ハンズオン](./part2-handson.md)** で承認・Teams 接続・観察・統制・保護を行う。
+完了後は **[第2部 B：承認と観測データ作成](./part2-1b-custom.md)** で承認・Teams 接続・観測データ作成を行い、その後 Observe / Govern / Secure に進む。
 
 ## 0. 最初に「名前」を決める（1 回だけ）
 
@@ -53,7 +49,7 @@ az account set --subscription "<SUBSCRIPTION_ID>"
 
 ## 2. Agent 365 Skills を導入する
 
-これを導入すると、Github Copilot / Claude Code に自然言語で指示したときに、②「受付と起動」のサーバー部分（`start_server.py`）等を自動生成してくれる。
+これを導入すると、Github Copilot / Claude Code に自然言語で指示したときに、(2)「受付と起動」のサーバー部分（`start_server.py`）等を自動生成してくれる。
 
 ```powershell
 git clone https://github.com/microsoft/agent365-skills.git
@@ -61,7 +57,7 @@ node .\agent365-skills\scripts\install.js   # VS Code の chat.agentSkillsLocati
 ```
 
 > **Skills が何をしてくれるか（重要）**
-> - `make-a365-agent` … ②ホスティング層（Python は aiohttp の `start_server.py`）＋ `a365.config.json` を生成
+> - `make-a365-agent` … (2) ホスティング層（Python は aiohttp の `start_server.py`）＋ `a365.config.json` を生成
 > - `instrument-observability` … OpenTelemetry を配管するコードを生成
 > - `a365-setup` … 前提チェック＋ Blueprint 作成の入口
 
@@ -126,25 +122,25 @@ cd ..\..\docs
 ```
 
 
-> この節では**道具を作って Azure に置くだけ**。**Agent 365 への登録は 6 節、承認は [第2部](./part2-handson.md)** でまとめて行う。
+> この節では**道具を作って Azure に置くだけ**。**Agent 365 への登録は 6 節、承認は [第2部 B](./part2-1b-custom.md)** でまとめて行う。
 
 ## 5. エージェント本体を実装する
 
-これも 3 節 と同じく、**AI チャットに打ち込む自然言語の指示**。Copilot Chat（または Claude Code）に次を送ると、Skill（`make-a365-agent`）が②の受付・起動サーバーを生成する。
+これも 3 節 と同じく、**AI チャットに打ち込む自然言語の指示**。Copilot Chat（または Claude Code）に次を送ると、Skill（`make-a365-agent`）が (2) の受付・起動サーバーを生成する。
 
 ```text
-非 AI Teammate のエージェントを OBO（委任）で作りたい。②の受付・起動サーバーを Python / aiohttp で生成して。
+非 AI Teammate のエージェントを OBO（委任）で作りたい。(2) の受付・起動サーバーを Python / aiohttp で生成して。
 ```
 
 > **この指示の意味（初学者向け）**
 > - **非 AI Teammate のエージェントを OBO（委任）で** … 3 節 で作ったのと同じ種類のエージェントとして扱う合図。Skill はこの言葉で生成するコードの形（認証の配線など）を判定する
-> - **②の受付・起動サーバーを Python / aiohttp で生成して** … ②「受付と起動」（`start_server.py`）を、Python の Web サーバーライブラリ **aiohttp** で作ってほしい、という依頼。このサーバーが外部からのメッセージを受け付けて①（`app.py`）に渡す
+> - **(2) の受付・起動サーバーを Python / aiohttp で生成して** … (2)「受付と起動」（`start_server.py`）を、Python の Web サーバーライブラリ **aiohttp** で作ってほしい、という依頼。このサーバーが外部からのメッセージを受け付けて (1)（`app.py`）に渡す
 
-`make-a365-agent` が **`start_server.py`（②受付・起動）** を生成する。ここに **[../src/agent/](../src/agent) の中身（①あなたのコード）を配置・接続**する。
+`make-a365-agent` が **`start_server.py`（(2)受付・起動）** を生成する。ここに **[../src/agent/](../src/agent) の中身（(1)あなたのコード）を配置・接続**する。
 
 やること（B・具体手順）：
 1. `../src/agent/` の `app.py` / `llm.py` / `obo.py` / `observability_setup.py` を、生成されたプロジェクト直下（`start_server.py` と同じ場所）にコピー
-2. `app.py` はすでに `from start_server import build_adapter` で②に差し込む形になっている（そのまま使える）
+2. `app.py` はすでに `from start_server import build_adapter` で (2) に差し込む形になっている（そのまま使える）
 3. `.env` に LLM と観測の設定を追記
    ```dotenv
    OLLAMA_BASE_URL=http://localhost:11434/v1
@@ -160,7 +156,7 @@ cd ..\..\docs
 
 ## 6. Azure にデプロイして「登録」する
 
-エージェント本体（①＋②）をコンテナにして App Service へ。**LLM（Qwen）は隣に置く Ollama コンテナ（sidecar）**で動かす。
+エージェント本体（(1)＋(2)）をコンテナにして App Service へ。**LLM（Qwen）は隣に置く Ollama コンテナ（sidecar）**で動かす。
 
 ### 6-1. コンテナレジストリと App Service を作る
 
@@ -193,14 +189,14 @@ App Service の **sidecar コンテナ**機能で `ollama/ollama` を横に足�
 ここまでで、エージェント本体はクラウド（App Service）で動く URL を持った。最後に、その **URL（＝メッセージの届け先＝messaging endpoint）を Agent 365 に教え**、エージェントと道具（MCP）を**登録**する。
 
 ```powershell
-# ① デプロイ後の実 URL を messaging endpoint に反映（＝エージェントの住所を最新化。）
+# (1) デプロイ後の実 URL を messaging endpoint に反映（＝エージェントの住所を最新化。）
 #    --m365 を付けると Teams / Microsoft 365 Copilot チャネル用に messaging endpoint を登録する
 a365 setup all --m365
 
-# ② エージェントを登録申請（Agents › Requests に Pending で出る）
+# (2) エージェントを登録申請（Agents › Requests に Pending で出る）
 a365 publish
 
-# ③ 道具（MCP）を登録申請（Tools › Requests に Pending で出る）
+# (3) 道具（MCP）を登録申請（Tools › Requests に Pending で出る）
 a365 develop-mcp register-external-mcp-server `
   --server-name "$MCP" `
   --server-url  "https://$FUNC.azurewebsites.net/runtime/webhooks/mcp" `
@@ -209,8 +205,8 @@ a365 develop-mcp register-external-mcp-server `
 ```
 
 - **`--m365`** … Teams / Copilot から話しかけられる「M365 エージェント」として messaging endpoint を登録する（[Learn: setup](https://learn.microsoft.com/microsoft-agent-365/developer/registration)）。
-- 登録すると、**エージェントは Agents › Requests、道具（MCP）は Tools › Requests** に `Pending` として現れる。**承認と Teams への接続は [第2部](./part2-handson.md)** で行う。
+- 登録すると、**エージェントは Agents › Requests、道具（MCP）は Tools › Requests** に `Pending` として現れる。**承認と Teams への接続は [第2部 B](./part2-1b-custom.md)** で行う。
 
 ---
 
-→ 次：**[第2部：Agent 365 ハンズオン](./part2-handson.md)** 
+→ 次：**[第2部 B：承認と観測データ作成](./part2-1b-custom.md)** ｜ [README（概要）](../README.MD)
