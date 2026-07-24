@@ -1,7 +1,6 @@
-# 依存パッケージ（Preview 前提。実際のパッケージ名は a365 setup all / Skills 生成物に合わせること）
+# エージェント本体の依存パッケージ（Preview 前提。実際は Skills 生成物の requirements に合わせる）
 openai
 msal
-azure-functions
 
 # Microsoft 365 Agents SDK / Agent 365 SDK（Preview）
 # 生成された骨格の requirements に従う。参考のためコメントで記載:
