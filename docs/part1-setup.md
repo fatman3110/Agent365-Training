@@ -23,28 +23,26 @@ $MCP   = "mymcp"                        # MCP サーバーの表示名
 
 ```powershell
 # バージョンが返れば OK（無ければ各コメントのコマンドで導入）
-node --version   # 18+
-az   version     # Azure CLI（無ければ: winget install Microsoft.AzureCLI）
-func --version   # Azure Functions Core Tools（無ければ: npm i -g azure-functions-core-tools@4）
+node --version   #  無ければ:  winget install OpenJS.NodeJS.LTS
+az   version     # 無ければ: winget install Microsoft.AzureCLI
+func --version   # A無ければ: npm i -g azure-functions-core-tools@4
 a365 --version   # 無ければ: dotnet tool install -g Microsoft.Agents.A365.DevTools.Cli
 
 # Azure にサインイン
 az login
-az account set --subscription "<SUBSCRIPTION_ID_または名前>"
+az account set --subscription "<SUBSCRIPTION_ID>"
 ```
 
 ## 2. Agent 365 Skills を導入する
 
-Copilot / Claude Code に自然言語で指示すると、**②「受付と起動」のサーバー部分（`start_server.py`）・観測配線・MCP 追加を自動生成**してくれます（あなたは①の中身だけ書けばよい）。
+これを導入することで Github Copilot / Claude Code に自然言語で指示すると、②「受付と起動」のサーバー部分（`start_server.py`）等を自動生成**してくれます。
 
 ```powershell
-# GitHub Copilot CLI（gh skill 対応版）
-gh skill add microsoft/agent365-skills
-
-# gh skill 非対応版 / VS Code agent mode の場合
 git clone https://github.com/microsoft/agent365-skills.git
-node <clone>/scripts/install.js   # VS Code の chat.agentSkillsLocations に登録される（Reload Window で反映）
+node .\agent365-skills\scripts\install.js   # VS Code の chat.agentSkillsLocations に登録される（Reload Window で反映）
 ```
+
+> `install.js` は **実行時のカレントディレクトリ**（`process.cwd()`）に対して登録する。VS Code のワークスペース直下で実行すること（別の場所で実行すると設定が $HOME 側に書かれてしまう）。導入後は **Reload Window** で反映する。
 
 > **Skills が何をしてくれるか（重要）**
 > - `make-a365-agent` … ②ホスティング層（Python は aiohttp の `start_server.py`）＋ `a365.config.json` を生成
