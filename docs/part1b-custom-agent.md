@@ -207,7 +207,7 @@ az webapp create -n $APP -g $RG -p $PLAN `
 
 App Service の **sidecar コンテナ**機能で `ollama/ollama` を横に足し、エージェントは `http://localhost:11434` で呼ぶ。
 
-- Azure ポータル → 対象 Web アプリ → **デプロイ センター → コンテナー（サイドカー）** → **追加**
+- [Azure ポータル](https://portal.azure.com/) → 対象 Web アプリ → **デプロイ センター → コンテナー（サイドカー）** → **追加**
   - イメージ：`ollama/ollama:latest`／ポート：`11434`
 - 参考：[App Service の sidecar コンテナー](https://learn.microsoft.com/azure/app-service/tutorial-custom-container-sidecar)
 

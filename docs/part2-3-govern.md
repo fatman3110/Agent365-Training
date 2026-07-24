@@ -12,7 +12,7 @@ Agent 365 の 3 本柱の 2 つ目。ライフサイクル管理と一貫した�
   - [3. Block（Kill Switch）— 構成保持のまま即時停止](#3-blockkill-switch-構成保持のまま即時停止)
   - [4. 削除（リタイア）](#4-削除リタイア)
   - [5. カスタムポリシーテンプレートを作る](#5-カスタムポリシーテンプレートを作る)
-    - [5-1. Entra で 3 種のポリシーを作る（必要なものだけ）](#5-1-entra-で-3-種のポリシーを作る必要なものだけ)
+    - [5-1. Entra で 3 種のポリシーを作成](#5-1-entra-で-3-種のポリシーを作成)
     - [5-2. M365 管理センターでテンプレートを作る](#5-2-m365-管理センターでテンプレートを作る)
   - [6. 条件付きアクセス — Agent risk = High を Block（Report-only → On）](#6-条件付きアクセス--agent-risk--high-を-blockreport-only--on)
 
@@ -31,7 +31,7 @@ Agent 365 の 3 本柱の 2 つ目。ライフサイクル管理と一貫した�
 3. **Agents › Overview › Top actions for you** の **Agents without owners（所有者不在）** / **Agents at risk（リスクあり）** から、要対応のエージェントを直接開く
 4. 必要なら **Export** で一覧を Excel / CSV に出し、棚卸し記録にする
 
-> 補足：一括処理・自動化したい場合は [Defender](https://security.microsoft.com/) › Advanced hunting の `AgentsInfo` テーブルを KQL で引く方法を活用可能
+> 補足：一括処理・自動化したい場合は [Microsoft Defender ポータル](https://security.microsoft.com/) › Advanced hunting の `AgentsInfo` テーブルを KQL で引く方法もある
 
 ## 3. Block（Kill Switch）— 構成保持のまま即時停止
 
@@ -42,7 +42,7 @@ Block には 2 つの粒度がある。**本節の手順（下記 1〜4）はエ
 | **エージェント全体**（本節の手順） | Agents › All agents › 対象 › **Block** | 組織全体で利用不可。全ユーザーから外れ、インストール済みのユーザーからも削除される。複数インスタンスがあれば全 instance に波及 |
 | **インスタンス単位** | エージェント詳細の **Instances** タブ › 対象 instance › **Block** | その instance だけ停止（実行中の動作も止まる）。**Instances タブは AI Teammate エージェントにのみ表示**されるため、本教材では対象外 |
 
-1. 管理センター › **Agents › All agents** で対象を開く（`Available`）→ 右上 **Block**
+1. [Microsoft 365 管理センター](https://admin.microsoft.com/) › **Agents › All agents** で対象を開く（`Available`）→ 右上 **Block**
 2. **Block agent** にチェック、任意で Reason を記入 → **Save**
 3. ステータスが **Blocked** に。
 4. 解除は **Unblock** → チェック → Save で `Available` に復帰
@@ -62,7 +62,7 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 片付けはルートによって異なる。
 
-**パターン A（Copilot Studio）**： M365 管理センター › **Agents › 対象エージェント › 完全に削除する**
+**パターン A（Copilot Studio）**：[Microsoft 365 管理センター](https://admin.microsoft.com/) › **Agents › 対象エージェント › 完全に削除する**（または [Copilot Studio](https://copilotstudio.microsoft.com/) 側で **Agents › 対象 › … › Delete**）
 
 **パターン B（自前ホスト）**：
 
@@ -74,22 +74,37 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 テンプレートは、複数のポリシーを束ねてエージェントへ**一括適用するガバナンスの仕組み**。承認タイミングで「テンプレートの適用」で選べる**カスタムテンプレート**は、ここで事前に作る。テンプレートでは **条件付きアクセス・アクセスパッケージ・カスタムセキュリティ属性** の 3 種の Entra ポリシーを束ねられる。
 
-### 5-1. Entra で 3 種のポリシーを作る（必要なものだけ）
+### 5-1. Entra で 3 種のポリシーを作成
 
-| ポリシー | 用途 | 作り方 |
-|----------|------|--------|
-| **条件付きアクセス（CA）** | Agent risk 等の条件でトークン発行を制御 | 本ファイル 6 節（CA）の手順。要点：Entra › **Conditional Access › + Create new policy** → **Assignments** を開き **Agents** に適用 → **Select agents** で対象の Agent ID を**1つ以上**選ぶ（必須；選ばないとテンプレート一覧に出ない）→ 条件・制御を設定して保存 |
-| **アクセスパッケージ** | リソース・ロール・ポリシーを束ねてエージェントのアクセス権を付与 | Entra ID Governance › Entitlement management でアクセスパッケージを作成し、エージェント ID が要求できるように設定（[Learn](https://learn.microsoft.com/entra/id-governance/entitlement-management-access-package-create#allow-users-service-principals-and-agent-identities-in-your-directory-to-request-the-access-package)） |
-| **カスタムセキュリティ属性** | エージェント ID に組織固有のメタデータを付与してきめ細かなアクセス制御 | Entra でカスタムセキュリティ属性を定義・割り当て（[Learn](https://learn.microsoft.com/entra/fundamentals/custom-security-attributes-overview)） |
+テンプレートに束ねる前提として、対象ポリシーを先に作る。ここでは**影響の少ない具体例**で 1 つずつ作る（必要なものだけでよい）。いずれも [Microsoft Entra 管理センター](https://entra.microsoft.com/) で行う。
 
-> CA・カスタムセキュリティ属性は **Global 管理者**が必要（AI 管理者では不足）。CA を「すべてのエージェント ID」にスコープすると M365 管理センターで自動選択され上書き不可。
-> ⚠️ Entra ポリシーはエージェントが **Entra 認証で**リソースにアクセスする前提。Entra 認証でないエージェントには割り当てても実行時に強制されないことがある。
+**(a) 条件付きアクセス（CA）— Report-only（影響ゼロ）**
+
+Report-only なら実際のブロックは起きない。作成手順は本ファイルの [6 節](#6-条件付きアクセス--agent-risk--high-を-blockreport-only--on) を参照（**Assignments › Agents › Select agents** で対象 Agent ID を 1 つ以上選ぶのが必須）。
+
+**(b) アクセスパッケージ — リソースを付けない空パッケージ（権限を与えないので影響なし）**
+
+1. [Microsoft Entra 管理センター](https://entra.microsoft.com/) › **ID ガバナンス › エンタイトルメント管理 › アクセス パッケージ › + 新しいアクセス パッケージ**
+2. **基本**：名前（例 `Agent-Training-Package`）を入力
+3. **リソース ロール**：勉強用は**何も追加しない**（権限付与ゼロ＝影響なし）
+4. **要求**：要求できる相手として **エージェント ID／サービス プリンシパル** を許可（[Learn](https://learn.microsoft.com/entra/id-governance/entitlement-management-access-package-create#allow-users-service-principals-and-agent-identities-in-your-directory-to-request-the-access-package)）
+5. 残りは既定のまま **作成**
+
+**(c) カスタムセキュリティ属性 — ラベルを 1 つ付けるだけ（メタデータ付与のみで影響なし）**
+
+1. [Microsoft Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › カスタム セキュリティ属性 › 属性セットの追加**（例 `AgentGovernance`）※定義には **Attribute Definition Administrator** ロールが必要。**Global 管理者でも既定ではこの権限を持たない**（[Learn](https://learn.microsoft.com/entra/fundamentals/custom-security-attributes-add)）
+2. 作った属性セットを開き **属性の追加**（例 名前 `Environment`／型 String）
+3. **Entra ID › エンタープライズ アプリケーション › 対象のエージェント ID（サービス プリンシパル）› 管理 › カスタム セキュリティ属性 › 割り当ての追加** で `Environment = Training` を付与 ※割り当てには **Attribute Assignment Administrator** ロールが必要（[Learn](https://learn.microsoft.com/entra/identity/enterprise-apps/custom-security-attributes-apps)）
+
+> CA の「すべてのエージェント ID」スコープは、[Microsoft 365 管理センター](https://admin.microsoft.com/) 側で自動選択され上書きできない。
+> ⚠️ これらの Entra ポリシーは、エージェントが **Entra 認証で**リソースへアクセスする前提。Entra 認証でないエージェントには割り当てても実行時に強制されないことがある。
+
 
 ### 5-2. M365 管理センターでテンプレートを作る
 
 1. [Microsoft 365 管理センター](https://admin.microsoft.com/) › **Agents › Settings › Templates › Add a New Template**
 2. テンプレート名・説明を入力し、「自分のアクセスで動くエージェントに適用するか」を指定
-3. **Next** → 追加したいカスタムポリシー（5-2 で作った CA / アクセスパッケージ / カスタムセキュリティ属性）を選ぶ
+3. **Next** → 追加したいカスタムポリシー（5-1 で作った CA / アクセスパッケージ / カスタムセキュリティ属性）を選ぶ
 4. 内容を確認して **Save template**
 
 ## 6. 条件付きアクセス — Agent risk = High を Block（Report-only → On）
@@ -114,8 +129,6 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 > **CA の対象化・属性適用には Global Administrator が必要**（AI Administrator では不足）。CA の対象化には Entra ID **P1/P2 ＋ ユーザーごとの Agent 365 ライセンス**も要る。
 > 条件付きアクセスはリスクベースのアクセス制御（[Secure](./part2-4-secure.md) の考え方）でもあるが、テンプレートに束ねる前提ポリシーとして本節（Govern）でまとめて扱う。
 > 出典: [エージェント向け条件付きアクセス](https://learn.microsoft.com/entra/identity/conditional-access/agent-id)
-
-✅ **Govern 完了条件**：Block → 実際に停止（サインイン Failure）、Unblock → 復帰、を確認。レジストリで統制対象を絞り込める。カスタムテンプレートを使う場合は承認ウィザードに自作テンプレートが並び、CA は Report-only で「Would block」まで評価されることを確認。
 
 ---
 

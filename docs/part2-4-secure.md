@@ -28,7 +28,7 @@ Agent 365 の 3 本柱の 3 つ目。Learn の Secure は、**Purview（情報�
 
 [Observe の ラボ](./part2-2-observe.md) で Purview を**観察**（Prompt/Response を読む）に使ったが、Secure では**保護**に使う。エージェントが機密データを扱う／外部へ出す動きを、情報保護ラベル・DLP・リスクセーフガードで抑止する。
 
-- [Purview](https://purview.microsoft.com/) › **DSPM** で、エージェントの AI アクティビティに含まれる機密情報の種類・件数を把握
+- [Microsoft Purview ポータル](https://purview.microsoft.com/) › **DSPM** で、エージェントの AI アクティビティに含まれる機密情報の種類・件数を把握
 - DLP ポリシーで、機密ラベル付きデータのプロンプト送信やツール経由の持ち出しを制限
 
 ## 3. 脅威とリスクを確認する
@@ -36,7 +36,7 @@ Agent 365 の 3 本柱の 3 つ目。Learn の Secure は、**Purview（情報�
 ### 3-1. リスクのあるエージェントを把握する（M365 管理センター レジストリ）
 
 - [Microsoft 365 管理センター](https://admin.microsoft.com/) › **エージェント › 概要** の **Agents at risk（リスクのあるエージェント）** (または、すべてのエージェントのリスク列)で、セキュリティプラットフォームが検出した高リスクなエージェントを確認できる
-- 対象エージェントの**Security** タブから Defender 画面l （もしくは Purview 画面）を開き、リスクの詳細と推奨対応を確認可能
+- 対象エージェントの **Security** タブから [Microsoft Defender ポータル](https://security.microsoft.com/)（もしくは [Microsoft Purview ポータル](https://purview.microsoft.com/)）を開き、リスクの詳細と推奨対応を確認できる
 
 ### 3-2. AI に関するアラートを確認する（Defender ポータル）
 

@@ -45,7 +45,7 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 
 **(1) M365 管理センターで「件数」を確認（メトリクス）**
 
-- [管理センター](https://admin.microsoft.com/) › **Agents › All agents › 対象 › Activity**
+- [Microsoft 365 管理センター](https://admin.microsoft.com/) › **Agents › All agents › 対象 › Activity**
 - ここで見えるのは「実行があった」という**メトリクス（件数）** で、対話の中身は見えない
   
 **(2) Entra サインインログで「誰が利用したか」を確認（ログ）**
@@ -56,12 +56,12 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 
 **(3) Purview Activity explorer で「対話の中身」を確認**
 
-- [Purview](https://purview.microsoft.com/) › **DSPM › 発見 › アクティビティエクスプローラー › AI アクティビティ**
+- [Microsoft Purview ポータル](https://purview.microsoft.com/) › **DSPM › 発見 › アクティビティエクスプローラー › AI アクティビティ**
 - 特定のレコードを選択し、**Prompt / Response** でユーザが送信した実際のプロンプトとレスポンスを確認
 
 **(4) Defender Advanced Hunting で横断照合（実行トレース）**
 
-- [Defender](https://security.microsoft.com/) › **調査と対応 › 追求 › 高度な追求** で、AI Agent 活動について横断的にログ分析する
+- [Microsoft Defender ポータル](https://security.microsoft.com/) › **調査と対応 › 追求 › 高度な追求** で、AI Agent 活動について横断的にログ分析する
 
 - 過去 1 日間の AI エージェント関連の操作ログを抽出して一覧表示
   ```kusto

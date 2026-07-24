@@ -12,7 +12,7 @@
 
 ## 1. 承認して「管理下」に置く
 
-Copilot Studio から「組織に表示」を申請したエージェントは、Microsoft 365 管理センター（Copilot Control System）の **Requests（申請）** に現れる。管理者が承認して初めて、組織のユーザーが使える。
+Copilot Studio から「組織に表示」を申請したエージェントは、[Microsoft 365 管理センター](https://admin.microsoft.com/)（Copilot Control System）の **Requests（申請）** に現れる。管理者が承認して初めて、組織のユーザーが使える。
 
 ### 1-1. 申請されたエージェントを承認する（Requests → Publish）
 
@@ -46,7 +46,7 @@ Copilot Studio から「組織に表示」を申請したエージェントは�
 
 ### 2-1. Teams / Copilot で話しかける
 
-1. Teams（または Microsoft 365 Copilot）で、追加したエージェントを開く
+1. [Teams](https://teams.cloud.microsoft/)（または [Microsoft 365 Copilot](https://m365.cloud.microsoft/)）で、追加したエージェントを開く
 2. エージェントの機能に応じた質問を送る（例：「条件付きアクセスについて教えて」など、ツールを使う質問だと後段の観測が見やすい）
 3. 応答が返れば、受信・送信の両方が通っている
 
