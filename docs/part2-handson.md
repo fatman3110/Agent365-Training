@@ -3,7 +3,7 @@
 > このパートは **AI 管理者**の作業。[Microsoft 365 管理センター](https://admin.microsoft.com/)（Copilot Control System）と [Microsoft Entra 管理センター](https://entra.microsoft.com/) で、[第1部](./part1-setup.md)で作った内容を確認し、**観測を4画面で追い、ガバナンスが「効いていること」をログ／KQL で検証**する。
 > 参考: [a365handson Step 4（登録）](https://github.com/ninjyanaka/a365handson/blob/main/04-register.md) ｜ [Step 7 実習ラボ（観測）](https://github.com/ninjyanaka/a365handson/blob/main/07-observability-lab.md) ｜ [Step 8 実習ラボ（ガバナンス）](https://github.com/ninjyanaka/a365handson/blob/main/08-governance-lab.md)
 >
-> ⚠️ Agent 365 は Preview を多く含みます（Agent risk 条件・Single Agent Map・ラベル配置など）。UI 名や提供条件は変わり得るので、詰まったら各節のリンク先で最新を確認してください。
+> ⚠️ Agent 365 は Preview を多く含む（Agent risk 条件・Single Agent Map・ラベル配置など）。UI 名や提供条件は変わり得るので、詰まったら各節のリンク先で最新を確認すること。
 
 ## 1. 管理者が承認する（Requests → Publish）
 
