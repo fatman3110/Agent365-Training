@@ -1,6 +1,6 @@
 # Agent 365 ハンズオン 
 
-**「AI エージェント」を自分で作り、それを Agent 365 などの管理画面から安全に管理できるようにするまで**を体験する、初学者向けの教材です。
+**「AI エージェント」を自分で作り、Agent 365 などの管理画面から管理できるようにするまで**を体験する、初学者向けの教材です。
 
 この教材でやることは、大きく次の 5 ステップです。
 
@@ -12,7 +12,7 @@
 
 > ⚠️ **教育目的の教材である。** 自前ホスト LLM・BYO MCP（クラウド公開）を含むため、本番環境では使用しないこと。使い終わったら後片づけ（`a365 cleanup` / リソース削除）を行うこと。
 
-> ⚠️ **Microsoft Agent 365 は Preview を多く含む。** UI・コマンド・仕様・提供条件は変わり得る。実際のサービス活用にあたっては Microsoft Learn で最新情報を確認すること。
+> ⚠️ **2026年7月現在、Microsoft Agent 365 は Preview を多く含む。** UI・コマンド・仕様・提供条件は変わり得る。実際のサービス活用にあたっては Microsoft Learn で最新情報を確認すること。
 
 ---
 
@@ -59,7 +59,7 @@ flowchart LR
 
 作業ごとに必要なロールを、**開発者（第1部）** と **AI 管理者（第2部）** の担当で分けて示す。
 
-| 作業 | 想定される作業担当者 | 必要なロール | 補足 |
+| 作業 | 担当 | 必要なロール | 補足 |
 |------|------|------------|------|
 | Blueprint / Agent ID 作成（`a365 setup all`） | 開発者 | **Application Administrator**（推奨・最小）/ Cloud Application Administrator / Global Administrator | テナント初回のみ管理者が `a365 setup requirements` を実行すれば、以降の開発者は引き継げる |
 | 自作 MCP 登録（`register-external-mcp-server`） | 開発者 |  **Application Administrator** 相当 |  |
@@ -70,13 +70,14 @@ flowchart LR
 | Block/ 削除 | AI 管理者 | **AI Administrator** | 一時停止（Block）と完全削除の違いに留意 |
 | 条件付きアクセス（Agent ID 対象） | AI 管理者 | **Conditional Access Administrator** / Security Administrator | |
 
-### 構成ファイル（自前ホスト側）
+### 構成ファイル
 
-ファイルは **① あなたが用意するコード**、**② `a365 setup all` / Skills が自動生成**、**③ シークレット（コミット禁止）** の 3 種に分かれる。本リポジトリの [`src/`](./src) に ① のスターター（`echo`/`now` の MCP、LLM/OBO/観測のスケルトン）を同梱してある。②・③ は各自のテナント・マシンで生成されるためリポジトリには含めない。
+必要なファイルは **① 自作コード**、**② `a365 setup all` / Skills が自動生成するもの**、**③ シークレット** の 3 種に分かれる。
+本リポジトリの [`src/`](./src) は ① に相当する。②・③ は各自の環境で生成されるためリポジトリには含まれない点に注意。
 
 ```text
 <PROJECT_DIR>/
-├── src/                             # ① あなたが用意するコード（本リポジトリに同梱）
+├── src/                             # ① 本リポジトリに同梱
 │   ├── app.py                       #   AgentApplication 本体（on_message で LLM 呼び出し）
 │   ├── llm.py                       #   OSS LLM（Ollama, OpenAI 互換）クライアント
 │   ├── obo.py                       #   OBO トークン交換（jwt-bearer）
@@ -90,263 +91,31 @@ flowchart LR
 ├── .env                             # ③ secret：a365 setup all がスタンプ（← .gitignore）
 └── a365.generated.config.json       # ③ secret：setup 生成（blueprint ID/同意状況）← .gitignore
 ```
-
-> ⚠️ **完全な "Out of the Box" は Agent 365 の仕様上不可**：② のホスティング層・manifest と ③ の ID/`.env` は **`a365 setup all` と Skills が各テナント・各マシンで生成**する（シークレットを含むためコミット不可）。本リポジトリは **① のコードだけをすぐ使える形**で同梱し、②③ は §2〜§3 の手順で生成する。
-
 ### 用語ミニ辞典
 
 | 用語 | 意味 |
 |------|------|
 | **Blueprint** | エージェントの「テンプレート」。ここから Agent ID を発行する。これ自体は実体ではない |
 | **Entra Agent ID** | エージェントに付与される Entra 上の ID。**instance 化して初めて実値になる** |
-| **instance 化** | Blueprint（テンプレート）から、実際に使えるエージェントの実体を 1 つ払い出すこと。これで初めて Entra Agent ID が「—」から実値の GUID になり、利用可能になる |
+| **instance 化** | Blueprint（テンプレート）から、実際に使えるエージェントの実体を 1 つ払い出すこと。これで初めて Entra Agent ID が実値の GUID になり、利用可能になる |
 | **BYO MCP** | 自作の外部 MCP サーバーを Agent 365 に登録して使う仕組み |
 | **Kill Switch** | 管理センターの Block。構成を保持したまま即時停止（Unblock で復帰） |
 
 ---
----
 
-# 第1部：環境構築
+# 手順（第1部・第2部）
 
-> このパートは **開発者**（VS Code / ターミナル）の作業。完了すると、エージェントが Agent 365 に登録され、**Azure（クラウド）**で動く状態になる。
+詳細な手順は `docs/` に分割しています。まず下の概要をつかんでから、各パートのドキュメントに進んでください。
 
-## 1. ツールを導入する
+## 第1部：環境構築（開発者）　→ [docs/part1-setup.md](./docs/part1-setup.md)
 
-```powershell
-node --version      # 18+
-az version
-a365 --version      # 無ければ: dotnet tool install -g Microsoft.Agents.A365.DevTools.Cli
-func --version      # Azure Functions Core Tools（BYO MCP をクラウドにデプロイするのに使う）
-```
+ツール導入 → Skills 導入 → **Blueprint / Agent ID 作成** → **BYO MCP（Azure Functions）** → **アプリ実装（LLM / OBO / 観測）** → **Azure デプロイ & 登録**。
+完了すると、エージェントが Agent 365 に登録され、Azure（クラウド）で動く。実装コードは [src/](./src) 参照。
 
-- 4 ツールすべてがバージョンを返す
-- `az login --tenant <TENANT_DOMAIN>` 済み
+## 第2部：Agent 365 ハンズオン（AI 管理者）　→ [docs/part2-handson.md](./docs/part2-handson.md)
 
-## 2. Agent 365 Skills を導入する
-
-Copilot / Claude Code に自然言語で指示すると、ホスティング層・観測配線・MCP 追加を自動生成してくれる。
-
-```powershell
-# GitHub Copilot CLI（gh skill 対応版）
-gh skill add microsoft/agent365-skills
-
-# gh skill 非対応版 / VS Code agent mode の場合
-git clone https://github.com/microsoft/agent365-skills.git
-node <clone>/scripts/install.js   # VS Code の chat.agentSkillsLocations に登録される
-```
-
-> 導入後、VS Code は **Reload Window** で反映。7 スキル（`a365-setup` / `make-a365-agent` / `instrument-observability` / `add-workiq-tools` / `test-local` / `make-ai-teammate` / `a365-code-validator`）が使える。
-
-## 3. Blueprint と Agent ID を作る（非 AI Teammate / OBO）
-
-> **なぜアプリ実装（§5）より先か**：この `a365 setup all` は **エージェントの ID（Blueprint / Agent ID）に加え、アプリの骨格（ホスティング層）と `.env`（接続情報）を生成**する。§5 はこの骨格に応答ロジックを実装する段階なので、**土台となる本節を先に実行する必要がある**（アプリ実装後には回せない）。
-
-Copilot / Claude Code に次のトリガーフレーズを投げる。
-
-```text
-a365-setup を実行して。UPN を持たない Agent を OBO（委任）認可で作りたい。
-Make this a non-AI-Teammate Agent using OBO (delegated / on-behalf-of).
-```
-
-内部で `a365 setup all`（**`--aiteammate` は付けない**）が実行され、以下が冪等に走る。
-
-```text
-要件チェック ─▶ Blueprint 作成 ─▶ 資格情報 ─▶ 委任権限の継承 ─▶ Agent Identity(UPN無し) ─▶ 登録 ─▶ .env スタンプ
-```
-
-途中で **2 回の承認**がある（04-register.md と同じ）：
-1. **アプリ権限（S2S）の付与** … `Assign this application permission now? [y/N]: y`
-2. **委任権限の管理者同意** … ブラウザでサインイン → ダイアログで **Allow**
-
-確認：
-
-```powershell
-a365 query-entra                                   # Entra 登録状態
-Get-Content a365.generated.config.json | ConvertFrom-Json
-```
-
-| 確認項目 | 期待値 |
-|---------|--------|
-| `a365.config.json` の `aiTeammate` | `false` |
-| `completed` | `True`（setup 完走の証拠） |
-| `agentBlueprintId` | `.env` の clientId/agentId と整合 |
-| `messagingEndpoint` | 後で App Service の URL を指す |
-| `resourceConsents` | Graph / Tools / Messaging / Observability が `consentGranted=True` |
-
-> ⚠️ `.env` と `a365.generated.config.json` は**必ず `.gitignore`**。シークレット（保護済みでも）を含む。
-
-## 4. BYO MCP サーバーを建てる（＝通信先・実行内容。ガバナンスの中心）
-
-> **なぜアプリ実装より先か**：Agent 365 の管理では「エージェントが**どこと通信し・何を実行するか**」の把握が必須で、その実体が **MCP（ツール）**。先に MCP を用意しておくと、次のアプリ実装や第2部の観測・ガバナンス（Registry の Data & tools / Single Agent Map / 承認）が「何を監視・制御しているか」を具体物で追える。
-
-学習用に、Azure Functions（クラウド）に MCP サーバーを**デプロイ（作成）**する。コードは [付録 A.4](#a4-byo-mcp-サーバーfunction_apppy)。
-
-```powershell
-# Azure Functions（クラウド）へデプロイ
-func azure functionapp publish <FUNCTION_APP_NAME>
-# → 公開 URL: https://<FUNCTION_APP_NAME>.azurewebsites.net/runtime/webhooks/mcp
-```
-
-> この節では**道具を作る（デプロイする）だけ**。**Agent 365 への登録は §6、承認（管理下に置く）は §8** でエージェントとまとめて行う（手順が混ざらないよう分離）。
-
-## 5. アプリを実装する（LLM / OBO / 観測）
-
-§4 で用意した MCP ツールを、エージェントが呼び出せるように配線する。Skills が生成した骨格に、①LLM 呼び出し ②OBO トークン交換 ③観測配線 を差し込む。**コードの実体は [付録 A. 実装リファレンス](#付録-a-実装リファレンスコード例)** にまとめた。要点のみ：
-
-- **LLM** は遅延初期化（起動時にブロックすると warmup プローブ失敗 → 再起動ループ）
-- **OBO** は `use_s2s_endpoint=False`。受け取ったユーザートークンを `jwt-bearer` で観測スコープへ交換
-- **観測** は `InvokeAgentScope`（呼び出し全体）と `ExecuteToolScope`（ツール）を計装 → 後段の Single Agent Map の描画元になる
-
-- `.env`：`ENABLE_A365_OBSERVABILITY=true` / `ENABLE_A365_OBSERVABILITY_EXPORTER=true`
-- `A365_EXPORTER_LOG_LEVEL=DEBUG` で **scp 付きトークン**の 200 送信を確認
-
-## 6. Azure にデプロイして「登録」する
-
-エージェント本体をクラウドにデプロイし、**エージェントと道具（MCP）をまとめて Agent 365 に登録**する（承認＝管理下配置は第2部 §8）。
-
-```powershell
-az group create -n <RESOURCE_GROUP> -l <REGION>
-# App Service(Linux container)+ACR にデプロイ（Ollama を sidecar）
-a365 setup all                  # 実 URL を messaging endpoint に再スタンプ（冪等）
-a365 publish                    # ① エージェントを登録（manifest.zip 生成）
-
-# ② 道具（MCP）を登録
-a365 develop-mcp register-external-mcp-server `
-  --server-name "<MCP_NAME>" `
-  --server-url  "https://<FUNCTION_APP_NAME>.azurewebsites.net/runtime/webhooks/mcp" `
-  --auth-type   "NoAuth" `
-  --tools       "echo,now"
-# → Entra アプリ2つ自動作成: <MCP_NAME>-A365Proxy / <MCP_NAME>-PublicClients
-```
-
-登録すると、**エージェントは Agents › Requests、道具（MCP）は Tools › Requests** に `Pending` として現れる。**ここから先が第2部**（管理者による承認＝管理下配置）。
-
----
----
-
-# 第2部：Agent 365 ハンズオン（管理センター / Entra で確認・統制する）
-
-> このパートは **AI 管理者**の作業。[Microsoft 365 管理センター](https://admin.microsoft.com/)（Copilot Control System）と [Microsoft Entra 管理センター](https://entra.microsoft.com/) で、第1部で作った内容を確認し、ガバナンスを効かせる。
-> 参考: [a365handson Step 4（登録・Entra Agent ID・Block）](https://github.com/ninjyanaka/a365handson/blob/main/04-register.md)
-
-## 8. 管理者が承認する（Requests → Publish）
-
-エージェントは承認されて初めて利用可能になる。
-
-1. [Microsoft 365 管理センター](https://admin.microsoft.com/) にサインイン
-2. **Agents › All agents › Requests** を開く（`Pending review` / `Pending activate` を確認）
-3. 対象エージェントを開く（この時点では **Entra agent ID は「—」**）→ **Publish to store**（承認）
-4. 「**Publish new agent**」ウィザードを進める：
-   1. **Select users** — インストール可能なユーザー（All users / 特定）を選択
-   2. **Apply template** — ポリシーテンプレート。条件付きアクセス（例「Block - High Risky Agent」）等を適用（→ §12）
-   3. **Review permissions** — エージェントが要求する権限を確認し、必要なら管理者同意
-   4. **Review and finish → Publish**
-
-<!-- ![Requests タブ](./assets/08-requests.png) -->
-
-> **BYO MCP の承認も同様**：**Agents › Tools › Requests (preview)** で `<MCP_NAME>` を開き **Approve** →（`-A365Proxy` / `-BYO` / ランタイムの）管理者同意 → Status が **Available**（承認まで利用不可）。
-
-✅ 承認が完了するとエージェントは `Pending review` から外れ、利用可能になる。
-
-## 9. Entra Agent ID を確認する
-
-承認済みの blueprint を「使える実体」にすると、**Entra Agent ID が「—」から実値の GUID に変わる**。
-
-1. 管理センター › **Agents** で対象 blueprint を開く → **`+ Add instance`**（または対象の登録を有効化）
-2. 作成後、blueprint / instance の **Overview の Entra agent ID** が実値化することを確認
-3. [Entra 管理センター](https://entra.microsoft.com/) › **Agent identities**（Enterprise apps）で同じ Agent ID が見えることを確認
-
-<!-- ![Entra Agent ID 実値化](./assets/09-agentid.png) -->
-
-> **本教材は非 AI Teammate** のため、**agent user（UPN）や Teams の `@mention` は作られない**（それは AI Teammate 専用）。本エージェントの呼び出しは Copilot Studio カスタムエンジン / REST（App Service の `/chat`）/ OBO クライアント経由で行う。
-> この Entra agent ID の値が、そのまま Observability の `agentId` になる（Single Agent Map の突き合わせキー）。
-
-## 10. Agent Registry をタブ別に確認する
-
-管理センター › **Agents › All agents › Registry** で対象を開き、各タブで「登録内容」を確認する。
-
-| タブ | 見るもの |
-|------|---------|
-| **Details** | Publisher type / Owner / Entra agent ID / Channel |
-| **Users** | 利用ユーザー |
-| **Data & tools** | Capabilities / Knowledge / **Tools（BYO MCP の echo・now がここに出る）** |
-| **Security** | Microsoft Purview（活動監視・機密データ保護）＋ Microsoft Entra（ID 保護・Agent ID）。右上に **Block** |
-| **Permissions** | 付与権限（Granted / Delegated） |
-| **Activity** | Active users / Sessions / Exceptions と時系列グラフ |
-
-<!-- ![Registry タブ](./assets/10-registry.png) -->
-
-## 11. Single Agent Map で可視化する（Preview）
-
-観測データが、エージェント ↔ ユーザー ↔ ツールの関係図として描かれる。**Map を点灯させるには、クラウド上のエージェントを実際に呼び出して活動を作る**必要がある。
-
-### 11.0 Map 点灯用のアクティビティを作る（クラウドのエージェントを呼ぶ）
-
-承認済み（§8）のエージェントを、クラウド経由で実際に使って観測データを溜める：
-
-- `echo` / `now` を**複数回**呼ぶ → Map の **Tool ノード**が出る（呼ぶほど線が太い）
-- **複数ユーザー**で叩く（OBO なので別ユーザーでサインイン）→ **User ノード**が増える
-- （デモ映え）ツールを**一定確率で失敗**させ exception rate を **>1%** に → Map で**赤いハイライト線**
-- 呼び出し方法：Copilot Studio カスタムエンジン / REST（App Service の `/chat`）/ OBO クライアント
-
-**要件**：E7（Agent 365）＋ Global Administrator か AI Administrator。Usage/観測はテナント **< 4,000 ユーザー**で有効。
-
-1. 管理センター › **Agents › All Agents › Map**
-2. **観測データを持つ**自分のエージェントを選択 → サマリ（users / sessions / exceptions）を確認
-3. **All connections** を選択 → **Single Agent Map** が開く
-
-| ノード | 内容 |
-|--------|------|
-| Agent | 詳細・サマリ活動 |
-| User（top 50） | クリックでユーザー詳細 |
-| Tool（top 50） | tool calls・exception 数・last activity（**echo / now** が出る） |
-
-- **線の太さ** = interaction volume、**exception >1% の線は赤**
-- 空表示なら §5（観測配線）と §11.0（アクティビティ生成）を見直す
-
-<!-- ![Single Agent Map](./assets/11-single-agent-map.png) -->
-
-> Single Agent Map は「1 エージェント ↔ ユーザー ↔ ツール」に限定で、**agent-to-agent の線は描かれない**。マルチエージェント化は**テナント全体の Agent Map（クラスタ表示）**を豊かにする用途。
-
-## 12. ガバナンス — Block（Kill Switch）/ 条件付きアクセス / 削除
-
-エージェントを止めるには「**無効化（Block）**」→「**削除（Delete）**」の 2 レベルがある。まず無効化、確証が取れてから削除、が安全な順序。
-
-### 12.1 Block（Kill Switch）— 構成保持のまま即時停止
-
-| 粒度 | 対象 | 効果 |
-|------|------|------|
-| **Blueprint 単位** | エージェント全体 | 組織全体で利用不可。全ユーザー・全 instance に波及 |
-| **Instance 単位** | 個々の instance | その instance だけ停止。他は影響なし |
-
-1. 管理センター › **Agents › All agents** で対象を開く（`Available`）→ 右上 **Block**
-2. **Block agent** にチェック、任意で Reason を記入 → **Save**
-3. ステータスが **Blocked** に。「removed from all users in your organization」。ボタンは **Unblock** に変化
-4. 解除は **Unblock** → チェック → Save で `Available` に復帰
-
-<!-- ![Block / Kill Switch](./assets/12-block.png) -->
-
-### 12.2 条件付きアクセス（テナント全体）
-
-さらに広く止めるなら Entra の条件付きアクセスで「**すべてのエージェント ID**」を対象にトークン発行をブロックできる（既存・新規の Agent ID をまとめて認証不可）。**本番適用前にレポート専用モードで影響を確認**する。
-
-- 出典: [エージェント向け条件付きアクセス](https://learn.microsoft.com/entra/identity/conditional-access/agent-id)
-
-### 12.3 削除（リタイア）と後片付け
-
-| | Block（無効化） | Permanent delete（削除） |
-|--|----------------|--------------------------|
-| 何が起きる | 認証・トークン発行を止める。オブジェクトは残る | オブジェクトを消す（子も連鎖削除） |
-| 構成・データ | 保持（Unblock で復帰） | 失われる（30 日は論理削除で復元可） |
-| クォータ | 消費したまま | 完全削除まで消費（250 上限に注意） |
-
-- 個別: instance 詳細 › **Permanent delete**
-- 一括（自前ホスト）: 作業ディレクトリで `a365 cleanup`（**破壊的**。config の blueprint 配下を一括削除）
-- orphan アプリ確認: `az ad app list --display-name "<blueprint名>" -o table` → `az ad app delete --id <appId>`
-
-> ⚠️ **後片づけ必須**：学習が終わったら Block ではなく `a365 cleanup` で消し、Azure リソース（App Service / Functions）も削除する。連鎖クリーンアップは非同期で数時間〜数日かかることがある。
-
-✅ **完了条件**：管理センターで Block → 実際に停止、Unblock → 復帰、を確認できる。Single Agent Map に自分の agent・Tool（echo/now）・User が描画される。
+**管理者承認（Requests）** → **Entra Agent ID 確認** → **Agent Registry 確認** → **Single Agent Map で可視化** → **ガバナンス（Block=Kill Switch / 条件付きアクセス / 削除）**。
+Microsoft 365 管理センターと Entra 管理センターで、登録内容とガバナンスを実機で確認する。
 
 ---
 ---
