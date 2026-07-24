@@ -14,7 +14,6 @@ Agent 365 の **② ホスティング層・manifest（Skills 生成）** と **
 | `observability_setup.py` | 要 SDK | `microsoft_agents_a365` が必要（Skills / setup で導入） |
 | `app.py` | 要スキャフォールド | `start_server.py`（Skills 生成）に依存。`a365 setup all` 後に差し込む |
 | `requirements.txt` | 参考 | 実パッケージ名は生成物に合わせる |
-| `.env.example` | テンプレ | 実値は `a365 setup all` がスタンプ（`.env` はコミット禁止） |
 
 ## 使い方（概略・README 本編 §1〜§6 参照）
 

@@ -64,18 +64,18 @@ flowchart LR
 | 作業 | 必要なロール | 補足 |
 |------|------------|------|
 | Blueprint / Agent ID 作成（`a365 setup all`） | **Application Administrator**（推奨・最小）/ Cloud Application Administrator / Global Administrator | テナント初回のみ管理者が `a365 setup requirements` を実行すれば、以降の開発者は引き継げる |
-| 自作 MCP 登録（`register-external-mcp-server`） | **Application Administrator** 相当 | プロキシ用 Entra アプリを自動作成 |
-| Azure へのデプロイ（App Service / ACR / Functions） | Azure RBAC: **Contributor**（リソース作成）/ **User Access Administrator**（RBAC 付与） | 自前ホストのため必須 |
+| 自作 MCP 登録（`register-external-mcp-server`） | **Application Administrator** 相当 |  |
+| Azure へのデプロイ（App Service / ACR / Functions） | Azure RBAC: **Contributor**（リソース作成）/ **User Access Administrator**（RBAC 付与） |  |
 
 **AI 管理者（第2部）**
 
 | 作業 | 必要なロール | 補足 |
 |------|------------|------|
-| エージェント登録の承認（Agents › Requests） | **AI Administrator** または **Global Administrator** | Requests タブで Publish |
+| エージェント登録の承認（Agents › Requests） | **AI Administrator** または **Global Administrator** |  |
 | 自作 MCP 登録の承認（Tools › Requests） | **AI Administrator** または **Global Administrator** | 同意は組織全体に付与 |
-| Agent Registry / Single Agent Map の閲覧 | **AI Administrator** または **Global Administrator** ＋ **E7（Agent 365）** | 観測フィルタはテナント < 4,000 ユーザーで有効 |
+| Agent Registry / Single Agent Map の閲覧 | **AI Administrator** または **Global Administrator** |  |
 | Block / 削除 | **AI Administrator** | 一時停止（Block）と完全削除の違いに留意 |
-| 条件付きアクセス（Agent ID 対象） | **Conditional Access Administrator** / Security Administrator | 本番適用前にレポート専用で確認 |
+| 条件付きアクセス（Agent ID 対象） | **Conditional Access Administrator** / Security Administrator | |
 
 ### 構成ファイル
 
@@ -84,19 +84,18 @@ flowchart LR
 
 ```text
 <PROJECT_DIR>/
-├── src/                             # ① 本リポジトリに同梱
-│   ├── app.py                       #   AO Agent 本体（on_message で LLM 呼び出し）
-│   ├── llm.py                       #   OSS LLM（Ollama, OpenAI 互換）クライアント
-│   ├── obo.py                       #   OBO トークン交換（jwt-bearer）
-│   ├── observability_setup.py       #   Agent 365 Observability 配線（use_s2s_endpoint=False）
-│   ├── function_app.py              #   BYO MCP サーバー（echo / now）
-│   ├── requirements.txt             #   依存パッケージ
-│   └── .env.example                 #   .env のテンプレ（実値は setup all がスタンプ）
-├── start_server.py                  # ② Skills 生成：aiohttp ホスティング層
-├── appPackage/manifest.json         # ② Skills 生成：公開用 manifest
-├── a365.config.json                 # ② setup の入力 config（aiTeammate:false 等）
-├── .env                             # ③ secret：a365 setup all がスタンプ（← .gitignore）
-└── a365.generated.config.json       # ③ secret：setup 生成（blueprint ID/同意状況）← .gitignore
+├── src/                             # ① 本リポジトリに同梱（あなたが書くコード）
+│   ├── app.py                       #   エージェント本体：ユーザーの発言を受け取り、AI に渡して返答する
+│   ├── llm.py                       #   AI（自前ホストの Qwen）に質問して答えをもらう部分
+│   ├── obo.py                       #   「ログイン中ユーザーの代理」で動くためのアクセス許可（トークン）を取る
+│   ├── observability_setup.py       #   「誰が・どの道具を使ったか」の記録を Agent 365 に送る設定
+│   ├── function_app.py              #   自作の道具（MCP サーバー：echo / now）
+│   └── requirements.txt             #   必要な Python ライブラリの一覧
+├── start_server.py                  # ② Skills が自動生成：エージェントを起動して待ち受けるサーバー部分
+├── appPackage/manifest.json         # ② Skills が自動生成：エージェントを登録するための情報（名前など）
+├── a365.config.json                 # ② `a365 setup all` に渡す設定ファイル
+├── .env                             # ③ 秘密情報：接続キー等。`a365 setup all` が自動で書き込む（共有・コミット禁止）
+└── a365.generated.config.json       # ③ 秘密情報：`a365 setup all` が作る ID・同意状況（共有・コミット禁止）
 ```
 ### 用語ミニ辞典
 
