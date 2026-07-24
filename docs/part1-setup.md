@@ -23,9 +23,9 @@ $MCP   = "mymcp"                        # MCP サーバーの表示名
 
 ```powershell
 # バージョンが返れば OK（無ければ各コメントのコマンドで導入）
-node --version   #  無ければ:  winget install OpenJS.NodeJS.LTS
+node --version   # 無ければ: winget install OpenJS.NodeJS.LTS
 az   version     # 無ければ: winget install Microsoft.AzureCLI
-func --version   # A無ければ: npm i -g azure-functions-core-tools@4
+func --version   # 無ければ:npm i -g azure-functions-core-tools@4
 a365 --version   # 無ければ: dotnet tool install -g Microsoft.Agents.A365.DevTools.Cli
 
 # Azure にサインイン
@@ -63,8 +63,10 @@ a365-setup を実行して。UPN を持たない Agent を OBO（委任）認可
 Skill が内部で `a365 setup all`を実行し、以下を**自動で**行う。
 
 ```text
-要件チェック ─▶ Blueprint 作成 ─▶ 資格情報 ─▶ 委任権限の継承 ─▶ Agent Identity(UPN無し) ─▶ 登録 ─▶ .env スタンプ
+要件チェック ─▶ Blueprint 作成 ─▶ 資格情報 ─▶ 委任権限の継承 ─▶ Agent Identity 作成(UPN無し) ─▶ 登録 ─▶ .env へ接続情報を書き込み
 ```
+
+> 末尾の「.env へ接続情報を書き込み」は、生成した **Blueprint ID / Agent ID / クライアント資格情報**などを、ローカルの `.env` ファイルに `a365 setup all` が自動で追記すること（英語ドキュメントの "stamp .env" にあたる）。この `.env` はシークレットを含むので**コミット禁止**。
 
 途中で **2 回**、画面の指示に従って承認する：
 1. **アプリ権限の付与** … `Assign this application permission now? [y/N]:` → `y`
