@@ -10,7 +10,7 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 
 - [第2部：Observe（観察する）｜AI 管理者](#第2部observe観察するai-管理者)
   - [1. Agent Registry をタブ別に確認する](#1-agent-registry-をタブ別に確認する)
-  - [2. Single Agent Map で可視化する（Preview）](#2-single-agent-map-で可視化するpreview)
+  - [2. Single Agent Map で可視化する](#2-single-agent-map-で可視化する)
   - [3. 観測を 4 画面で追う（同じ Run を突き合わせる｜実践ラボ）](#3-観測を-4-画面で追う同じ-run-を突き合わせる実践ラボ)
 
 ## 1. Agent Registry をタブ別に確認する
@@ -35,34 +35,29 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 3. **All connections** を選択 → **Single Agent Map** が開く
 
 > **User 名がハッシュ文字列で匿名化される場合**
-> 組織設定「**レポートで、ユーザー、グループ、サイトの名前を非表示にする（Display concealed user, group, and site names in all reports）**」が有効だと、ユーザー名が MD5 ハッシュで匿名化される（**2021/9/1 以降は既定でオン**）。Single Agent Map もこの設定に従う。実名に戻すには、Global Administrator が [Microsoft 365 管理センター](https://admin.microsoft.com/) › **設定 › 組織設定 › サービス › レポート** で当該チェックを外して保存する（反映まで数分。M365／Teams の全レポートに一括で効くので他レポートも実名化される点に注意）。出典: [agent-map – Single Agent Map](https://learn.microsoft.com/microsoft-365/admin/manage/agent-map?view=o365-worldwide#single-agent-map-preview)、[使用状況レポートの実名表示](https://learn.microsoft.com/microsoft-365/admin/activity-reports/activity-reports?view=o365-worldwide#show-user,-group,-or-site-details-in-usage-reports)
+> 組織設定「**レポートで、ユーザー、グループ、サイトの名前を非表示にする**」が有効だと、ユーザー名が MD5 ハッシュで匿名化される。実名に戻すには、Global Administrator が [Microsoft 365 管理センター](https://admin.microsoft.com/) › **設定 › 組織設定 › サービス › レポート** で当該チェックを外して保存
 
 
-## 3. 観測を 4 画面で追う（同じ Run を突き合わせる｜実践ラボ）
+## 3. アクティビティを複数のツールから確認
 
-エージェントを動かして作った **1回の実行（Run）** が、Microsoft の複数ポータルに**同じもの**として記録されていることを、自分の手で追いかける。これが「見える化（Observe）」の実技。
-参考: [a365handson Step 7 実習ラボ](https://github.com/ninjyanaka/a365handson/blob/main/07-observability-lab.md)
+エージェントの動作記録は、複数ポータルにそれぞれの側面で記録される。これによって、 IT 管理者やセキュリティ管理者等、役割の異なる担当者が自分の慣れたツールで運用を行うことを支援する。
 
-**追う順番**：(1) M365 管理センター（件数＝メトリクス）→ (2) Entra サインインログ（認証イベント＝ログ）→ (3) Purview（対話の中身）→ (4) Defender（KQL で横断照合＝実行トレース）
-**必要ロール（閲覧）**：AI Reader（M365）／Reports Reader（Entra）／Content Viewer 相当（Purview）／Security Reader（Defender）
+**本トレーニングでの確認順**：(1) M365 管理センター（件数＝メトリクス）→ (2) Entra サインインログ（認証イベント＝ログ）→ (3) Purview（対話の中身）→ (4) Defender（KQL で横断照合＝実行トレース）
 
-**(1) 発話して Run を1件つくる**（`echo`/`now` を1回呼び、**時刻と質問内容を控える**）
-
-**(2) M365 管理センターで「件数」を確認（メトリクス）**
+**(1) M365 管理センターで「件数」を確認（メトリクス）**
 
 - [管理センター](https://admin.microsoft.com/) › **Agents › All agents › 対象 › Activity**
-- 控えた時刻に近い行が**増えている**ことを確認（反映に数分かかることがある）
-- ここで見えるのは「実行があった」という**メトリクス（件数）**。対話の中身は見えない（→ (4) Purview）
+- ここで見えるのは「実行があった」という**メトリクス（件数）**。対話の中身は見えない
+  
+**(2) Entra サインインログで「認証イベント」を確認（ログ）**
 
-**(3) Entra サインインログで「認証イベント」を確認（ログ）**
-
-- [Entra 管理センター](https://entra.microsoft.com/) › **Agents › Agent identities › 対象 › Activity › Sign-in logs**
-- フィルタ **Is Agent = Yes**。控えた時刻付近のイベントを開き **Correlation ID** を控える
+- [Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › Agents › Agent identities › 対象 › Activity › Sign-in logs**
 - 「何を話したか」ではなく「**いつ・どの ID として認証されたか**」のログ
+- エージェントが**ユーザーに代わって（委任）**動いた実行では、**どのユーザーのために動いたか**（対象ユーザー）も記録される。つまり「誰が使ったか」まで追える。一方、エージェントが**自身の ID で（自律）**動いた実行にはユーザーが紐づかず、エージェント ID 自身の認証として記録される（出典: [What are agent identities – Delegated access](https://learn.microsoft.com/entra/agent-id/what-are-agent-identities#what-agent-identities-enable)、[Agent 365 Identity – 認証フロー](https://learn.microsoft.com/microsoft-agent-365/developer/identity#authentication-flows)）
 
-**(4) Purview Activity explorer で「対話の中身」を確認**
+**(3) Purview Activity explorer で「対話の中身」を確認**
 
-- [Purview](https://purview.microsoft.com/) › **DSPM for AI（AI observability）› Activity explorer › AI activities**
+- [Purview](https://purview.microsoft.com/) › **DSPM › 発見 › アクティビティエクスプローラー › AI あくてぃびてｌ**
 - Timestamp を控えた時刻付近に絞り、`Invoke Agent` / `Copilot Interaction` の行を開く
 - **Prompt / Response** が (1) の内容と一致することを確認（出ないなら Content Viewer 相当のロール不足を疑う）
 
