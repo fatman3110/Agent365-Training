@@ -80,7 +80,7 @@ func azure functionapp publish <FUNCTION_APP_NAME>
 # → 公開 URL: https://<FUNCTION_APP_NAME>.azurewebsites.net/runtime/webhooks/mcp
 ```
 
-> この節では**道具を作る（デプロイする）だけ**。**Agent 365 への登録は §6、承認（管理下に置く）は [第2部 §8](./part2-handson.md)** でエージェントとまとめて行う（手順が混ざらないよう分離）。
+> この節では**道具を作る（デプロイする）だけ**。**Agent 365 への登録は §6、承認（管理下に置く）は [第2部 §1](./part2-handson.md)** でエージェントとまとめて行う（手順が混ざらないよう分離）。
 
 ## 5. アプリを実装する（LLM / OBO / 観測）
 
@@ -95,7 +95,7 @@ func azure functionapp publish <FUNCTION_APP_NAME>
 
 ## 6. Azure にデプロイして「登録」する
 
-エージェント本体をクラウドにデプロイし、**エージェントと道具（MCP）をまとめて Agent 365 に登録**する（承認＝管理下配置は [第2部 §8](./part2-handson.md)）。
+エージェント本体をクラウドにデプロイし、**エージェントと道具（MCP）をまとめて Agent 365 に登録**する（承認＝管理下配置は [第2部 §1](./part2-handson.md)）。
 
 ```powershell
 az group create -n <RESOURCE_GROUP> -l <REGION>

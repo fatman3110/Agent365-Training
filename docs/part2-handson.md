@@ -3,7 +3,7 @@
 > このパートは **AI 管理者**の作業。[Microsoft 365 管理センター](https://admin.microsoft.com/)（Copilot Control System）と [Microsoft Entra 管理センター](https://entra.microsoft.com/) で、[第1部](./part1-setup.md)で作った内容を確認し、ガバナンスを効かせる。
 > 参考: [a365handson Step 4（登録・Entra Agent ID・Block）](https://github.com/ninjyanaka/a365handson/blob/main/04-register.md)
 
-## 8. 管理者が承認する（Requests → Publish）
+## 1. 管理者が承認する（Requests → Publish）
 
 エージェントは承認されて初めて利用可能になる。
 
@@ -12,7 +12,7 @@
 3. 対象エージェントを開く（この時点では **Entra agent ID は「—」**）→ **Publish to store**（承認）
 4. 「**Publish new agent**」ウィザードを進める：
    1. **Select users** — インストール可能なユーザー（All users / 特定）を選択
-   2. **Apply template** — ポリシーテンプレート。条件付きアクセス（例「Block - High Risky Agent」）等を適用（→ §12）
+   2. **Apply template** — ポリシーテンプレート。条件付きアクセス（例「Block - High Risky Agent」）等を適用（→ §5）
    3. **Review permissions** — エージェントが要求する権限を確認し、必要なら管理者同意
    4. **Review and finish → Publish**
 
@@ -22,7 +22,7 @@
 
 ✅ 承認が完了するとエージェントは `Pending review` から外れ、利用可能になる。
 
-## 9. Entra Agent ID を確認する
+## 2. Entra Agent ID を確認する
 
 承認済みの blueprint を「使える実体」にすると（instance 化）、**Entra Agent ID が「—」から実値の GUID に変わる**。
 
@@ -35,7 +35,7 @@
 > **本教材は非 AI Teammate** のため、**agent user（UPN）や Teams の `@mention` は作られない**（それは AI Teammate 専用）。本エージェントの呼び出しは Copilot Studio カスタムエンジン / REST（App Service の `/chat`）/ OBO クライアント経由で行う。
 > この Entra agent ID の値が、そのまま Observability の `agentId` になる（Single Agent Map の突き合わせキー）。
 
-## 10. Agent Registry をタブ別に確認する
+## 3. Agent Registry をタブ別に確認する
 
 管理センター › **Agents › All agents › Registry** で対象を開き、各タブで「登録内容」を確認する。
 
@@ -50,13 +50,13 @@
 
 <!-- ![Registry タブ](../assets/10-registry.png) -->
 
-## 11. Single Agent Map で可視化する（Preview）
+## 4. Single Agent Map で可視化する（Preview）
 
 観測データが、エージェント ↔ ユーザー ↔ ツールの関係図として描かれる。**Map を点灯させるには、クラウド上のエージェントを実際に呼び出して活動を作る**必要がある。
 
-### 11.0 Map 点灯用のアクティビティを作る（クラウドのエージェントを呼ぶ）
+### 4.0 Map 点灯用のアクティビティを作る（クラウドのエージェントを呼ぶ）
 
-承認済み（§8）のエージェントを、クラウド経由で実際に使って観測データを溜める：
+承認済み（§1）のエージェントを、クラウド経由で実際に使って観測データを溜める：
 
 - `echo` / `now` を**複数回**呼ぶ → Map の **Tool ノード**が出る（呼ぶほど線が太い）
 - **複数ユーザー**で叩く（OBO なので別ユーザーでサインイン）→ **User ノード**が増える
@@ -76,17 +76,17 @@
 | Tool（top 50） | tool calls・exception 数・last activity（**echo / now** が出る） |
 
 - **線の太さ** = interaction volume、**exception >1% の線は赤**
-- 空表示なら [第1部 §5](./part1-setup.md)（観測配線）と §11.0（アクティビティ生成）を見直す
+- 空表示なら [第1部 §5](./part1-setup.md)（観測配線）と §4.0（アクティビティ生成）を見直す
 
 <!-- ![Single Agent Map](../assets/11-single-agent-map.png) -->
 
 > Single Agent Map は「1 エージェント ↔ ユーザー ↔ ツール」に限定で、**agent-to-agent の線は描かれない**。マルチエージェント化は**テナント全体の Agent Map（クラスタ表示）**を豊かにする用途。
 
-## 12. ガバナンス — Block（Kill Switch）/ 条件付きアクセス / 削除
+## 5. ガバナンス — Block（Kill Switch）/ 条件付きアクセス / 削除
 
 エージェントを止めるには「**無効化（Block）**」→「**削除（Delete）**」の 2 レベルがある。まず無効化、確証が取れてから削除、が安全な順序。
 
-### 12.1 Block（Kill Switch）— 構成保持のまま即時停止
+### 5.1 Block（Kill Switch）— 構成保持のまま即時停止
 
 | 粒度 | 対象 | 効果 |
 |------|------|------|
@@ -100,13 +100,13 @@
 
 <!-- ![Block / Kill Switch](../assets/12-block.png) -->
 
-### 12.2 条件付きアクセス（テナント全体）
+### 5.2 条件付きアクセス（テナント全体）
 
 さらに広く止めるなら Entra の条件付きアクセスで「**すべてのエージェント ID**」を対象にトークン発行をブロックできる（既存・新規の Agent ID をまとめて認証不可）。**本番適用前にレポート専用モードで影響を確認**する。
 
 - 出典: [エージェント向け条件付きアクセス](https://learn.microsoft.com/entra/identity/conditional-access/agent-id)
 
-### 12.3 削除（リタイア）と後片付け
+### 5.3 削除（リタイア）と後片付け
 
 | | Block（無効化） | Permanent delete（削除） |
 |--|----------------|--------------------------|
