@@ -1,43 +1,52 @@
 # 第1部 A：Copilot Studio で AI エージェントを作る（開発者）
 
-ノーコード／ローコードの **Microsoft Copilot Studio** でエージェントを作り、Teams / Microsoft 365 Copilot チャネルに公開して、組織のカタログに**申請**するまで。
+ノーコード／ローコードの **Microsoft Copilot Studio** でエージェントを作り、Teams / Microsoft 365 Copilot チャネルに公開して、組織のカタログに**申請**するまで。今回は具体例として、**無償の Microsoft Learn Docs MCP Server** を道具に使う「**Learn ヘルパー**」（Microsoft / Azure の質問に Learn の公式情報で答えるエージェント）を作る。MCP を呼ぶので、第2部の Observability（観測）に「ツール呼び出し」の記録が残る。
 
-
-> ⚠️ ⚠️ Microsoft Agent 365 は Preview を多く含む。コマンド・API は変わり得るので、Microsoft Learn で最新情報を確認すること。
+> 💡 自前ホストの LLM やコードでフル制御したいなら **[第1部 B：独自エージェント＋独自 MCP](./part1b-custom-agent.md)** を選ぶ。本ファイル（A）は最短ルート。
+>
+> ⚠️ Microsoft Agent 365 / Copilot Studio は Preview を多く含む。UI 名やメニュー位置は変わり得るので、詰まったら Microsoft Learn で最新を確認すること。
 
 **目次**
 
 - [0. 前提を確認する](#0-前提を確認する)
-- [1. Copilot Studio でエージェントを作る](#1-copilot-studio-でエージェントを作る)
-- [2. 指示・知識・ツールを設定する](#2-指示知識ツールを設定する)
+- [1. エージェントを作る（Learn ヘルパー）](#1-エージェントを作るlearn-ヘルパー)
+- [2. 無償の Microsoft MCP を道具として足す](#2-無償の-microsoft-mcp-を道具として足す)
 - [3. 公開して組織に申請する](#3-公開して組織に申請する)
 
-## 1. Copilot Studio でエージェントを作る
+## 1. エージェントを作る（Learn ヘルパー）
+
+今回作るのは「**Learn ヘルパー**」— Microsoft / Azure の質問に、無償の **Microsoft Learn Docs MCP Server**（Microsoft 提供の認定コネクター）を使って Learn の公式情報から答えるエージェント。追加ライセンスなしで作れて、MCP を呼ぶので Observability にも記録が残る。
 
 1. [Copilot Studio](https://copilotstudio.microsoft.com/) にサインイン（画面上部の **Environment**（環境）セレクターで対象環境を確認）
-2. **Home（ホーム）** ページの入力ボックスに、作りたいことを**自然言語で説明**して送る（AI が名前・説明・指示・知識・ツールの候補を生成する）。あるいは次のどちらか：
-   - **Home** ページの **Start building from scratch（ゼロから作成）** → **Create an agent（エージェントを作成）**
-   - 左ペインの **Agents** → **Create blank agent（空のエージェントを作成）**
-3. プロビジョニング（数十秒）の後、エージェントの **Overview（概要）** ページが開く（Details / Instructions / Model / Starter prompts / Knowledge の各セクションが並ぶ）
-4. 名前・説明を整え、**Save**。**Test / Preview** ペインでその場で会話して動作を確認できる
+2. 左ペインの **Agents** → 上部の **+ Create blank agent（空のエージェントを作成）**
+3. プロビジョニング（数十秒）の後、エージェントの **Overview（概要）** ページが開く
+4. **Details** セクションの **Edit** で、Name に `Learn ヘルパー`、Description に「Microsoft / Azure の質問に Microsoft Learn の公式情報で答えるアシスタント」と入力
+5. **Model（モデル）** で言語モデルを選ぶ（チャット主体なら GPT-4.1 か GPT-5 でよい）
+6. **Save**（初回保存時の名前が内部スキーマ名になる点に注意）
 
-出典: [Create and delete agents](https://learn.microsoft.com/microsoft-copilot-studio/authoring-first-bot) ｜ [Quickstart: Create and deploy an agent](https://learn.microsoft.com/microsoft-copilot-studio/fundamentals-get-started)
+出典: [Create and delete agents](https://learn.microsoft.com/microsoft-copilot-studio/authoring-first-bot)
 
 > ここで作るのは Copilot Studio 製のエージェント。第2部で組織に公開すると、Microsoft 365 管理センター（Copilot Control System）の**エージェントレジストリに載り、Agent 365 のガバナンス対象**になる。
 
-## 2. 指示・知識・ツールを設定する
+## 2. 無償の Microsoft MCP を道具として足す
 
-エージェントの中身を作り込む（すべて任意。最小限なら指示だけでよい）。上部タブは **Overview / Knowledge / Tools / Agents / Topics / Activity / Analytics / Channels**。
+Microsoft 提供の **Microsoft Learn Docs MCP Server**（無償・認定コネクター）を道具として追加する。これで「Learn を検索する」という道具呼び出しが発生し、第2部の Observability に残る。
 
-- **Instructions（指示）** — **Overview** ページの Instructions セクションに、役割・口調・してよいこと／いけないことを自然言語で書く（最大 8,000 文字）
-- **Model（モデル）** — Overview で使う AI モデルを選ぶ
-- **Knowledge（知識）** — 上部タブ **Knowledge** から SharePoint / 公開 Web / ファイルを知識源として追加
-- **Tools（ツール）** — 上部タブ **Tools** から **+ Add tool** でコネクターや **MCP サーバー**を追加（第1部 B の自作 MCP のような「道具」を、ここではローコードで足す）
-- **Topics（トピック）** — 上部タブ **Topics** で決まった会話フローを定義（必要な場合のみ）
+1. 上部タブ **Tools** → **+ Add tool**
+2. 検索欄に `Microsoft Learn Docs MCP` と入力して検索
+3. **Microsoft Learn Docs MCP Server** を選ぶ → **Add and Configure**
+4. 上部タブ **Overview** に戻り、**Instructions** に道具の使いどきを書く：
+   ```text
+   Microsoft の製品・サービスに関する質問には、Microsoft Learn Docs MCP Server を使って回答を検索すること。
+   ```
+5. **Save** → **Test** ペインで「Microsoft Entra の条件付きアクセスとは？」などと質問。Learn を検索して答えれば成功
 
-変更したら **Save** し、**Test** ペインで都度確認する。
+出典: [Get started with Microsoft Learn MCP Server in Copilot Studio](https://learn.microsoft.com/training/support/mcp-get-started-copilot-studio)
 
-> 道具（ツール）を組織へ展開するには、エージェント本体とは別に管理者の承認が要ることがある（第2部で扱う）。
+> このエージェントが Learn Docs MCP を呼ぶたびに、Agent 365 の Observability に **ツール呼び出し（ExecuteTool）** が記録される。第2部の Observe（Single Agent Map の Tool ノード / Defender の `CloudAppEvents`）でこの呼び出しを確認できる。
+> **ライセンス**：Microsoft Learn Docs MCP コネクター自体は無償。ただしツール呼び出しを含む生成 AI 応答は **Copilot Studio のメッセージを消費**する（Microsoft 365 Copilot に含まれる範囲、または Copilot Studio メッセージパック）。
+>
+> 組織へ公開する際、ツールにも管理者の承認・同意が要ることがある（第2部で扱う）。
 
 ## 3. 公開して組織に申請する
 

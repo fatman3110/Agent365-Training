@@ -51,7 +51,7 @@ flowchart LR
 | 項目 | 内容 | 対象ルート | ライセンス / 要件 |
 |------|------|---------|------------------|
 | Microsoft Agent 365 テナント | エージェント登録・観測・ガバナンスの基盤 | **A・B** | **Microsoft Agent 365** または **Microsoft 365 E7** |
-| Copilot Studio ライセンス | Copilot Studio でエージェントを作成・公開する | **A** | Microsoft 365 Copilot または 単体の Copilot Studio ライセンス|
+| Copilot Studio ライセンス | Copilot Studio でエージェントを作成・公開する | **A** | Microsoft 365 Copilot または 単体の Copilot Studio ライセンス。※ ツール（MCP）呼び出しを含む応答は Copilot Studio メッセージを消費（同ライセンス内／メッセージパック）。本教材の **Microsoft Learn Docs MCP は無償コネクタ（追加ライセンス不要）** |
 | Azure サブスクリプション | App Service（+ ACR / Functions）で自前ホスト。outbound HTTPS 必須 | **B** | 従量課金（本トレーニング期間のみの利用であれば数ドル程度） |
 | 開発ツール | Node.js 18+ / Python 3.11+ / a365 CLI / Azure CLI / Azure Functions Core Tools | **B** | 無料 |
 | AI コーディングアシスタント | **GitHub Copilot** または **Claude Code** のいずれ。Agent 365 Skills を実行する“土台” | **B** | GitHub Copilot（無料枠あり）/ Claude Code |
