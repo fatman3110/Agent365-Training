@@ -54,7 +54,8 @@ flowchart LR
 | Microsoft Agent 365 テナント | エージェント登録・観測・ガバナンスの基盤 | **Microsoft Agent 365** または **Microsoft 365 E7** |
 | Azure サブスクリプション | App Service（+ ACR / Functions）で自前ホスト。outbound HTTPS 必須 | 従量課金（本トレーニング期間のみの利用であれば数ドル程度） |
 | 開発ツール | Node.js 18+ / Python 3.11+ / a365 CLI / Azure CLI / Azure Functions Core Tools | 無料 |
-| Agent 365 Skills | Copilot / Claude Code 用の自動化スキル集 | 無料（`microsoft/agent365-skills`） |
+| **AI コーディングアシスタント** | **GitHub Copilot（VS Code の agent mode / Copilot CLI）** または **Claude Code** のいずれか。Agent 365 Skills を実行する“土台”で、**本教材では必須** | GitHub Copilot（無料枠あり）/ Claude Code |
+| Agent 365 Skills | 上記アシスタントに読み込ませて雛形生成を自動化するスキル集 | 無料（`microsoft/agent365-skills`） |
 | Frontier Preview（任意） | AI Teammate 機能に必要。**本教材は非 AI Teammate のため必須としない** | — |
 
 ### 操作に必要な権限とロール
