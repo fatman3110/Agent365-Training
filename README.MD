@@ -9,9 +9,8 @@
 3. 🛡️ **管理者として統制する** — 管理者がエージェントを**ワンクリックで止める（Kill Switch）**など、ガバナンス（統制）が効くことを確認します。
 4. 🧩 **道具（ツール）を追加する** — エージェントに持たせる**自作の小さな道具**を作り、管理画面の**関係図（Single Agent Map）**に表示させます。
 
-> 💡 **初学者向けメモ**：`OBO`・`BYO MCP`・`Single Agent Map` などの用語は、初回は「そういうものがある」と流して大丈夫です。各章で都度やさしく説明し、末尾の[用語ミニ辞典](#用語ミニ辞典)にもまとめています。
 >
-> ℹ️ この教材のエージェントは「**AI Teammate ではない**タイプ」（人のように Teams に常駐せず、道具として呼び出す形）で作ります。理由や違いは本文で説明します。
+> ℹ️ 本教材は「**AI Teammate ではない**タイプ」（人のように Teams に常駐せず、道具として呼び出す形）の AI エージェントを作ります。理由や違いは本文で説明します。
 
 <!-- 全体像の画像を使いたい場合は assets/overview.png を置き、次の行のコメントを外す:
 ![本教材の全体像](./assets/overview.png) -->
@@ -30,7 +29,7 @@ flowchart LR
     subgraph P1["第1部：環境構築 ｜ 開発者（VS Code / ターミナル）"]
         direction TB
         A1["ツール導入"] --> A2["Skills 導入"] --> A3["Blueprint / Agent ID 作成"]
-        A3 --> A4["アプリ実装<br/>(LLM / OBO / 観測)"] --> A5["BYO MCP を建てる<br/>(Azure Functions)"]
+        A3 --> A4["BYO MCP を建てる<br/>(Azure Functions)"] --> A5["アプリ実装<br/>(LLM / OBO / 観測)"]
         A5 --> A6["Azure にデプロイ & 公開"]
     end
     subgraph P2["第2部：A365 ハンズオン ｜ AI 管理者（M365 / Entra 管理センター）"]
@@ -176,18 +175,9 @@ Get-Content a365.generated.config.json | ConvertFrom-Json
 
 > ⚠️ `.env` と `a365.generated.config.json` は**必ず `.gitignore`**。シークレット（保護済みでも）を含む。
 
-## 4. アプリを実装する（LLM / OBO / 観測）
+## 4. BYO MCP サーバーを建てる（＝通信先・実行内容。ガバナンスの中心）
 
-Skills が生成した骨格に、①LLM 呼び出し ②OBO トークン交換 ③観測配線 を差し込む。**コードの実体は [付録 A. 実装リファレンス](#付録-a-実装リファレンスコード例)** にまとめた。要点のみ：
-
-- **LLM** は遅延初期化（起動時にブロックすると warmup プローブ失敗 → 再起動ループ）
-- **OBO** は `use_s2s_endpoint=False`。受け取ったユーザートークンを `jwt-bearer` で観測スコープへ交換
-- **観測** は `InvokeAgentScope`（呼び出し全体）と `ExecuteToolScope`（ツール）を計装 → 後段の Single Agent Map の描画元になる
-
-- [ ] `.env`：`ENABLE_A365_OBSERVABILITY=true` / `ENABLE_A365_OBSERVABILITY_EXPORTER=true`
-- [ ] `A365_EXPORTER_LOG_LEVEL=DEBUG` で **scp 付きトークン**の 200 送信を確認
-
-## 5. BYO MCP サーバーを建てる（ダミーツール echo / now）
+> **なぜアプリ実装より先か**：Agent 365 の管理では「エージェントが**どこと通信し・何を実行するか**」の把握が必須で、その実体が **MCP（ツール）**。先に MCP を用意しておくと、次のアプリ実装や第2部の観測・ガバナンス（Registry の Data & tools / Single Agent Map / 承認）が「何を監視・制御しているか」を具体物で追える。
 
 学習用に、Azure Functions（クラウド）に MCP サーバーをデプロイして登録する。コードは [付録 A.4](#a4-byo-mcp-サーバーfunction_apppy)。
 
@@ -205,6 +195,17 @@ a365 develop-mcp register-external-mcp-server `
 ```
 
 > 承認はこのあと**第2部 §8**（管理者作業）で行う。承認前は利用不可。
+
+## 5. アプリを実装する（LLM / OBO / 観測）
+
+§4 で用意した MCP ツールを、エージェントが呼び出せるように配線する。Skills が生成した骨格に、①LLM 呼び出し ②OBO トークン交換 ③観測配線 を差し込む。**コードの実体は [付録 A. 実装リファレンス](#付録-a-実装リファレンスコード例)** にまとめた。要点のみ：
+
+- **LLM** は遅延初期化（起動時にブロックすると warmup プローブ失敗 → 再起動ループ）
+- **OBO** は `use_s2s_endpoint=False`。受け取ったユーザートークンを `jwt-bearer` で観測スコープへ交換
+- **観測** は `InvokeAgentScope`（呼び出し全体）と `ExecuteToolScope`（ツール）を計装 → 後段の Single Agent Map の描画元になる
+
+- [ ] `.env`：`ENABLE_A365_OBSERVABILITY=true` / `ENABLE_A365_OBSERVABILITY_EXPORTER=true`
+- [ ] `A365_EXPORTER_LOG_LEVEL=DEBUG` で **scp 付きトークン**の 200 送信を確認
 
 ## 6. Azure にデプロイして公開する
 
@@ -298,7 +299,7 @@ a365 publish                    # manifest.zip 生成
 | Tool（top 50） | tool calls・exception 数・last activity（**echo / now** が出る） |
 
 - **線の太さ** = interaction volume、**exception >1% の線は赤**
-- 空表示なら §4（観測配線）と §11.0（アクティビティ生成）を見直す
+- 空表示なら §5（観測配線）と §11.0（アクティビティ生成）を見直す
 
 <!-- ![Single Agent Map](./assets/11-single-agent-map.png) -->
 
