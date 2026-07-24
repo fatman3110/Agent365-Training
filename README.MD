@@ -51,10 +51,10 @@ flowchart LR
 | 項目 | 内容 | 対象ルート | ライセンス / 要件 |
 |------|------|---------|------------------|
 | Microsoft Agent 365 テナント | エージェント登録・観測・ガバナンスの基盤 | **A・B** | **Microsoft Agent 365** または **Microsoft 365 E7** |
-| Copilot Studio ライセンス | Copilot Studio でエージェントを作成・公開する | **A** | Copilot Studio（試用可） |
+| Copilot Studio ライセンス | Copilot Studio でエージェントを作成・公開する | **A** | **Microsoft 365 Copilot に含まれる**（一般的）。単体の Copilot Studio ライセンス・試用でも可 |
 | Azure サブスクリプション | App Service（+ ACR / Functions）で自前ホスト。outbound HTTPS 必須 | **B** | 従量課金（本トレーニング期間のみの利用であれば数ドル程度） |
 | 開発ツール | Node.js 18+ / Python 3.11+ / a365 CLI / Azure CLI / Azure Functions Core Tools | **B** | 無料 |
-| **AI コーディングアシスタント** | **GitHub Copilot（VS Code の agent mode / Copilot CLI）** または **Claude Code** のいずれ。Agent 365 Skills を実行する“土台” | **B** | GitHub Copilot（無料枠あり）/ Claude Code |
+| AI コーディングアシスタント | **GitHub Copilot** または **Claude Code** のいずれ。Agent 365 Skills を実行する“土台” | **B** | GitHub Copilot（無料枠あり）/ Claude Code |
 | Agent 365 Skills | 上記アシスタントに読み込ませて雛形生成を自動化するスキル集 | **B** | 無料（`microsoft/agent365-skills`） |
 | Frontier Preview（任意） | AI Teammate 機能に必要。**本教材は非 AI Teammate のためどちらも不要** | A・B | — |
 
@@ -66,7 +66,7 @@ flowchart LR
 
 | 作業 | 対象ルート | 必要なロール | 補足 |
 |------|---------|------------|------|
-| Copilot Studio でエージェントを作成・組織に申請 | **A** | Copilot Studio ライセンスを持つユーザー（特別な管理者ロール不要） | 公開の承認は管理者へ |
+| Copilot Studio でエージェントを作成・組織に申請 | **A** | N/A | ライセンスを持つユーザであれば特別な権限は不要 |
 | Blueprint / Agent ID 作成（`a365 setup all`） | **B** | **Application Administrator**（推奨・最小）/ Cloud Application Administrator / Global Administrator | テナント初回のみ管理者が `a365 setup requirements` を実行すれば、以降の開発者は引き継げる |
 | 自作 MCP 登録（`register-external-mcp-server`） | **B** | **Application Administrator** 相当 |  |
 | Azure へのデプロイ（App Service / ACR / Functions） | **B** | Azure RBAC: **Contributor**（リソース作成）/ **User Access Administrator**（RBAC 付与） |  |
@@ -76,7 +76,7 @@ flowchart LR
 | 作業 | 対象ルート | 必要なロール | 補足 |
 |------|---------|------------|------|
 | エージェント登録の承認（Agents › Requests） | A・B | **AI Administrator** または **Global Administrator** |  |
-| 自作 MCP の承認（Tools › Requests） | B（A はツール使用時のみ） | **AI Administrator** または **Global Administrator** | 同意は組織全体に付与 |
+| 自作 MCP の承認（Tools › Requests） | B | **AI Administrator** または **Global Administrator** | 同意は組織全体に付与 |
 | Agent Registry / Single Agent Map の閲覧 | A・B | **AI Administrator** または **Global Administrator** |  |
 | Block / 削除 | A・B | **AI Administrator** | 一時停止（Block）と完全削除の違いに留意 |
 | 条件付きアクセス（Agent ID 対象） | A・B | **Conditional Access Administrator** / Security Administrator | |
@@ -87,7 +87,7 @@ flowchart LR
 |------|------|
 | **Blueprint** | エージェントの「テンプレート」。ここから Agent ID を発行する。これ自体は実体ではない |
 | **Entra Agent ID** | エージェントに付与される Entra 上の ID（blueprint の `agentBlueprintId`）。Observability の突き合わせキーになる |
-| **instance 化** | Blueprint（テンプレート）から実際に使えるエージェントの実体を払い出すこと。組織図に載る「エージェントユーザー」を伴う本格的な instance 化は **AI Teammate（Frontier Preview）** の概念。本教材の非 AI Teammate では Teams 開発者ポータルでの接続で足りる |
+| **instance 化** | Blueprint（テンプレート）から実際に使えるエージェントの実体を払い出すこと。|
 | **BYO MCP** | 自作の外部 MCP サーバーを Agent 365 に登録して使う仕組み |
 | **Kill Switch** | 管理センターの Block。構成を保持したまま即時停止（Unblock で復帰） |
 
@@ -119,13 +119,13 @@ flowchart LR
 
 ## 参考リンク
 
-**Agent 365 全体**
+**Agent 365**
 
 - [Microsoft Agent 365 の概要（Observe / Govern / Secure）](https://learn.microsoft.com/ja-jp/microsoft-agent-365/overview)
 - [Agent 365 Developer Docs](https://learn.microsoft.com/microsoft-agent-365/developer/)
 - [ポリシーテンプレート](https://learn.microsoft.com/microsoft-agent-365/admin/policy-template)
 
-**管理センター（Microsoft 365 admin › エージェント管理）** — いずれも `microsoft-365/admin/manage/` 配下
+**Microsoft 365 管理センター（ admin › エージェント管理）** 
 
 - [レジストリ管理](https://learn.microsoft.com/microsoft-365/admin/manage/agent-registry) ｜ [申請の承認](https://learn.microsoft.com/microsoft-365/admin/manage/agent-requests) ｜ [Agent Map](https://learn.microsoft.com/microsoft-365/admin/manage/agent-map) ｜ [ツール（BYO MCP）](https://learn.microsoft.com/microsoft-365/admin/manage/manage-tools-for-agent) ｜ [ロールと権限](https://learn.microsoft.com/microsoft-365/admin/manage/agent-roles-perms)
 

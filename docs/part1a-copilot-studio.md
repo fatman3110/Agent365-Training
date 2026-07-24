@@ -19,7 +19,7 @@
 
 | 項目 | 内容 |
 |------|------|
-| ライセンス | Copilot Studio を利用できるライセンス（試用版でも可）。Agent 365 のガバナンス対象にするには Microsoft 365 E7 / Agent 365 が前提 |
+| ライセンス | Copilot Studio を利用できるライセンス。**Microsoft 365 Copilot に含まれる**のが一般的（単体の Copilot Studio ライセンス・試用版でも可）。Agent 365 のガバナンス対象にするには Microsoft 365 E7 / Agent 365 が前提 |
 | ロール | エージェント作成は各ユーザーで可。組織への公開（申請）の**承認**は AI Administrator / Global Administrator（→ 第2部） |
 | アクセス先 | [Copilot Studio](https://copilotstudio.microsoft.com/) にサインインできること |
 
