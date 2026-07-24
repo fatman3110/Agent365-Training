@@ -24,6 +24,11 @@
 5. **詳細（Details）** セクションの **Edit（編集）** を開き、説明に「Microsoft / Azure の質問に Microsoft Learn の公式情報で答えるアシスタント」と入力して保存
 6. **Model（モデル）** セクションで言語モデルを選ぶ（テスト用途なので GPT-4.1）
 
+> **Entra Agent ID は自動で付与される（手動設定・Power Automate 設定は不要）**：Copilot Studio は新規エージェントごとに Entra Agent ID を自動作成し、Agent 365 のレジストリ・観測・ガバナンス対象にする。**2026年7月のロールアウト以降は必須で、オプトアウト不可**（以前あった環境単位の「Entra Agent ID を無効化するトグル」は廃止された）。
+> - 確認：Copilot Studio → **設定 → 詳細 → メタデータ → Entra Agent ID**（GUID）
+> - コネクター権限・DLP・Advanced Connector Policies の統制は **Power Platform 管理センター**側（管理者作業）。公開時にエージェントの Entra Agent ID へコネクター権限が自動付与される
+> - 出典: [Automatically create Microsoft Entra Agent IDs for Copilot Studio agents](https://learn.microsoft.com/microsoft-copilot-studio/admin-use-entra-agent-identities)
+
 ## 2. 無償の Microsoft MCP を道具として足す
 
 Microsoft 提供の **Microsoft Learn Docs MCP Server**（無償・認定コネクター）を道具として追加する。これで「Learn を検索する」という道具呼び出しが発生し、第2部の Observability に残る。
@@ -33,29 +38,26 @@ Microsoft 提供の **Microsoft Learn Docs MCP Server**（無償・認定コネ�
 3. **Microsoft Learn Docs MCP Server** を選ぶ
 4. 接続（Connection）の作成を求められた場合、**新しい接続を追加**（Create new connection）を選び、接続を作成する
 5. **追加と構成** を押下してエージェントに追加する
-6. **接続を有効にする**：ツールを足しただけでは接続が未確立のことがある。**ツール** タブで **Microsoft Learn ドキュメント MCP サーバー** を開き、接続（コネクション）を作成・認可して「接続済み」にする（Learn Docs MCP は認証不要でも、初回は接続の作成が必要）
-7. 上部タブ **概要** に戻り、**指示** に MCP の利用タイミングを指定したうえで保存
+6. 上部タブ **概要** に戻り、**指示** に MCP の利用タイミングを指定したうえで保存
    ```text
    Microsoft の製品・サービスに関する質問には、Microsoft Learn Docs MCP Server を使って回答を検索すること。
    ```
-8. **テスト** ペインで「Microsoft Entra の条件付きアクセスとは？」などと質問。Learn を検索して答えれば成功
+7. **テスト** ペインで「Microsoft Entra の条件付きアクセスとは？」などと質問。Learn を検索して答えれば成功
 
-> **テストで「まずは接続して … この資格情報を『接続マネージャーを開く』で検証してください」と出たら**：ツールの接続がまだ確立されていない。メッセージ内の **接続マネージャーを開く**（またはツール詳細）から対象の接続を作成／認可し、「接続済み」になってから **再試行** する。接続ができるまで MCP は呼ばれない。
+> **テストで「まずは接続して … この資格情報を『接続マネージャーを開く』で検証してください」と出たら**：メッセージ内の **接続マネージャーを開く**（またはツール詳細）から対象の接続を作成／認可し、「接続済み」になってから **再試行** する。
 
 
 ## 3. 公開して組織に申請する
 
 作っただけでは他のユーザーは使えない。**公開（Publish）してチャネルに接続し、組織カタログへ申請**する。
 
-1. 右上の **Publish** でエージェントを公開する
+1. 右上の **公開** でエージェントを公開する
 2. **Channels（チャネル）** ページ → **Teams and Microsoft 365 Copilot**（Microsoft 365 と Microsoft Teams）を開く
 3. **Turn on Microsoft 365** の「Make agent available in Microsoft 365 Copilot」を有効にすると、Teams と Microsoft 365 Copilot の両方で使えるようになる（Teams だけにするなら無効のまま）
 4. **Add channel** でチャネルを追加
 5. **Show to the organization（組織に表示）** を選び、**組織カタログへの掲載を申請**する（この操作で管理者承認へ回る）
 
 出典: [Connect and configure an agent for Teams and Microsoft 365](https://learn.microsoft.com/microsoft-copilot-studio/publication-add-bot-to-microsoft-teams) ｜ [Manage requested agents](https://learn.microsoft.com/microsoft-365/copilot/agent-essentials/agent-lifecycle/agent-copilot-studio-requested)
-
-> 組織への申請を出すと、エージェントは Microsoft 365 管理センター（Copilot Control System）の **Requests（申請）** に現れ、管理者の承認待ちになる。テスト段階では **Built with Power Platform** セクション（共有）に出す方法もあり、管理者承認なしで自分だけ試せる。
 
 ---
 
