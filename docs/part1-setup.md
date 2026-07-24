@@ -42,21 +42,25 @@ git clone https://github.com/microsoft/agent365-skills.git
 node .\agent365-skills\scripts\install.js   # VS Code の chat.agentSkillsLocations に登録される（Reload Window で反映）
 ```
 
-> `install.js` は **実行時のカレントディレクトリ**（`process.cwd()`）に対して登録する。VS Code のワークスペース直下で実行すること（別の場所で実行すると設定が $HOME 側に書かれてしまう）。導入後は **Reload Window** で反映する。
-
 > **Skills が何をしてくれるか（重要）**
 > - `make-a365-agent` … ②ホスティング層（Python は aiohttp の `start_server.py`）＋ `a365.config.json` を生成
-> - `instrument-observability` … 観測（OpenTelemetry）配線コードを生成
+> - `instrument-observability` … OpenTelemetry を配管するコードを生成
 > - `a365-setup` … 前提チェック＋ Blueprint 作成の入口
 
 ## 3. エージェントの「土台」を作る（Blueprint / Agent ID）
 
-VS Code の Copilot Chat（または Claude Code）に、次を**そのまま貼って**実行させます。
+これは**ターミナルのコマンドではなく、AI チャットに打ち込む「お願い（自然言語の指示）」**です。VS Code の **Copilot Chat**（または Claude Code）の入力欄に、次の文をそのまま貼り付けて送信します。すると §2 で入れた Skill が起動し、必要なコマンドを AI が代わりに実行してくれます。
 
 ```text
 a365-setup を実行して。UPN を持たない Agent を OBO（委任）認可で作りたい。
 Make this a non-AI-Teammate Agent using OBO (delegated / on-behalf-of).
 ```
+
+> **この指示の意味（初学者向け）**
+> - **a365-setup を実行して** … §2 の Skill（`a365-setup`）を起動する合図
+> - **UPN を持たない Agent** … 人間のようなメールアドレス／ログイン名（UPN）を**持たない**エージェント。= **非 AI Teammate**（Teams で `@メンション`されるタイプではない、裏方で動くエージェント）
+> - **OBO（委任 / on-behalf-of）認可** … エージェントが**「今ログインしているユーザーの代理」**として権限を借りて動く方式。監査ログにも「誰の代理か」が残る（もう一方の S2S＝アプリ自身の権限で動く方式とは別）
+> - 英語文を併記しているのは、Skill が英語のキーワード（non-AI-Teammate / OBO）で確実に判定できるようにするため。**日本語だけでも通じます**
 
 Skill が内部で `a365 setup all`（`--aiteammate` は付けない）を実行し、以下を**自動で**行います。
 
