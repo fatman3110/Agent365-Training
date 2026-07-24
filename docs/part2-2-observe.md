@@ -11,7 +11,7 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 - [第2部：Observe（観察する）｜AI 管理者](#第2部observe観察するai-管理者)
   - [1. Agent Registry をタブ別に確認する](#1-agent-registry-をタブ別に確認する)
   - [2. Single Agent Map で可視化する](#2-single-agent-map-で可視化する)
-  - [3. 観測を 4 画面で追う（同じ Run を突き合わせる｜実践ラボ）](#3-観測を-4-画面で追う同じ-run-を突き合わせる実践ラボ)
+  - [3. アクティビティを複数のツールから確認](#3-アクティビティを複数のツールから確認)
 
 ## 1. Agent Registry をタブ別に確認する
 
@@ -42,30 +42,27 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 
 エージェントの動作記録は、複数ポータルにそれぞれの側面で記録される。これによって、 IT 管理者やセキュリティ管理者等、役割の異なる担当者が自分の慣れたツールで運用を行うことを支援する。
 
-**本トレーニングでの確認順**：(1) M365 管理センター（件数＝メトリクス）→ (2) Entra サインインログ（認証イベント＝ログ）→ (3) Purview（対話の中身）→ (4) Defender（KQL で横断照合＝実行トレース）
-
 **(1) M365 管理センターで「件数」を確認（メトリクス）**
 
 - [管理センター](https://admin.microsoft.com/) › **Agents › All agents › 対象 › Activity**
 - ここで見えるのは「実行があった」という**メトリクス（件数）**。対話の中身は見えない
   
-**(2) Entra サインインログで「認証イベント」を確認（ログ）**
+**(2) Entra サインインログで「誰が利用したか」を確認（ログ）**
 
 - [Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › Agents › Agent identities › 対象 › Activity › Sign-in logs**
 - 「何を話したか」ではなく「**いつ・どの ID として認証されたか**」のログ
-- エージェントが**ユーザーに代わって（委任）**動いた実行では、**どのユーザーのために動いたか**（対象ユーザー）も記録される。つまり「誰が使ったか」まで追える。一方、エージェントが**自身の ID で（自律）**動いた実行にはユーザーが紐づかず、エージェント ID 自身の認証として記録される（出典: [What are agent identities – Delegated access](https://learn.microsoft.com/entra/agent-id/what-are-agent-identities#what-agent-identities-enable)、[Agent 365 Identity – 認証フロー](https://learn.microsoft.com/microsoft-agent-365/developer/identity#authentication-flows)）
+- エージェントが**ユーザーに代わって（委任）**動いた実行では、**どのユーザーのために動いたか**（対象ユーザー）も記録される。
 
 **(3) Purview Activity explorer で「対話の中身」を確認**
 
-- [Purview](https://purview.microsoft.com/) › **DSPM › 発見 › アクティビティエクスプローラー › AI あくてぃびてｌ**
-- Timestamp を控えた時刻付近に絞り、`Invoke Agent` / `Copilot Interaction` の行を開く
-- **Prompt / Response** が (1) の内容と一致することを確認（出ないなら Content Viewer 相当のロール不足を疑う）
+- [Purview](https://purview.microsoft.com/) › **DSPM › 発見 › アクティビティエクスプローラー › AI アクティビティ**
+- 特定のレコードを選択し、**Prompt / Response** でユーザが送信した実際のプロンプトとレスポンスを確認
 
-**(5) Defender Advanced Hunting で横断照合（実行トレース）**
+**(4) Defender Advanced Hunting で横断照合（実行トレース）**
 
-- [Defender](https://security.microsoft.com/) › **Hunting › Advanced hunting**
-- 直近の Agent 365 活動を一覧して `ConversationId` を1つ控える：
+- [Defender](https://security.microsoft.com/) › **調査と対応 › 追求 › 高度な追求** で、AI Agent 活動について横断的にログ分析する
 
+- 過去 1 日間の AI エージェント関連の操作ログを抽出して一覧表示
   ```kusto
   CloudAppEvents
   | where Timestamp > ago(1d)
@@ -75,7 +72,7 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
   | order by Timestamp desc
   ```
 
-- その `ConversationId` だけに絞り、実行順を確認：
+- 特定の `ConversationId` だけに絞り、特定のオペレーションについて実行内容を確認：
 
   ```kusto
   CloudAppEvents
@@ -83,11 +80,6 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
   | project Timestamp, ActionType, RawEventData
   | order by Timestamp asc
   ```
-
-- `InvokeAgent → InferenceCall →（あれば）ExecuteTool...` の時系列が **1 Run の実行トレース**。`summarize count() by ActionType` に変えれば呼び出し回数という**メトリクス**にもなる
-
-✅ **Observe 完了条件**：同じ Run が 4 画面で同一エンティティ（時刻・`ConversationId`）として追える＝観測が効いている。
-
 ---
 
 ← 戻る：**[第2部 B：承認と観測データ作成](./part2-1b-custom.md)** ｜ 次：**[第2部：Govern（管理）](./part2-3-govern.md)** ｜ [README（概要）](../README.MD)
