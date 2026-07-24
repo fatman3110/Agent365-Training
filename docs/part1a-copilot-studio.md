@@ -24,11 +24,6 @@
 5. **詳細（Details）** セクションの **Edit（編集）** を開き、説明に「Microsoft / Azure の質問に Microsoft Learn の公式情報で答えるアシスタント」と入力して保存
 6. **Model（モデル）** セクションで言語モデルを選ぶ（テスト用途なので GPT-4.1）
 
-> **Entra Agent ID は自動で付与される（手動設定・Power Automate 設定は不要）**：Copilot Studio は新規エージェントごとに Entra Agent ID を自動作成し、Agent 365 のレジストリ・観測・ガバナンス対象にする。**2026年7月のロールアウト以降は必須で、オプトアウト不可**（以前あった環境単位の「Entra Agent ID を無効化するトグル」は廃止された）。
-> - 確認：Copilot Studio → **設定 → 詳細 → メタデータ → Entra Agent ID**（GUID）
-> - コネクター権限・DLP・Advanced Connector Policies の統制は **Power Platform 管理センター**側（管理者作業）。公開時にエージェントの Entra Agent ID へコネクター権限が自動付与される
-> - 出典: [Automatically create Microsoft Entra Agent IDs for Copilot Studio agents](https://learn.microsoft.com/microsoft-copilot-studio/admin-use-entra-agent-identities)
-
 ## 2. 無償の Microsoft MCP を道具として足す
 
 Microsoft 提供の **Microsoft Learn Docs MCP Server**（無償・認定コネクター）を道具として追加する。これで「Learn を検索する」という道具呼び出しが発生し、第2部の Observability に残る。
@@ -51,13 +46,14 @@ Microsoft 提供の **Microsoft Learn Docs MCP Server**（無償・認定コネ�
 
 作っただけでは他のユーザーは使えない。**公開（Publish）してチャネルに接続し、組織カタログへ申請**する。
 
-1. 右上の **公開** でエージェントを公開する
-2. **Channels（チャネル）** ページ → **Teams and Microsoft 365 Copilot**（Microsoft 365 と Microsoft Teams）を開く
-3. **Turn on Microsoft 365** の「Make agent available in Microsoft 365 Copilot」を有効にすると、Teams と Microsoft 365 Copilot の両方で使えるようになる（Teams だけにするなら無効のまま）
-4. **Add channel** でチャネルを追加
-5. **Show to the organization（組織に表示）** を選び、**組織カタログへの掲載を申請**する（この操作で管理者承認へ回る）
+1. 右上の **公開** でエージェントを ”最新バージョンを強制する” オプションを設定したうえで公開する
+2. 上部タブ **チャネル** → **Microsoft 365 と Microsoft Teams** を開く
+3. **Microsoft 365 をオンにする** のチェックを有効にして、**チャネルを追加**する
+4. 同じ設定パネルで **利用可否オプション（Availability options）** を開く（「組織に表示」の入口はここ）
+5. **組織内のすべてのユーザーに表示（Show to everyone in my org）** を選ぶ（「Added to Teams（同僚・共有ユーザーに表示済み）」になっている場合は先に解除する）
+6. 要件を確認して **管理者の承認を得るために送信（Submit for admin approval）** → 確認で **はい**（この操作で管理者承認へ回る）
 
-出典: [Connect and configure an agent for Teams and Microsoft 365](https://learn.microsoft.com/microsoft-copilot-studio/publication-add-bot-to-microsoft-teams) ｜ [Manage requested agents](https://learn.microsoft.com/microsoft-365/copilot/agent-essentials/agent-lifecycle/agent-copilot-studio-requested)
+出典: [Connect and configure an agent for Teams and Microsoft 365（Show to the organization）](https://learn.microsoft.com/microsoft-copilot-studio/publication-add-bot-to-microsoft-teams#show-to-the-organization) ｜ [Manage requested agents](https://learn.microsoft.com/microsoft-365/copilot/agent-essentials/agent-lifecycle/agent-copilot-studio-requested)
 
 ---
 
