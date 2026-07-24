@@ -8,11 +8,11 @@
 
 | 柱 | 目的（Learn） | 本パートの節 | 主な画面 |
 |----|--------------|-------------|---------|
-| **Observe（観察する）** | 一元レジストリで可視化し、使用状況・アクティビティ・正常性を把握。リスクシグナルを早期特定 | §3 | M365 管理センター |
-| **Govern（管理）** | ライフサイクル管理・アクセス制御・コンプライアンスを一元化し、一貫したガードレールを確立 | §4 | M365 管理センター / Entra |
-| **Secure（保護）** | Entra（リスクベースアクセス）・Purview（情報保護/DLP）・Defender（脅威防御）でエンドツーエンド保護 | §5 | Entra / Purview / Defender |
+| **Observe（観察する）** | 一元レジストリで可視化し、使用状況・アクティビティ・正常性を把握。リスクシグナルを早期特定 | 3 節 | M365 管理センター |
+| **Govern（管理）** | ライフサイクル管理・アクセス制御・コンプライアンスを一元化し、一貫したガードレールを確立 | 4 節 | M365 管理センター / Entra |
+| **Secure（保護）** | Entra（リスクベースアクセス）・Purview（情報保護/DLP）・Defender（脅威防御）でエンドツーエンド保護 | 5 節 | Entra / Purview / Defender |
 
-処理の順序は **①承認して管理下に置く（§1）→ ②実際に動かして観測データを作る（§2）→ ③観察（§3）→ ④管理（§4）→ ⑤保護（§5）**。まず承認して ID を実体化し、実際に動かさないと、観察も統制も保護も何も表示されない。
+処理の順序は **①承認して管理下に置く（1 節）→ ②実際に動かして観測データを作る（2 節）→ ③観察（3 節）→ ④管理（4 節）→ ⑤保護（5 節）**。まず承認して ID を実体化し、実際に動かさないと、観察も統制も保護も何も表示されない。
 
 **目次**
 
@@ -40,25 +40,25 @@
 <!-- ![Requests タブ](../assets/08-requests.png) -->
 
 > **ポリシーテンプレート／条件付きアクセスは「事前準備」が要る（重要）**
-> - **カスタムテンプレート**を使うなら、**先に Entra で CA 等のポリシーを作成**しておく必要がある（未作成だとテンプレート作成時に選べない）。CA の作り方は §5-2。作成後、テンプレートに束ねてこのウィザードで選ぶ。
+> - **カスタムテンプレート**を使うなら、**先に Entra で CA 等のポリシーを作成**しておく必要がある（未作成だとテンプレート作成時に選べない）。CA の作り方は 5-2 節。作成後、テンプレートに束ねてこのウィザードで選ぶ。
 > - すぐ進めたいなら、まず **既定テンプレート（全エージェント用）** を選べばよい（カスタムは後回しでも可）。
-> - ⚠️ **テンプレートは「新規アクティブ化時のみ」適用**。**承認済みのエージェントには後付けできない**（[Learn FAQ](https://learn.microsoft.com/microsoft-agent-365/admin/policy-template#select-a-template)）。後から統制を足す／変える場合は、テンプレートではなく **Entra の CA を直接更新**する（対象エージェント ID に動的に効く。§5-2）。テンプレートを当て直すにはエージェントの作り直しになる。
+> - ⚠️ **テンプレートは「新規アクティブ化時のみ」適用**。**承認済みのエージェントには後付けできない**（[Learn FAQ](https://learn.microsoft.com/microsoft-agent-365/admin/policy-template#select-a-template)）。後から統制を足す／変える場合は、テンプレートではなく **Entra の CA を直接更新**する（対象エージェント ID に動的に効く。5-2 節）。テンプレートを当て直すにはエージェントの作り直しになる。
 > - 出典: [Learn: ポリシーテンプレート](https://learn.microsoft.com/microsoft-agent-365/admin/policy-template)
 
 ✅ 承認が完了するとエージェントは `Pending review` から外れ、利用可能になる。
 
 ### 1-2. 自作 MCP（道具）を承認する
 
-エージェント本体（§1-1）とは**別の承認**が必要。第1部で登録申請した自作 MCP（`echo` / `now`）を、管理者が承認して初めてエージェントから呼べるようになる。
+エージェント本体（1-1 節）とは**別の承認**が必要。第1部で登録申請した自作 MCP（`echo` / `now`）を、管理者が承認して初めてエージェントから呼べるようになる。
 
 1. [Microsoft 365 管理センター](https://admin.microsoft.com/) › **Agents › Tools › Requests (preview)** を開く
-2. 対象の MCP（第1部 §0 で決めた `$MCP` の表示名）を開く → **Approve**
+2. 対象の MCP（第1部 0 節 で決めた `$MCP` の表示名）を開く → **Approve**
 3. 求められた管理者同意を付与する（`-A365Proxy` / `-BYO` / ランタイム用のアプリ登録に対する同意）
 4. Status が **Available** に変われば承認完了（承認まではエージェントから呼び出せない）
 
 <!-- ![Tools Requests](../assets/08b-tools-requests.png) -->
 
-> **エージェント（§1-1）と MCP（§1-2）は別々に承認する**。両方を Approve して初めて、エージェントが道具を呼べる状態になる。
+> **エージェント（1-1 節）と MCP（1-2 節）は別々に承認する**。両方を Approve して初めて、エージェントが道具を呼べる状態になる。
 
 ### 1-3. Teams / Copilot チャネルに接続する
 
@@ -68,7 +68,7 @@
 2. ブラウザで開く：`https://dev.teams.microsoft.com/tools/agent-blueprint/<agentBlueprintId>/configuration`
 3. **Agent Type = API Based**、**Notification URL = messagingEndpoint**（`a365.generated.config.json` の値）を設定 → **Save**
 4. Teams › **Apps** でエージェント名を検索 → **Request Instance / Add**。要求はテナント管理者の承認に回る（[管理センター Requested Agents](https://admin.cloud.microsoft/#/agents/all/requested)）
-5. 承認後、Teams でエージェントとチャットできるようになる（→ §2 で実際に動かす）
+5. 承認後、Teams でエージェントとチャットできるようになる（→ 2 節 で実際に動かす）
 
 出典: [Learn: エージェントインスタンスの作成](https://learn.microsoft.com/microsoft-agent-365/developer/create-instance)
 
@@ -79,11 +79,11 @@
 
 ## 2. エージェントを実際に動かす（観測データを作る）
 
-**この節が §3 以降の前提**。Observe（§3）以降の画面は、エージェントを一度も動かしていないと**何も表示されない**。まずクラウド上のエージェントを実際に呼び出し、観測データ（Run）を作る。
+**この節が 3 節 以降の前提**。Observe（3 節）以降の画面は、エージェントを一度も動かしていないと**何も表示されない**。まずクラウド上のエージェントを実際に呼び出し、観測データ（Run）を作る。
 
 ### 2-1. エージェントに話しかける（Teams）
 
-§1-3 で Teams に接続したエージェントに、**Teams のチャットで話しかける**（これが現実の利用チャネル）。
+1-3 節 で Teams に接続したエージェントに、**Teams のチャットで話しかける**（これが現実の利用チャネル）。
 
 1. Teams › **Apps** で追加した自分のエージェントを開く
 2. `echo こんにちは` や `今何時？`（`now`）などと送る
@@ -94,7 +94,7 @@
 
 ### 2-2. 観測データを厚くするコツ
 
-§3 の画面を見栄えよくするために、少し多めに動かしておく：
+3 節 の画面を見栄えよくするために、少し多めに動かしておく：
 
 - `echo` / `now` を**複数回**呼ぶ → Map の **Tool ノード**が出る（呼ぶほど線が太い）
 - **複数ユーザー**で叩く（OBO なので別ユーザーでサインイン）→ **User ノード**が増える
@@ -104,7 +104,7 @@
 
 ## 3. Observe（観察する）
 
-一元レジストリで「組織にどんなエージェントがいて、何をしているか」を可視化する。§2 で作った観測データを、ここで確認する。
+一元レジストリで「組織にどんなエージェントがいて、何をしているか」を可視化する。2 節 で作った観測データを、ここで確認する。
 
 ### 3-1. Agent Registry をタブ別に確認する
 
@@ -136,7 +136,7 @@
 | Tool（top 50） | tool calls・exception 数・last activity（**echo / now** が出る） |
 
 - **線の太さ** = interaction volume、**exception >1% の線は赤**
-- 空表示なら §2（エージェントを動かす）と [第1部 §5](./part1-setup.md)（観測配線）を見直す
+- 空表示なら 2 節（エージェントを動かす）と [第1部 5 節](./part1-setup.md)（観測配線）を見直す
 
 <!-- ![Single Agent Map](../assets/11-single-agent-map.png) -->
 
@@ -144,13 +144,13 @@
 
 ### 3-3. 観測を 4 画面で追う（同じ Run を突き合わせる｜実践ラボ）
 
-§2 で作った **1回の実行（Run）** が、Microsoft の複数ポータルに**同じもの**として記録されていることを、自分の手で追いかける。これが「見える化（Observe）」の実技。
+2 節 で作った **1回の実行（Run）** が、Microsoft の複数ポータルに**同じもの**として記録されていることを、自分の手で追いかける。これが「見える化（Observe）」の実技。
 参考: [a365handson Step 7 実習ラボ](https://github.com/ninjyanaka/a365handson/blob/main/07-observability-lab.md)
 
 **追う順番**：① M365 管理センター（件数＝メトリクス）→ ② Entra サインインログ（認証イベント＝ログ）→ ③ Purview（対話の中身）→ ④ Defender（KQL で横断照合＝実行トレース）
 **必要ロール（閲覧）**：AI Reader（M365）／Reports Reader（Entra）／Content Viewer 相当（Purview）／Security Reader（Defender）
 
-**① 発話して Run を1件つくる**（§2 の方法で `echo`/`now` を1回呼び、**時刻と質問内容を控える**）
+**① 発話して Run を1件つくる**（2 節 の方法で `echo`/`now` を1回呼び、**時刻と質問内容を控える**）
 
 **② M365 管理センターで「件数」を確認（メトリクス）**
 
@@ -222,7 +222,7 @@ AgentsInfo
 | project AgentName, Platform, PublishedStatus, LastUpdatedDateTime
 ```
 
-> `Owners` / `Endpoints` / `DeclaredTools` は dynamic（JSON）列。ここで得た **高リスク／ownerless リスト**が §5-2（CA）や一括統制の入力になる。管理センター **Agents › Overview › Top actions for you › Manage agent risks** とも突き合わせる。
+> `Owners` / `Endpoints` / `DeclaredTools` は dynamic（JSON）列。ここで得た **高リスク／ownerless リスト**が 5-2 節（CA）や一括統制の入力になる。管理センター **Agents › Overview › Top actions for you › Manage agent risks** とも突き合わせる。
 
 ### 4-2. Block（Kill Switch）— 構成保持のまま即時停止
 
@@ -255,7 +255,7 @@ AgentsInfo
 - orphan アプリ確認: `az ad app list --display-name "<blueprint名>" -o table` → `az ad app delete --id <appId>`
 
 > ⚠️ **後片づけ必須**：学習が終わったら Block ではなく `a365 cleanup` で消し、Azure リソース（App Service / Functions / ACR / ストレージ、まとめて `az group delete -n $RG`）も削除する。連鎖クリーンアップは非同期で数時間〜数日かかることがある。
-> **削除後の確認**：§4-1 の `AgentsInfo` KQL で `LifecycleStatus == "Deleted"` に遷移したことを確認（反映にタイムラグあり）。
+> **削除後の確認**：4-1 節 の `AgentsInfo` KQL で `LifecycleStatus == "Deleted"` に遷移したことを確認（反映にタイムラグあり）。
 
 ### 4-4. ガードレールの限界（Agent ID が無いと統制は効かない）
 
@@ -264,7 +264,7 @@ AgentsInfo
 - **Agent ID を主体に持たない**エンティティ（レジストリ同期のみ／素の Entra アプリ登録）は、**一覧には見えても CA の主体にならず統制できない**
 - サインインログで、そのエンティティが `Is Agent = No` として扱われることを確認
 
-> これは「**まず観察（Observe）→ Agent ID 発行 → 統制（Govern）**」という順序の必然性を示す。可視化だけでは統制は成立しない。統制には Agent ID の発行（§1）が前提。
+> これは「**まず観察（Observe）→ Agent ID 発行 → 統制（Govern）**」という順序の必然性を示す。可視化だけでは統制は成立しない。統制には Agent ID の発行（1 節）が前提。
 
 ✅ **Govern 完了条件**：Block → 実際に停止（サインイン Failure）、Unblock → 復帰、を確認。`AgentsInfo` で対象を機械抽出できる。
 
@@ -274,13 +274,13 @@ Learn の Secure は、**Entra（リスクベースのアクセス制御）・Pu
 
 | 保護面 | 役割 | 本節 |
 |--------|------|------|
-| **Microsoft Entra** | ユーザー／エージェントに一貫したリスクベースのアクセス制御（Agent risk による Block 等） | §5-2 |
-| **Microsoft Purview** | 情報保護・DLP・リスクセーフガードで機密データ露出を防ぐ | §5-3 |
-| **Microsoft Defender** | エージェント活動の脅威検出・調査・対応（Advanced Hunting） | §5-4 |
+| **Microsoft Entra** | ユーザー／エージェントに一貫したリスクベースのアクセス制御（Agent risk による Block 等） | 5-2 節 |
+| **Microsoft Purview** | 情報保護・DLP・リスクセーフガードで機密データ露出を防ぐ | 5-3 節 |
+| **Microsoft Defender** | エージェント活動の脅威検出・調査・対応（Advanced Hunting） | 5-4 節 |
 
 ### 5-1. 全体像
 
-Observe（§3）が「見る」、Govern（§4）が「ライフサイクルを止める／消す」なら、Secure（§5）は「**リスクに応じて自動で守る**」。同じ Entra / Purview / Defender の画面を、ここでは**保護（ポリシー適用・データ保護・脅威検出）**の観点で使う。
+Observe（3 節）が「見る」、Govern（4 節）が「ライフサイクルを止める／消す」なら、Secure（5 節）は「**リスクに応じて自動で守る**」。同じ Entra / Purview / Defender の画面を、ここでは**保護（ポリシー適用・データ保護・脅威検出）**の観点で使う。
 
 ### 5-2. 条件付きアクセス — Agent risk = High を Block（Report-only → On）
 
@@ -306,7 +306,7 @@ Entra の条件付きアクセス（CA）で「**すべてのエージェント 
 
 ### 5-3. Purview — 機密データの保護（情報保護 / DLP）
 
-§3-3 で Purview を**観察**（Prompt/Response を読む）に使ったが、Secure では**保護**に使う。エージェントが機密データを扱う／外部へ出す動きを、情報保護ラベル・DLP・リスクセーフガードで抑止する。
+3-3 節 で Purview を**観察**（Prompt/Response を読む）に使ったが、Secure では**保護**に使う。エージェントが機密データを扱う／外部へ出す動きを、情報保護ラベル・DLP・リスクセーフガードで抑止する。
 
 - [Purview](https://purview.microsoft.com/) › **DSPM for AI** で、エージェントの AI アクティビティに含まれる機密情報の種類・件数を把握
 - DLP ポリシーで、機密ラベル付きデータのプロンプト送信やツール経由の持ち出しを制限
@@ -316,7 +316,7 @@ Entra の条件付きアクセス（CA）で「**すべてのエージェント 
 
 ### 5-4. Defender — 脅威検出と調査（Advanced Hunting）
 
-Defender はエージェント活動を**脅威防御**の観点で監視する。§3-3 / §4-1 で使った `CloudAppEvents` / `AgentsInfo` は、そのまま**不審な振る舞いの検出**にも使える。
+Defender はエージェント活動を**脅威防御**の観点で監視する。3-3 節 / 4-1 節 で使った `CloudAppEvents` / `AgentsInfo` は、そのまま**不審な振る舞いの検出**にも使える。
 
 ```kusto
 // 例：短時間に大量のツール呼び出し／高い失敗率のエージェントを洗い出す
@@ -329,7 +329,7 @@ CloudAppEvents
 | order by Calls desc
 ```
 
-- 高リスク該当は §4-1 の棚卸し・§5-2 の CA（Agent risk）へフィードバックする
+- 高リスク該当は 4-1 節 の棚卸し・5-2 節 の CA（Agent risk）へフィードバックする
 - 詳細: [Defender Advanced Hunting（AgentsInfo テーブル）](https://learn.microsoft.com/defender-xdr/advanced-hunting-agentsinfo-table)
 
 ✅ **Secure 完了条件**：CA を Report-only で「Would block」までログ確認。Purview / Defender でエージェントのデータ・脅威面を見る場所を把握。
