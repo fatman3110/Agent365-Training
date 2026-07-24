@@ -8,21 +8,22 @@
 
 **目次**
 
-- [0. 前提を確認する](#0-前提を確認する)
-- [1. エージェントを作る（Learn ヘルパー）](#1-エージェントを作るlearn-ヘルパー)
-- [2. 無償の Microsoft MCP を道具として足す](#2-無償の-microsoft-mcp-を道具として足す)
-- [3. 公開して組織に申請する](#3-公開して組織に申請する)
+- [第1部 A：Copilot Studio で AI エージェントを作る（開発者）](#第1部-acopilot-studio-で-ai-エージェントを作る開発者)
+  - [1. エージェントを作る（Learn ヘルパー）](#1-エージェントを作るlearn-ヘルパー)
+  - [2. 無償の Microsoft MCP を道具として足す](#2-無償の-microsoft-mcp-を道具として足す)
+  - [3. 公開して組織に申請する](#3-公開して組織に申請する)
 
-## 1. エージェントを作る（Learn ヘルパー）
+## 1. エージェントを作る
 
-今回作るのは「**Learn ヘルパー**」— Microsoft / Azure の質問に、無償の **Microsoft Learn Docs MCP Server**（Microsoft 提供の認定コネクター）を使って Learn の公式情報から答えるエージェント。追加ライセンスなしで作れて、MCP を呼ぶので Observability にも記録が残る。
+今回作るのは「**Learn ヘルパー**」エージェント — Microsoft / Azure の質問に、無償の **Microsoft Learn Docs MCP Server**（Microsoft 提供の認定コネクター）を使って Learn の公式情報から答えるエージェント。
 
 1. [Copilot Studio](https://copilotstudio.microsoft.com/) にサインイン（画面上部の **Environment**（環境）セレクターで対象環境を確認）
 2. 左ペインの **Agents** → 上部の **+ Create blank agent（空のエージェントを作成）**
-3. プロビジョニング（数十秒）の後、エージェントの **Overview（概要）** ページが開く
-4. **Details** セクションの **Edit** で、Name に `Learn ヘルパー`、Description に「Microsoft / Azure の質問に Microsoft Learn の公式情報で答えるアシスタント」と入力
-5. **Model（モデル）** で言語モデルを選ぶ（チャット主体なら GPT-4.1 か GPT-5 でよい）
-6. **Save**（初回保存時の名前が内部スキーマ名になる点に注意）
+3. 名前の入力を求められたら **`Learn ヘルパー`** と入力して **Create**（この最初に付けた名前が内部スキーマ名にもなるので、後から変えられない前提で決める）
+4. プロビジョニング（数十秒）の後、エージェントの **Overview（概要）** ページが開く
+5. **Details** セクションの **Edit** で、Description に「Microsoft / Azure の質問に Microsoft Learn の公式情報で答えるアシスタント」と入力（Name は手順 3 の `Learn ヘルパー` のまま）
+6. **Model（モデル）** で言語モデルを選ぶ（チャット主体なら GPT-4.1 か GPT-5 でよい）
+7. **Save**
 
 出典: [Create and delete agents](https://learn.microsoft.com/microsoft-copilot-studio/authoring-first-bot)
 
