@@ -63,16 +63,12 @@ a365-setup を実行して。UPN を持たない Agent を OBO（委任）認可
 Skill が内部で `a365 setup all`を実行し、以下を**自動で**行う。
 
 ```text
-要件チェック ─▶ Blueprint 作成 ─▶ 資格情報 ─▶ 委任権限の継承 ─▶ Agent Identity 作成(UPN無し) ─▶ 登録 ─▶ .env へ接続情報を書き込み
+要件チェック ─▶ Blueprint 作成 ─▶ 資格情報 ─▶ 委任権限の継承 ─▶ Agent Identity 作成(UPN無し) ─▶ 登録 ─▶ ローカルの .env へ接続情報を書き込み
 ```
-
-> 末尾の「.env へ接続情報を書き込み」は、生成した **Blueprint ID / Agent ID / クライアント資格情報**などを、ローカルの `.env` ファイルに `a365 setup all` が自動で追記すること（英語ドキュメントの "stamp .env" にあたる）。この `.env` はシークレットを含むので**コミット禁止**。
 
 途中で **2 回**、画面の指示に従って承認する：
 1. **アプリ権限の付与** … `Assign this application permission now? [y/N]:` → `y`
 2. **委任権限の管理者同意** … ブラウザが開く → サインイン → **Allow**
-
-> **このコマンドが生成するもの（C）**：エージェントの ID に加えて、**②`start_server.py`（受付・起動）** と **③`.env`（接続情報）**、**②`a365.config.json`** が作られる。これらが「土台」である。だから **§5 のアプリ実装より先**に実行する。
 
 確認：
 
@@ -88,7 +84,7 @@ Get-Content a365.generated.config.json | ConvertFrom-Json | Select-Object comple
 
 エージェントが使う「道具」を、Azure Functions として建てる。コードは [../src/mcp/](../src/mcp)（`echo` / `now` の 2 ツール）。
 
-### 4-1. Azure に Functions を作る（コピペ）
+### 4-1. Azure Functions をデプロイする
 
 ```powershell
 az group create -n $RG -l $LOC
@@ -107,17 +103,21 @@ func azure functionapp publish $FUNC
 cd ..\..\docs
 ```
 
-> MCP の Functions 拡張は Preview。`host.json` の `extensionBundle` は MCP 対応版（Experimental バンドル）を指定済み。うまく出ない場合は [Azure Functions リモート MCP のドキュメント](https://learn.microsoft.com/azure/azure-functions/) で最新のバンドル版を確認。
 
-> この節では**道具を作って Azure に置くだけ**。**Agent 365 への登録は §6、承認は [第2部 §1](./part2-handson.md)** でまとめて行う。
+> この節では**道具を作って Azure に置くだけ**。**Agent 365 への登録と承認は公団のステップ** でまとめて行う。
 
 ## 5. エージェント本体を実装する
 
-Copilot / Claude Code に、②の受付・起動サーバーを生成させる。
+これも §3 と同じく、**AI チャットに打ち込む自然言語の指示**。Copilot Chat（または Claude Code）に次を送ると、Skill（`make-a365-agent`）が②の受付・起動サーバーを生成する。
 
 ```text
 Make this a non-AI-Teammate Agent using OBO. Python / aiohttp のホスティング層を生成して。
 ```
+
+> **この指示の意味（初学者向け）**
+> - **Make this a non-AI-Teammate Agent using OBO** … §3 で作ったのと同じ「非 AI Teammate・OBO（委任）」のエージェントとして扱う合図。Skill はこのキーワードで生成するコードの形（認証の配線など）を判定する
+> - **Python / aiohttp のホスティング層を生成して** … ②「受付と起動」（`start_server.py`）を、Python の Web サーバーライブラリ **aiohttp** で作ってほしい、という依頼。このサーバーが外部からのメッセージを受け付けて①（`app.py`）に渡す
+> - 英語と日本語が混ざっているのは、前半（判定に使うキーワード）を英語で確実に伝え、後半（やってほしい作業）を日本語で書いているため。**日本語だけでも通じる**
 
 `make-a365-agent` が **`start_server.py`（②受付・起動）** を生成する。ここに **[../src/agent/](../src/agent) の中身（①あなたのコード）を配置・接続**する。
 
@@ -131,18 +131,17 @@ Make this a non-AI-Teammate Agent using OBO. Python / aiohttp のホスティン
    ENABLE_A365_OBSERVABILITY=true
    ENABLE_A365_OBSERVABILITY_EXPORTER=true
    ```
-4. 観測配線は Skill に任せてもよい：
+4. 観測配線は Skill に任せてもよい。下の指示を AI チャットに送ると、Skill（`instrument-observability`）が OpenTelemetry の配線コードを生成する：
    ```text
    Add A365 observability to this agent (delegated / OBO).
    ```
-
-> **①と②の役割**：①（`app.py` ほか）＝“頭脳”、②（`start_server.py`）＝“受付・起動”。①だけでは受信口が無く、②だけでは中身が無い。両方そろって動く。
+   > **意味**：「このエージェントに Agent 365 の観測（誰が・どの道具を使ったかの記録送信）を、**delegated / OBO**（委任）で追加して」という依頼。`observability_setup.py` 相当の配線を代わりに書いてくれる。
 
 ## 6. Azure にデプロイして「登録」する
 
 エージェント本体（①＋②）をコンテナにして App Service へ。**LLM（Qwen）は隣に置く Ollama コンテナ（sidecar）**で動かす。
 
-### 6-1. コンテナレジストリと App Service を作る（コピペ）
+### 6-1. コンテナレジストリと App Service を作る
 
 ```powershell
 # コンテナレジストリ
@@ -159,7 +158,7 @@ az webapp create -n $APP -g $RG -p $PLAN `
   --deployment-container-image-name "$ACR.azurecr.io/agent:latest"
 ```
 
-### 6-2. Ollama（LLM）を sidecar で追加（★このステップだけ少し高度）
+### 6-2. Ollama（LLM）を sidecar で追加
 
 App Service の **sidecar コンテナ**機能で `ollama/ollama` を横に足し、エージェントは `http://localhost:11434` で呼ぶ。
 
@@ -167,7 +166,6 @@ App Service の **sidecar コンテナ**機能で `ollama/ollama` を横に足�
   - イメージ：`ollama/ollama:latest`／ポート：`11434`
 - 参考：[App Service の sidecar コンテナー](https://learn.microsoft.com/azure/app-service/tutorial-custom-container-sidecar)
 
-> 😌 **もっと簡単に済ませたい場合**：Ollama の sidecar を使わず、**Azure OpenAI などのマネージド LLM** に向ける手もある（`llm.py` の接続先を差し替えるだけ）。コスト最優先で自前ホストにこだわらないなら、まずこちらで動かすのが楽だ。
 
 ### 6-3. messaging endpoint を更新して「登録」する
 
