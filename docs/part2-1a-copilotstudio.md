@@ -36,20 +36,19 @@ Copilot Studio から「組織に表示」を申請したエージェントは�
 
 承認後、エージェントは Teams アプリストアの **Built for your org**（組織で作成）に現れる。Copilot Studio 側でチャネル接続済みのため、**第2部 B のような Teams 開発者ポータルの手動設定は不要**。
 
-1. [Teams](https://teams.cloud.microsoft/) › **アプリ** で作成したエージェント名を検索
+1. [Teams](https://teams.cloud.microsoft/) › **アプリ** で作成したエージェントを検索
 2. **Add / インストール**（管理者が特定ユーザーへ事前インストールすることも可能）
 3. Microsoft 365 Copilot でも使う設定にしていれば、Copilot のサイドバーからも呼び出せる
 
-出典: [Connect and configure an agent for Teams and Microsoft 365](https://learn.microsoft.com/microsoft-copilot-studio/publication-add-bot-to-microsoft-teams)
-
 > エージェント作成の反映は非同期。承認・インストール後、Teams 検索に出るまで数分〜数時間かかることがある。
 
-> **「組織向けに開発（Built for your org）」に検索しても出ない場合の切り分け**
-> Microsoft 365 管理センターの **エージェント一覧で「使用可能」** と表示されても、それは **Agent 365 レジストリ上の状態**であり、**Teams アプリストアの「組織向けに開発」への掲載＝管理者承認済み**とは別物。以下を上から順に確認する。
-> 1. **管理者承認が未完了／伝播待ち** — 「組織向けに開発」は**管理者が承認したアプリだけ**が並ぶ。承認は Teams 管理センターの **[アプリを管理（Manage apps）](https://learn.microsoft.com/microsoftteams/submit-approve-custom-apps#validate)** 側で行い、Copilot Studio 側の **公開ページ → 承認状態が「承認済み（Approved）」** になっているかを確認する（[Learn](https://learn.microsoft.com/microsoft-copilot-studio/publication-add-bot-to-microsoft-teams#show-an-agent-in-the-teams-app-store-or-in-the-microsoft-365-agent-store)）。承認直後は反映に数分〜数時間かかる。
-> 2. **公開後に公開範囲を狭めた** — 管理者承認へ**送信した後にアクセス範囲を「組織全員」未満に変えると、ユーザーはインストールしても使えず、検索にも出ない**（[Learn 注記](https://learn.microsoft.com/microsoft-copilot-studio/publication-add-bot-to-microsoft-teams#show-an-agent-in-the-teams-app-store-or-in-the-microsoft-365-agent-store)）。範囲を「組織内のすべてのユーザー」に戻す。
-> 3. **検索したユーザーのライセンス／アプリポリシー** — 検索している本人が **Teams ライセンス＋Microsoft 365 Copilot ライセンス**を持ち、Teams のアプリ許可／セットアップポリシーでブロックされていないか。承認済みでも、アプリポリシーで対象外にされたユーザーには表示されない。
-> 4. **Power Platform アプリの Teams 追加が無効** — 「Built with Power Platform」セクション経由で探す場合は、テナントで Power Platform アプリの Teams 追加が許可されている必要がある（[Manage Power Platform apps](https://learn.microsoft.com/microsoftteams/manage-power-platform-apps)）。
+> **M365 Copilot には出るが Teams アプリストアに出ない場合**
+> Copilot の「組織によって構築されました」に見えている時点で**管理者承認は完了**。Teams ストアだけ遅れているので、Teams 側の要因を順に確認する。
+> 1. **Teams クライアントのキャッシュ** — デスクトップは一度サインアウト→再サインイン、Web はブラウザを更新（[Learn](https://learn.microsoft.com/microsoft-copilot-studio/publication-add-bot-to-microsoft-teams#show-an-agent-in-the-teams-app-store-or-in-the-microsoft-365-agent-store)）。
+> 2. **反映のタイムラグ** — Teams ストアと M365 Agent Store は別々に伝播し、Teams 側が遅れることがある（数分〜数時間）。
+> 3. **Teams で Power Platform アプリが許可されていない** — 未許可だと Teams での検索・インストールができない。Teams 管理センターで許可する（[Manage Power Platform apps](https://learn.microsoft.com/microsoftteams/manage-power-platform-apps)）。
+> 4. **Teams のアプリ許可／セットアップポリシー** — 承認済みでも、対象ユーザーがポリシーでブロックされていると Teams に出ない。Teams 管理センターの[アプリを管理](https://learn.microsoft.com/microsoftteams/submit-approve-custom-apps#validate)で確認。
+> なお Copilot 側で使えるなら、観測データ作成（次節）は Copilot 経由で先に進められる。
 
 ## 2. エージェントを実際に動かす（観測データを作る）
 
