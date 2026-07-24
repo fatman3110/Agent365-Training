@@ -31,9 +31,10 @@ flowchart LR
     end
     subgraph P2["第2部：Agent 365 ハンズオン ｜ AI 管理者（M365 / Entra 管理センター）"]
         direction TB
-        B1["承認して管理下に置く<br/>（Agent ID を実体化）"] --> B2["Observe：観察<br/>Registry / Map / 観測4画面"]
-        B2 --> B3["Govern：管理<br/>棚卸し / Block / 削除"]
-        B3 --> B4["Secure：保護<br/>CA / Purview / Defender"]
+        B1["承認して管理下に置く<br/>（Agent ID を実体化）"] --> B2["エージェントを実際に動かす<br/>（観測データを作る）"]
+        B2 --> B3["Observe：観察<br/>Registry / Map / 観測4画面"]
+        B3 --> B4["Govern：管理<br/>棚卸し / Block / 削除"]
+        B4 --> B5["Secure：保護<br/>CA / Purview / Defender"]
     end
     A6 ==> B1
 ```
