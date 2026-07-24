@@ -30,23 +30,21 @@ Agent 365 の 3 本柱の 2 つ目。ライフサイクル管理と一貫した�
 
 ## 2. Block（Kill Switch）— 構成保持のまま即時停止
 
-Block には 2 つの粒度がある。**本節の手順（下記 1〜4）はエージェント全体の Block**。インスタンス単位の Block は別 UI（Instances タブ）で、しかも AI Teammate エージェントにのみ存在するため本教材では対象外。
+Block には 2 つの粒度がある。**本節の手順（下記 1〜4）はエージェント全体の Block**。インスタンス単位の Block は、AI Teammate エージェントにのみ存在するため本教材では対象外。
 
 | 粒度 | どこで | 効果 |
 |------|--------|------|
 | **エージェント全体**（本節の手順） | Agents › All agents › 対象 › **Block** | 組織全体で利用不可。全ユーザーから外れ、インストール済みのユーザーからも削除される。複数インスタンスがあれば全 instance に波及 |
-| **インスタンス単位** | エージェント詳細の **Instances** タブ › 対象 instance › **Block** | その instance だけ停止（実行中の動作も止まる）。**Instances タブは AI Teammate エージェントにのみ表示**されるため、非 AI Teammate の本教材では対象外 |
+| **インスタンス単位** | エージェント詳細の **Instances** タブ › 対象 instance › **Block** | その instance だけ停止（実行中の動作も止まる）。**Instances タブは AI Teammate エージェントにのみ表示**されるため、本教材では対象外 |
 
 1. 管理センター › **Agents › All agents** で対象を開く（`Available`）→ 右上 **Block**
 2. **Block agent** にチェック、任意で Reason を記入 → **Save**
-3. ステータスが **Blocked** に。「removed from all users in your organization」。ボタンは **Unblock** に変化
+3. ステータスが **Blocked** に。
 4. 解除は **Unblock** → チェック → Save で `Available` に復帰
 
-<!-- ![Block / Kill Switch](../assets/12-block.png) -->
-
-> **ID 遮断 ≠ プロセス停止（重要）**：Block は「エージェント **ID としての認証**」を止める。出口（LLM/MCP 呼び出し）が **Agent ID トークン（`fmi_path`）** 依存なら egress も止まり応答生成が失敗する（＝キルスイッチ成立）。出口が SAMI/UAMI のままだと **ID は止まってもプロセスは動き続ける** → 完全停止はホスト側（App Service を停止、または Container Apps の操作）が必要。
->
-> **検証**：Block 後にエージェントを呼ぶ → Entra **サインインログに Failure** が出ることを確認。詳細の **Status / Conditional access / Failure reason** で「どのポリシーで止まったか」を特定する。
+> **「Block ＝ ID を止める」であって「プロセスを止める」ではない（重要）**：Block が止めるのは、エージェントの **Entra Agent ID による認証（トークンの発行）**。エージェントの中身（サーバープロセス）まで止まるかは、**外部（LLM や MCP）を呼ぶときに何の資格情報を使っているか**による。
+> - エージェントが **Agent ID のトークンで外部を呼ぶ**構成なら、Block でその呼び出しも失敗する（＝キルスイッチ成立）。
+> - エージェントが **Agent ID とは別の資格情報**（アプリ自身の ID や API キーなど）で外部を呼ぶ構成なら、**ID は止まってもプロセスは動き続ける** → 完全に止めるにはホスト側（例：App Service を停止）で止める必要がある。
 
 ## 3. 削除（リタイア）と後片付け
 
