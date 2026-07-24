@@ -104,20 +104,19 @@ cd ..\..\docs
 ```
 
 
-> この節では**道具を作って Azure に置くだけ**。**Agent 365 への登録と承認は公団のステップ** でまとめて行う。
+> この節では**道具を作って Azure に置くだけ**。**Agent 365 への登録は §6、承認は [第2部](./part2-handson.md)** でまとめて行う。
 
 ## 5. エージェント本体を実装する
 
 これも §3 と同じく、**AI チャットに打ち込む自然言語の指示**。Copilot Chat（または Claude Code）に次を送ると、Skill（`make-a365-agent`）が②の受付・起動サーバーを生成する。
 
 ```text
-Make this a non-AI-Teammate Agent using OBO. Python / aiohttp のホスティング層を生成して。
+非 AI Teammate のエージェントを OBO（委任）で作りたい。②の受付・起動サーバーを Python / aiohttp で生成して。
 ```
 
 > **この指示の意味（初学者向け）**
-> - **Make this a non-AI-Teammate Agent using OBO** … §3 で作ったのと同じ「非 AI Teammate・OBO（委任）」のエージェントとして扱う合図。Skill はこのキーワードで生成するコードの形（認証の配線など）を判定する
-> - **Python / aiohttp のホスティング層を生成して** … ②「受付と起動」（`start_server.py`）を、Python の Web サーバーライブラリ **aiohttp** で作ってほしい、という依頼。このサーバーが外部からのメッセージを受け付けて①（`app.py`）に渡す
-> - 英語と日本語が混ざっているのは、前半（判定に使うキーワード）を英語で確実に伝え、後半（やってほしい作業）を日本語で書いているため。**日本語だけでも通じる**
+> - **非 AI Teammate のエージェントを OBO（委任）で** … §3 で作ったのと同じ種類のエージェントとして扱う合図。Skill はこの言葉で生成するコードの形（認証の配線など）を判定する
+> - **②の受付・起動サーバーを Python / aiohttp で生成して** … ②「受付と起動」（`start_server.py`）を、Python の Web サーバーライブラリ **aiohttp** で作ってほしい、という依頼。このサーバーが外部からのメッセージを受け付けて①（`app.py`）に渡す
 
 `make-a365-agent` が **`start_server.py`（②受付・起動）** を生成する。ここに **[../src/agent/](../src/agent) の中身（①あなたのコード）を配置・接続**する。
 
@@ -133,9 +132,9 @@ Make this a non-AI-Teammate Agent using OBO. Python / aiohttp のホスティン
    ```
 4. 観測配線は Skill に任せてもよい。下の指示を AI チャットに送ると、Skill（`instrument-observability`）が OpenTelemetry の配線コードを生成する：
    ```text
-   Add A365 observability to this agent (delegated / OBO).
+   このエージェントに Agent 365 の観測を OBO（委任）で追加して。
    ```
-   > **意味**：「このエージェントに Agent 365 の観測（誰が・どの道具を使ったかの記録送信）を、**delegated / OBO**（委任）で追加して」という依頼。`observability_setup.py` 相当の配線を代わりに書いてくれる。
+   > **意味**：「このエージェントに Agent 365 の観測（誰が・どの道具を使ったかの記録送信）を、**OBO（委任）**で追加して」という依頼。`observability_setup.py` 相当の配線を代わりに書いてくれる。
 
 ## 6. Azure にデプロイして「登録」する
 
@@ -184,8 +183,8 @@ a365 develop-mcp register-external-mcp-server `
   --tools       "echo,now"
 ```
 
-登録すると、**エージェントは Agents › Requests、道具（MCP）は Tools › Requests** に `Pending` として現れる。**ここから先が第2部**（管理者による承認＝管理下配置）。
+登録すると、**エージェントは Agents › Requests、道具（MCP）は Tools › Requests** に `Pending` として現れる。
 
 ---
 
-→ 次：**[第2部：Agent 365 ハンズオン](./part2-handson.md)** ｜ [README（概要）](../README.MD)
+→ 次：**[第2部：Agent 365 ハンズオン](./part2-handson.md)** 
