@@ -1,10 +1,9 @@
 # 第1部 A：Copilot Studio で AI エージェントを作る（開発者）
 
-ノーコード／ローコードの **Microsoft Copilot Studio** でエージェントを作り、Teams / Microsoft 365 Copilot チャネルに公開して、組織のカタログに**申請**するまで。コードも Azure も要らず、最短で「Agent 365 に載る」エージェントを用意できる。
+ノーコード／ローコードの **Microsoft Copilot Studio** でエージェントを作り、Teams / Microsoft 365 Copilot チャネルに公開して、組織のカタログに**申請**するまで。
 
-> 💡 自前ホストの LLM やコードでフル制御したいなら **[第1部 B：独自エージェント＋独自 MCP](./part1b-custom-agent.md)** を選ぶ。本ファイル（A）は最短ルート。
->
-> ⚠️ Microsoft Agent 365 / Copilot Studio は Preview を多く含む。UI 名やメニュー位置は変わり得るので、詰まったら [Copilot Studio の公開ドキュメント](https://learn.microsoft.com/microsoft-copilot-studio/publication-add-bot-to-microsoft-teams) で最新を確認すること。
+
+> ⚠️ ⚠️ Microsoft Agent 365 は Preview を多く含む。コマンド・API は変わり得るので、Microsoft Learn で最新情報を確認すること。
 
 **目次**
 
@@ -13,37 +12,30 @@
 - [2. 指示・知識・ツールを設定する](#2-指示知識ツールを設定する)
 - [3. 公開して組織に申請する](#3-公開して組織に申請する)
 
-完了後は **[第2部 A：承認と観測データ作成](./part2-1a-copilotstudio.md)** で管理者承認と観測データ作成を行い、その後 Observe / Govern / Secure に進む。
-
-## 0. 前提を確認する
-
-| 項目 | 内容 |
-|------|------|
-| ライセンス | Copilot Studio を利用できるライセンス。**Microsoft 365 Copilot に含まれる**のが一般的（単体の Copilot Studio ライセンス・試用版でも可）。Agent 365 のガバナンス対象にするには Microsoft 365 E7 / Agent 365 が前提 |
-| ロール | エージェント作成は各ユーザーで可。組織への公開（申請）の**承認**は AI Administrator / Global Administrator（→ 第2部） |
-| アクセス先 | [Copilot Studio](https://copilotstudio.microsoft.com/) にサインインできること |
-
-> このルートは**コード不要**。Azure リソース（App Service / Functions / ACR 等）も作らない。LLM は Copilot Studio 側がホストする。
-
 ## 1. Copilot Studio でエージェントを作る
 
-1. [Copilot Studio](https://copilotstudio.microsoft.com/) にサインイン
-2. 左ナビ **Create（作成）** → **New agent（新しいエージェント）**
-3. 名前・説明・アイコンなどの基本情報を入力（自然言語で「何をするエージェントか」を書くと、雛形が生成される）
-4. **Create** で作成。プレビュー画面（**Test（テスト）**）でその場で会話して動作を確認できる
+1. [Copilot Studio](https://copilotstudio.microsoft.com/) にサインイン（画面上部の **Environment**（環境）セレクターで対象環境を確認）
+2. **Home（ホーム）** ページの入力ボックスに、作りたいことを**自然言語で説明**して送る（AI が名前・説明・指示・知識・ツールの候補を生成する）。あるいは次のどちらか：
+   - **Home** ページの **Start building from scratch（ゼロから作成）** → **Create an agent（エージェントを作成）**
+   - 左ペインの **Agents** → **Create blank agent（空のエージェントを作成）**
+3. プロビジョニング（数十秒）の後、エージェントの **Overview（概要）** ページが開く（Details / Instructions / Model / Starter prompts / Knowledge の各セクションが並ぶ）
+4. 名前・説明を整え、**Save**。**Test / Preview** ペインでその場で会話して動作を確認できる
+
+出典: [Create and delete agents](https://learn.microsoft.com/microsoft-copilot-studio/authoring-first-bot) ｜ [Quickstart: Create and deploy an agent](https://learn.microsoft.com/microsoft-copilot-studio/fundamentals-get-started)
 
 > ここで作るのは Copilot Studio 製のエージェント。第2部で組織に公開すると、Microsoft 365 管理センター（Copilot Control System）の**エージェントレジストリに載り、Agent 365 のガバナンス対象**になる。
 
 ## 2. 指示・知識・ツールを設定する
 
-エージェントの中身を作り込む（すべて任意。最小限なら指示だけでよい）。
+エージェントの中身を作り込む（すべて任意。最小限なら指示だけでよい）。上部タブは **Overview / Knowledge / Tools / Agents / Topics / Activity / Analytics / Channels**。
 
-- **Instructions（指示）** — 役割・口調・してよいこと／いけないことを自然言語で書く
-- **Knowledge（知識）** — SharePoint / 公開 Web / ファイルなどを知識源として追加
-- **Tools / Actions（ツール）** — コネクタや **MCP サーバー**を追加して外部データ・操作を扱わせる（第1部 B の自作 MCP のような「道具」を、ここではローコードで足す）
-- **Topics（トピック）** — 決まった会話フローを定義（必要な場合のみ）
+- **Instructions（指示）** — **Overview** ページの Instructions セクションに、役割・口調・してよいこと／いけないことを自然言語で書く（最大 8,000 文字）
+- **Model（モデル）** — Overview で使う AI モデルを選ぶ
+- **Knowledge（知識）** — 上部タブ **Knowledge** から SharePoint / 公開 Web / ファイルを知識源として追加
+- **Tools（ツール）** — 上部タブ **Tools** から **+ Add tool** でコネクターや **MCP サーバー**を追加（第1部 B の自作 MCP のような「道具」を、ここではローコードで足す）
+- **Topics（トピック）** — 上部タブ **Topics** で決まった会話フローを定義（必要な場合のみ）
 
-変更したら **Save** し、**Test** で都度確認する。
+変更したら **Save** し、**Test** ペインで都度確認する。
 
 > 道具（ツール）を組織へ展開するには、エージェント本体とは別に管理者の承認が要ることがある（第2部で扱う）。
 

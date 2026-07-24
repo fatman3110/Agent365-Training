@@ -51,7 +51,7 @@ flowchart LR
 | 項目 | 内容 | 対象ルート | ライセンス / 要件 |
 |------|------|---------|------------------|
 | Microsoft Agent 365 テナント | エージェント登録・観測・ガバナンスの基盤 | **A・B** | **Microsoft Agent 365** または **Microsoft 365 E7** |
-| Copilot Studio ライセンス | Copilot Studio でエージェントを作成・公開する | **A** | **Microsoft 365 Copilot に含まれる**（一般的）。単体の Copilot Studio ライセンス・試用でも可 |
+| Copilot Studio ライセンス | Copilot Studio でエージェントを作成・公開する | **A** | Microsoft 365 Copilot または 単体の Copilot Studio ライセンス|
 | Azure サブスクリプション | App Service（+ ACR / Functions）で自前ホスト。outbound HTTPS 必須 | **B** | 従量課金（本トレーニング期間のみの利用であれば数ドル程度） |
 | 開発ツール | Node.js 18+ / Python 3.11+ / a365 CLI / Azure CLI / Azure Functions Core Tools | **B** | 無料 |
 | AI コーディングアシスタント | **GitHub Copilot** または **Claude Code** のいずれ。Agent 365 Skills を実行する“土台” | **B** | GitHub Copilot（無料枠あり）/ Claude Code |
@@ -60,7 +60,7 @@ flowchart LR
 
 ### 操作に必要な権限とロール
 
-作業ごとに必要なロールを、**開発者（第1部）** と **AI 管理者（第2部）** に分けて示す。すべてクラウドで行うため、いずれも必要。
+作業ごとに必要なロールを、**開発者（第1部）** と **AI 管理者（第2部）** に分けて示す。
 
 **開発者（第1部）**
 
