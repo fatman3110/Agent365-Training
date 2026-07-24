@@ -9,13 +9,14 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 **目次**
 
 - [第2部：Observe（観察する）｜AI 管理者](#第2部observe観察するai-管理者)
-  - [1. Agent Registry をタブ別に確認する](#1-agent-registry-をタブ別に確認する)
+  - [1. Agent Registry からエージェントの詳細を確認する](#1-agent-registry-からエージェントの詳細を確認する)
   - [2. Single Agent Map で可視化する](#2-single-agent-map-で可視化する)
   - [3. アクティビティを複数のツールから確認](#3-アクティビティを複数のツールから確認)
+  - [付録. Registry Sync（外部プラットフォームの取り込み）](#付録-registry-sync外部プラットフォームの取り込み)
 
-## 1. Agent Registry をタブ別に確認する
+## 1. Agent Registry からエージェントの詳細を確認する
 
-管理センター › **Agents › All agents › Registry** で対象を開き、組織に存在する AI エージェントを確認する。
+**[Microsoft 365 管理センター](https://admin.microsoft.com/) › Agents › All agents › Registry** で確認対象のエージェントを選択し、組織に存在する AI エージェントの詳細を確認する。
 
 | タブ | 見るもの |
 |------|---------|
@@ -30,8 +31,8 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 
 観測データが、ツール ↔ エージェント ↔ ユーザー の関係図として描かれる。
 
-1. 管理センター › **Agents › All Agents › Map**
-2. **観測データを持つ**自分のエージェントを選択 
+1. **[Microsoft 365 管理センター](https://admin.microsoft.com/) › Agents › All Agents › Map**
+2. **観測データを仕込んだ**エージェントを選択 
 3. **All connections** を選択 → **Single Agent Map** が開く
 
 > **User 名がハッシュ文字列で匿名化される場合**
@@ -40,12 +41,12 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 
 ## 3. アクティビティを複数のツールから確認
 
-エージェントの動作記録は、複数ポータルにそれぞれの側面で記録される。これによって、 IT 管理者やセキュリティ管理者等、役割の異なる担当者が自分の慣れたツールで運用を行うことを支援する。
+エージェントの動作記録は、複数ポータルにそれぞれの側面で記録される。これによって、 IT 管理者やセキュリティ管理者等の役割が異なる担当者が各々の目的に沿ったツールで運用を行うことができる。
 
 **(1) M365 管理センターで「件数」を確認（メトリクス）**
 
 - [管理センター](https://admin.microsoft.com/) › **Agents › All agents › 対象 › Activity**
-- ここで見えるのは「実行があった」という**メトリクス（件数）**。対話の中身は見えない
+- ここで見えるのは「実行があった」という**メトリクス（件数）** で、対話の中身は見えない
   
 **(2) Entra サインインログで「誰が利用したか」を確認（ログ）**
 
@@ -80,6 +81,18 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
   | project Timestamp, ActionType, RawEventData
   | order by Timestamp asc
   ```
+
+## 付録. Registry Sync（外部プラットフォームの取り込み）
+
+Copilot Studio / Foundry / Agent Builder 製のエージェントは自動でレジストリに載るが、**Amazon Bedrock・Google Vertex AI・Salesforce Agentforce・Databricks Genie** など Microsoft 外のプラットフォームで作ったエージェントは、**Registry Sync（Preview）** でレジストリに取り込める。
+
+1. 管理センター › **Agents › All Agents** の **Registry sync** パーツ › **Manage**
+2. **+ Connect a platform** → 接続名・説明・プラットフォーム・リージョン・認証情報を入力 → **Validate** → **Save**
+3. **Sync agents** で同期。以後は接続ごとに同期状況・最終同期・エラーを確認できる
+
+> **Sync だけでは「一覧管理」しかできない（重要）**
+> Registry Sync が取り込むのは**エージェントの在庫（メタデータ）と、各プラットフォーム API が許す管理アクション**まで。**Observe のテレメトリ（Activity の件数・Single Agent Map・Purview の対話本文・Defender の実行トレース）は取得できない**。テレメトリを得るには、そのエージェントを **Agent 365 SDK（Microsoft OpenTelemetry Distro）で計装**するか、Copilot Studio / Foundry のように**自動でテレメトリを送る**構成にする必要がある。つまり「見える（在庫）」と「観測できる（テレメトリ）」は別物。
+> 出典: [Registry sync（Preview）](https://learn.microsoft.com/microsoft-agent-365/admin/agent-registry)、[既存エージェントの接続](https://learn.microsoft.com/microsoft-agent-365/connect-existing-agents)
 ---
 
 ← 戻る：**[第2部 B：承認と観測データ作成](./part2-1b-custom.md)** ｜ 次：**[第2部：Govern（管理）](./part2-3-govern.md)** ｜ [README（概要）](../README.MD)
