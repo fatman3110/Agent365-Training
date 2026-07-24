@@ -31,10 +31,9 @@ flowchart LR
     end
     subgraph P2["第2部：Agent 365 ハンズオン ｜ AI 管理者（M365 / Entra 管理センター）"]
         direction TB
-        B1["エージェントの承認"] --> B2["Entra Agent ID 確認"]
-        B2 --> B3["Agent Registry を確認"] --> B4["Single Agent Map で可視化"]
-        B4 --> B5["観測を4画面で追う<br/>M365→Entra→Purview→Defender"]
-        B5 --> B6["ガバナンスを検証<br/>棚卸し/Block/CA/削除"]
+        B1["承認して管理下に置く<br/>（Agent ID を実体化）"] --> B2["Observe：観察<br/>Registry / Map / 観測4画面"]
+        B2 --> B3["Govern：管理<br/>棚卸し / Block / 削除"]
+        B3 --> B4["Secure：保護<br/>CA / Purview / Defender"]
     end
     A6 ==> B1
 ```
@@ -43,7 +42,7 @@ flowchart LR
 | 部 | ゴール | 主な担当・画面 |
 |----|--------|---------------|
 | 第1部 環境構築 | エージェントが Agent 365 に登録され、Azure（クラウド）で動く | 開発者：VS Code・ターミナル・Azure |
-| 第2部 Agent 365 ハンズオン | 登録内容・アクティビティ・ガバナンスを実機で確認できる | AI 管理者：M365 管理センター・Entra 管理センター |
+| 第2部 Agent 365 ハンズオン | Learn の 3 本柱（**Observe / Govern / Secure**）で登録内容・アクティビティ・ガバナンスを実機確認できる | AI 管理者：M365 管理センター・Entra・Purview・Defender |
 
 ---
 
@@ -128,6 +127,7 @@ Agent365-Training/
 
 ## 参考リンク
 
+- [Microsoft Agent 365 の概要（Observe / Govern / Secure）](https://learn.microsoft.com/ja-jp/microsoft-agent-365/overview)
 - [Agent 365 Developer Docs](https://learn.microsoft.com/microsoft-agent-365/developer/)
 - [On-Behalf-Of フロー（Microsoft Entra Agent ID）](https://learn.microsoft.com/entra/agent-id/agent-on-behalf-of-oauth-flow)
 - [Manage agent registry（管理センター）](https://learn.microsoft.com/microsoft-365/admin/manage/agent-registry)
