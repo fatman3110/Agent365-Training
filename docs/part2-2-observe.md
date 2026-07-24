@@ -2,51 +2,41 @@
 
 Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどんなエージェントがいて、何をしているか」を可視化する。
 
-> ▶ **前提**：先に **[第2部 A：Copilot Studio 版](./part2-1a-copilotstudio.md)** または **[第2部 B：独自エージェント版](./part2-1b-custom.md)** で承認し、**実際に動かして観測データを作っておくこと**。一度も動かしていないと、この節の画面は何も表示されない。
->
-> ⚠️ Microsoft Agent 365 は Preview を多く含む。UI 名や配置は変わり得るので、詰まったら [Microsoft Learn](https://learn.microsoft.com/ja-jp/microsoft-agent-365/overview) で最新を確認すること。
+>**前提**：先に エージェントを動かして観測データを作っておくこと。一度も動かしていないと、この節の画面は何も表示されない。
+
+> ⚠️ Microsoft Agent 365 / Copilot Studio は Preview を多く含む。UI 名やメニュー位置は変わり得るので、詰まったら Microsoft Learn で最新を確認すること。
 
 **目次**
 
-- [1. Agent Registry をタブ別に確認する](#1-agent-registry-をタブ別に確認する)
-- [2. Single Agent Map で可視化する](#2-single-agent-map-で可視化するpreview)
-- [3. 観測を 4 画面で追う（実践ラボ）](#3-観測を-4-画面で追う同じ-run-を突き合わせる実践ラボ)
+- [第2部：Observe（観察する）｜AI 管理者](#第2部observe観察するai-管理者)
+  - [1. Agent Registry をタブ別に確認する](#1-agent-registry-をタブ別に確認する)
+  - [2. Single Agent Map で可視化する（Preview）](#2-single-agent-map-で可視化するpreview)
+  - [3. 観測を 4 画面で追う（同じ Run を突き合わせる｜実践ラボ）](#3-観測を-4-画面で追う同じ-run-を突き合わせる実践ラボ)
 
 ## 1. Agent Registry をタブ別に確認する
 
-管理センター › **Agents › All agents › Registry** で対象を開き、各タブで「登録内容」を確認する。
+管理センター › **Agents › All agents › Registry** で対象を開き、組織に存在する AI エージェントを確認する。
 
 | タブ | 見るもの |
 |------|---------|
 | **Details** | Publisher type / Owner / Entra agent ID / Channel |
 | **Users** | 利用ユーザー |
-| **Data & tools** | Capabilities / Knowledge / **Tools（BYO MCP の echo・now がここに出る）** |
+| **Data & tools** | Capabilities / Knowledge / Tools（利用している MCP はここに表示される） |
 | **Security** | Microsoft Purview（活動監視・機密データ保護）＋ Microsoft Entra（ID 保護・Agent ID）。右上に **Block** |
 | **Permissions** | 付与権限（Granted / Delegated） |
 | **Activity** | Active users / Sessions / Exceptions と時系列グラフ |
 
-<!-- ![Registry タブ](../assets/10-registry.png) -->
+## 2. Single Agent Map で可視化する
 
-## 2. Single Agent Map で可視化する（Preview）
-
-観測データが、エージェント ↔ ユーザー ↔ ツールの関係図として描かれる。
+観測データが、ツール ↔ エージェント ↔ ユーザー の関係図として描かれる。
 
 1. 管理センター › **Agents › All Agents › Map**
-2. **観測データを持つ**自分のエージェントを選択 → サマリ（users / sessions / exceptions）を確認
+2. **観測データを持つ**自分のエージェントを選択 
 3. **All connections** を選択 → **Single Agent Map** が開く
 
-| ノード | 内容 |
-|--------|------|
-| Agent | 詳細・サマリ活動 |
-| User（top 50） | クリックでユーザー詳細 |
-| Tool（top 50） | tool calls・exception 数・last activity（**echo / now** が出る） |
+> **User 名がハッシュ文字列で匿名化される場合**
+> 組織設定「**レポートで、ユーザー、グループ、サイトの名前を非表示にする（Display concealed user, group, and site names in all reports）**」が有効だと、ユーザー名が MD5 ハッシュで匿名化される（**2021/9/1 以降は既定でオン**）。Single Agent Map もこの設定に従う。実名に戻すには、Global Administrator が [Microsoft 365 管理センター](https://admin.microsoft.com/) › **設定 › 組織設定 › サービス › レポート** で当該チェックを外して保存する（反映まで数分。M365／Teams の全レポートに一括で効くので他レポートも実名化される点に注意）。出典: [agent-map – Single Agent Map](https://learn.microsoft.com/microsoft-365/admin/manage/agent-map?view=o365-worldwide#single-agent-map-preview)、[使用状況レポートの実名表示](https://learn.microsoft.com/microsoft-365/admin/activity-reports/activity-reports?view=o365-worldwide#show-user,-group,-or-site-details-in-usage-reports)
 
-- **線の太さ** = interaction volume、**exception >1% の線は赤**
-- 空表示なら、観測データ作成（[第2部 A](./part2-1a-copilotstudio.md) / [B](./part2-1b-custom.md)）と観測配線（[第1部 B](./part1b-custom-agent.md)）を見直す
-
-<!-- ![Single Agent Map](../assets/11-single-agent-map.png) -->
-
-> Single Agent Map は「1 エージェント ↔ ユーザー ↔ ツール」に限定で、**agent-to-agent の線は描かれない**。マルチエージェント化は**テナント全体の Agent Map（クラスタ表示）**を豊かにする用途。
 
 ## 3. 観測を 4 画面で追う（同じ Run を突き合わせる｜実践ラボ）
 
