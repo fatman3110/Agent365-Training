@@ -26,15 +26,16 @@ Agent 365 の 3 本柱の 2 つ目。ライフサイクル管理と一貫した�
 3. **Agents › Overview › Top actions for you** の **Agents without owners（所有者不在）** / **Agents at risk（リスクあり）** から、要対応のエージェントを直接開く
 4. 必要なら **Export** で一覧を Excel / CSV に出し、棚卸し記録にする
 
-> ここで絞った **高リスク／所有者不在リスト**が [条件付きアクセス](#6-条件付きアクセス--agent-risk--high-を-blockreport-only--on) や一括統制の入力になる。
-> 補足：一括処理・自動化したい場合は [Defender](https://security.microsoft.com/) › Advanced hunting の `AgentsInfo` テーブルを KQL で引く方法もある（本教材では補足扱い）。
+> 補足：一括処理・自動化したい場合は [Defender](https://security.microsoft.com/) › Advanced hunting の `AgentsInfo` テーブルを KQL で引く方法を活用可能
 
 ## 2. Block（Kill Switch）— 構成保持のまま即時停止
 
-| 粒度 | 対象 | 効果 |
-|------|------|------|
-| **Blueprint 単位** | エージェント全体 | 組織全体で利用不可。全ユーザー・全 instance に波及 |
-| **Instance 単位** | 個々の instance | その instance だけ停止。他は影響なし |
+Block には 2 つの粒度がある。**本節の手順（下記 1〜4）はエージェント全体の Block**。インスタンス単位の Block は別 UI（Instances タブ）で、しかも AI Teammate エージェントにのみ存在するため本教材では対象外。
+
+| 粒度 | どこで | 効果 |
+|------|--------|------|
+| **エージェント全体**（本節の手順） | Agents › All agents › 対象 › **Block** | 組織全体で利用不可。全ユーザーから外れ、インストール済みのユーザーからも削除される。複数インスタンスがあれば全 instance に波及 |
+| **インスタンス単位** | エージェント詳細の **Instances** タブ › 対象 instance › **Block** | その instance だけ停止（実行中の動作も止まる）。**Instances タブは AI Teammate エージェントにのみ表示**されるため、非 AI Teammate の本教材では対象外 |
 
 1. 管理センター › **Agents › All agents** で対象を開く（`Available`）→ 右上 **Block**
 2. **Block agent** にチェック、任意で Reason を記入 → **Save**
