@@ -8,13 +8,10 @@
 2. **エージェントが使う道具（MCP）を作る** — エージェントが活用するツール（本教材では `echo` / `now` といった疑似的なもの）を自作します。
 3. **本体を実装してクラウドにデプロイする** — 応答ロジックを実装し、Azure に載せます。
 4. **Agent 365 に登録して“管理下”に置く** — エージェントと道具（MCP）を登録し、管理者が承認します（管理画面で可視化されます）。
-5. **管理者として統制する** — 管理者がエージェントを**ワンクリックで止める（Kill Switch）**など、ガバナンス（統制）が効くことを確認します。
-
->
-> ℹ️ 本教材は「**AI Teammate ではない**タイプ」（人のように Teams に常駐せず、道具として呼び出す形）の AI エージェントを作成します
-
+5. **管理者として統制する** — 管理者がエージェントを **ワンクリックで止める（Kill Switch）** など、ガバナンス（統制）が効くことを確認します。
 
 > ⚠️ **教育目的の教材である。** 自前ホスト LLM・BYO MCP（クラウド公開）を含むため、本番環境では使用しないこと。使い終わったら後片づけ（`a365 cleanup` / リソース削除）を行うこと。
+
 > ⚠️ **Microsoft Agent 365 は Preview を多く含む。** UI・コマンド・仕様・提供条件は変わり得る。実際のサービス活用にあたっては Microsoft Learn で最新情報を確認すること。
 
 ---
@@ -28,8 +25,8 @@ flowchart LR
     subgraph P1["第1部：環境構築 ｜ 開発者（VS Code / ターミナル）"]
         direction TB
         A1["作業端末への必要ツール導入"] --> A2["作業端末への便利ツール（Skills） 導入"] --> A3["Blueprint / Agent ID 作成"]
-        A3 --> A4["自作 MCP サーバ作成<br/>(Azure Functions)"] --> A5["AI エージェント"]
-        A5 --> A6["Azure にデプロイ"]
+        A3 --> A4["自作 MCP サーバ作成<br/>(Azure Functions)"] --> A5["AI エージェント作成"]
+        A5 --> A6["Azure への AI エージェントデプロイ"]
     end
     subgraph P2["第2部：Agent 365 ハンズオン ｜ AI 管理者（M365 / Entra 管理センター）"]
         direction TB
@@ -53,26 +50,35 @@ flowchart LR
 | 項目 | 内容 | ライセンス / 要件 |
 |------|------|------------------|
 | Microsoft Agent 365 テナント | エージェント登録・観測・ガバナンスの基盤 | **Microsoft Agent 365** または **Microsoft 365 E7** |
-| Azure サブスクリプション | App Service（+ ACR）で自前ホスト。outbound HTTPS 必須 | 従量課金 |
+| Azure サブスクリプション | App Service（+ ACR / Functions）で自前ホスト。outbound HTTPS 必須 | 従量課金（**概算は下記 💰**） |
 | 開発ツール | Node.js 18+ / Python 3.11+ / a365 CLI / Azure CLI / Azure Functions Core Tools | 無料 |
 | Agent 365 Skills | Copilot / Claude Code 用の自動化スキル集 | 無料（`microsoft/agent365-skills`） |
 | Frontier Preview（任意） | AI Teammate 機能に必要。**本教材は非 AI Teammate のため必須としない** | — |
 
-> `a365 setup all` は要件チェックで「Frontier Preview Program — テナント登録は自動確認できません」と **Warn** を出すことがある。非 AI Teammate では致命的ではないが、Agent 365 一般前提として求められる場合はここで判断する。
+**💰 概算コスト（Azure 従量課金・目安）** — リージョン・SKU・実使用で変わるため、正確には [Azure Pricing Calculator](https://azure.microsoft.com/pricing/calculator/) で確認すること。
+
+| リソース | 目安 SKU | 概算（常時稼働・月） | コストの抑え方 |
+|---|---|---|---|
+| App Service Plan（**主コスト**。Ollama を載せるためメモリ 4〜8GB クラス） | B3 〜 P1v3 目安 | 約 **$30〜160** | 使わない時は **停止（Stop）**、学習後は **削除** |
+| Azure Container Registry | Basic | 約 **$5** | 低額。不要なら削除 |
+| Azure Functions（BYO MCP） | 従量課金（Consumption） | 学習規模なら **ほぼ無料〜$1** | 呼び出しが少なければ無視できる |
+
+> **合計目安**：常時稼働で **月 $40〜170 程度**。**学習時のみ起動し、終了後に `a365 cleanup` とリソース削除**をすれば **数ドル**に収まる。
 
 ### 操作に必要な権限とロール
 
-作業ごとに必要なロールと、そのロールが属するレイヤ（管理基盤）は以下のとおり。**開発者の作業**と**AI 管理者の作業**が分かれる点に注意する。
+作業ごとに必要なロールを、**開発者（第1部）** と **AI 管理者（第2部）** の担当で分けて示す。
 
-| 作業 | 区分 | 必要なロール | 補足 |
+| 作業 | 担当 | 必要なロール | 補足 |
 |------|------|------------|------|
-| Blueprint / Agent ID 作成（`a365 setup all`） | 必須 | Entra: **Application Administrator**（推奨・最小）/ Cloud Application Administrator / Global Administrator | テナント初回のみ `a365 setup requirements` を管理者が実行すれば以降の開発者は引き継ぐ |
-| BYO MCP 登録の承認（Tools › Requests） | 必須 | **AI Administrator** または **Global Administrator** | 同意は組織全体に付与される |
-| エージェント登録の承認（Agents › Requests） | 必須 | **AI Administrator** または **Global Administrator** | Requests タブで Publish |
-| Agent Registry / Agent Map の閲覧 | 必須 | **Global Administrator** または **AI Administrator** ＋ **E7（Agent 365）** | Usage/観測フィルタはテナント < 4,000 ユーザーで有効 |
-| Block（Kill Switch）/ 削除 | 必須 | **AI Administrator** | 構成保持の一時停止（Block）と完全削除（Delete）は別物 |
-| 条件付きアクセス（全 Agent ID 対象） | 任意 | Entra: **Conditional Access Administrator** / Security Administrator | 本番適用前にレポート専用で影響確認 |
-| Azure へのデプロイ | 任意 | Azure RBAC: **Contributor**（作成）/ **User Access Administrator**（RBAC 付与） | App Service + ACR を使う場合 |
+| Blueprint / Agent ID 作成（`a365 setup all`） | 開発者 | **Application Administrator**（推奨・最小）/ Cloud Application Administrator / Global Administrator | テナント初回のみ管理者が `a365 setup requirements` を実行すれば、以降の開発者は引き継げる |
+| BYO MCP 登録（`register-external-mcp-server`） | 開発者 |  **Application Administrator** 相当 | プロキシ用 Entra アプリを自動作成するため。登録のみ（承認は下段） |
+| Azure へのデプロイ（App Service / ACR / Functions） | 開発者 | Azure RBAC: **Contributor**（リソース作成）/ **User Access Administrator**（RBAC 付与） | 自前ホストのため必須 |
+| エージェント登録の承認（Agents › Requests） | AI 管理者 | **AI Administrator** または **Global Administrator** | Requests タブで Publish |
+| BYO MCP 登録の承認（Tools › Requests） | AI 管理者 | **AI Administrator** または **Global Administrator** | 同意は組織全体に付与される |
+| Agent Registry / Single Agent Map の閲覧 | AI 管理者 | **AI Administrator** または **Global Administrator** |  |
+| Block（Kill Switch）/ 削除 | AI 管理者 | **AI Administrator** | 一時停止（Block）と完全削除（Delete）は別物 |
+| 条件付きアクセス（全 Agent ID 対象） | AI 管理者 | Entra: **Conditional Access Administrator** / Security Administrator | 本番適用前にレポート専用で影響確認 |
 
 > ロール名・付与手順は変更され得る。最新は公式ドキュメントを参照すること。
 
