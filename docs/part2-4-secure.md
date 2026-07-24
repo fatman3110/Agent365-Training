@@ -7,7 +7,7 @@ Agent 365 の 3 本柱の 3 つ目。Learn の Secure は、**Purview（情報�
 | 保護面 | 役割 | 本節 |
 |--------|------|------|
 | **Microsoft Purview** | 情報保護・DLP・リスクセーフガードで機密データ露出を防ぐ | [2 節](#2-purview--機密データの保護情報保護--dlp) |
-| **Microsoft Defender** | エージェント活動の脅威検出・調査・対応（Advanced Hunting） | [3 節](#3-defender--脅威検出と調査advanced-hunting) |
+| **Microsoft Defender ／ レジストリ** | AI アラートの確認（Defender ポータル）＋リスクのあるエージェントの把握（M365 管理センター レジストリ） | [3 節](#3-脅威とリスクを確認する) |
 
 > リスクベースのアクセス制御（Entra 条件付きアクセス・Agent risk）は、テンプレートと併せて [Govern の 6 節](./part2-3-govern.md#6-条件付きアクセス--agent-risk--high-を-blockreport-only--on) で扱う。
 
@@ -16,7 +16,7 @@ Agent 365 の 3 本柱の 3 つ目。Learn の Secure は、**Purview（情報�
 - [第2部：Secure（保護）｜AI 管理者](#第2部secure保護ai-管理者)
   - [1. 全体像](#1-全体像)
   - [2. Purview — 機密データの保護（情報保護 / DLP）](#2-purview--機密データの保護情報保護--dlp)
-  - [3. Defender — 脅威検出と調査（Advanced Hunting）](#3-defender--脅威検出と調査advanced-hunting)
+  - [3. 脅威とリスクを確認する](#3-脅威とリスクを確認する)
 
 ## 1. 全体像
 
@@ -29,9 +29,24 @@ Agent 365 の 3 本柱の 3 つ目。Learn の Secure は、**Purview（情報�
 - [Purview](https://purview.microsoft.com/) › **DSPM** で、エージェントの AI アクティビティに含まれる機密情報の種類・件数を把握
 - DLP ポリシーで、機密ラベル付きデータのプロンプト送信やツール経由の持ち出しを制限
 
-## 3. Defender — 脅威検出と調査（Advanced Hunting）
+## 3. 脅威とリスクを確認する
 
-Defender はエージェント活動を**脅威防御**の観点で監視する。
+### 3-1. リスクのあるエージェントを把握する（M365 管理センター レジストリ）
+
+- [Microsoft 365 管理センター](https://admin.microsoft.com/) › **Agents › Overview**（または **Registry**）の **Agents at risk（リスクのあるエージェント）** で、セキュリティプラットフォームが検出した高リスクなエージェントを確認できる
+- **Manage agent risks** から対象を開き、リスクの詳細と推奨対応を確認する
+- 出典: [Agent registry — Agents at risk](https://learn.microsoft.com/microsoft-365/admin/manage/agent-registry?view=o365-worldwide#agents-at-risk)
+
+### 3-2. AI に関するアラートを確認する（Defender ポータル）
+
+Defender は Agent 365 管理下のエージェント活動を常時監視し、**jailbreak／プロンプトインジェクション（XPIA）／資格情報の漏えい／回避手法／不審なユーザーアクセス** などの疑わしい振る舞いを、**Defender ポータルの準リアルタイムのアラート**として上げる（Preview）。アラートはインシデントに相関され、AI Assets ページや各エージェントの **Incidents and alerts** タブから調査できる。
+
+- [Defender ポータル](https://security.microsoft.com/) でエージェント関連のアラート／インシデントを確認
+- 出典: [Detect and investigate threats to AI agents（Defender）](https://learn.microsoft.com/defender-xdr/security-for-ai/ai-agent-detection-protection)
+
+> 詳細なログ分析（Advanced Hunting / KQL によるハンティング）は補足的な調査手段のため、本教材では扱わない。
+
+✅ **Secure 完了条件**：Purview で機密データ面、M365 管理センターのレジストリでリスク、Defender ポータルで AI アラートを確認できる。
 
 
 
