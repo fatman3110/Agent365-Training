@@ -31,9 +31,10 @@ flowchart LR
     end
     subgraph P2["第2部：Agent 365 ハンズオン ｜ AI 管理者（M365 / Entra 管理センター）"]
         direction TB
-        B1["Ai エージェントの承認"] --> B2["Entra Agent ID 確認"]
-        B2 --> B3["Agent Registry を確認"] --> B4["Single Agent Map で関係性の可視化"]
-        B4 --> B5["ガバナンス制御"]
+        B1["エージェントの承認"] --> B2["Entra Agent ID 確認"]
+        B2 --> B3["Agent Registry を確認"] --> B4["Single Agent Map で可視化"]
+        B4 --> B5["観測を4画面で追う<br/>M365→Entra→Purview→Defender"]
+        B5 --> B6["ガバナンスを検証<br/>棚卸し/Block/CA/削除"]
     end
     A6 ==> B1
 ```
@@ -133,6 +134,9 @@ Agent365-Training/
 - [Use Agent Map / Single Agent Map](https://learn.microsoft.com/microsoft-365/admin/manage/agent-map)
 - [Manage tools for agents（Tools・BYO MCP）](https://learn.microsoft.com/microsoft-365/admin/manage/manage-tools-for-agent)
 - [エージェント向け条件付きアクセス](https://learn.microsoft.com/entra/identity/conditional-access/agent-id)
+- [Defender Advanced Hunting（AgentsInfo テーブル）](https://learn.microsoft.com/defender-xdr/advanced-hunting-agentsinfo-table)
+- [Purview DSPM for AI（AI のアクティビティ監視）](https://learn.microsoft.com/purview/ai-microsoft-purview)
+- 実践ラボ参考: [Step 7 Observability Lab](https://github.com/ninjyanaka/a365handson/blob/main/07-observability-lab.md) ｜ [Step 8 Governance Lab](https://github.com/ninjyanaka/a365handson/blob/main/08-governance-lab.md)
 - [Agent management roles & permissions](https://learn.microsoft.com/microsoft-365/admin/manage/agent-roles-perms)
 - [microsoft/agent365-skills](https://github.com/microsoft/agent365-skills)
 - [ninjyanaka/a365handson](https://github.com/ninjyanaka/a365handson)
