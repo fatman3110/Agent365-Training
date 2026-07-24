@@ -5,7 +5,7 @@
 この教材でやることは、大きく次の 4 点です。
 
 1. 🤖 **自分の AI エージェントを用意する** — AI エージェントを、クラウドにデプロイします。
-2. 🧩 **エージェントに「道具（ツール）」を持たせる** — エージェントが「**どこと通信し・何を実行するか**」を把握するには**道具（MCP）**の把握が不可欠です。ここでは自作の小さな道具（`echo` / `now`）を作って**登録**します。
+2. 🧩 **エージェントに「道具（ツール）」を持たせる** — エージェントが「**どこと通信し・何を実行するか**」を把握するには**道具（MCP）**の把握が不可欠です。ここでは自作の小さな道具（`echo` / `now`）を**作ります**（登録・承認は次の #3 でまとめて行います）。
 3. 🏢 **会社のシステムに登録して“管理下”に置く** — エージェント**と道具（MCP）**を **Microsoft Agent 365** に登録し、**管理者が承認（＝管理下に配置）** します。**管理画面（Microsoft 365 / Entra 管理センター）** で可視化します
 4. 🛡️ **管理者として統制する** — 管理者がエージェントを**ワンクリックで止める（Kill Switch）**など、ガバナンス（統制）が効くことを確認します。
 
@@ -26,7 +26,7 @@
 flowchart LR
     subgraph P1["第1部：環境構築 ｜ 開発者（VS Code / ターミナル）"]
         direction TB
-        A1["作業端末環境構築"] --> A2["Skills 導入"] --> A3["Blueprint / Agent ID 作成"]
+        A1["作業端末への必要ツール導入"] --> A2["Agent 365 向け便利ツール（Skills） 導入"] --> A3["Blueprint / Agent ID 作成"]
         A3 --> A4["BYO MCP を建てる<br/>(Azure Functions)"] --> A5["アプリ実装<br/>(LLM / OBO / 観測)"]
         A5 --> A6["Azure にデプロイ & 公開"]
     end
@@ -177,22 +177,15 @@ Get-Content a365.generated.config.json | ConvertFrom-Json
 
 > **なぜアプリ実装より先か**：Agent 365 の管理では「エージェントが**どこと通信し・何を実行するか**」の把握が必須で、その実体が **MCP（ツール）**。先に MCP を用意しておくと、次のアプリ実装や第2部の観測・ガバナンス（Registry の Data & tools / Single Agent Map / 承認）が「何を監視・制御しているか」を具体物で追える。
 
-学習用に、Azure Functions（クラウド）に MCP サーバーをデプロイして登録する。コードは [付録 A.4](#a4-byo-mcp-サーバーfunction_apppy)。
+学習用に、Azure Functions（クラウド）に MCP サーバーを**デプロイ（作成）**する。コードは [付録 A.4](#a4-byo-mcp-サーバーfunction_apppy)。
 
 ```powershell
 # Azure Functions（クラウド）へデプロイ
 func azure functionapp publish <FUNCTION_APP_NAME>
 # → 公開 URL: https://<FUNCTION_APP_NAME>.azurewebsites.net/runtime/webhooks/mcp
-
-a365 develop-mcp register-external-mcp-server `
-  --server-name "<MCP_NAME>" `
-  --server-url  "https://<FUNCTION_APP_NAME>.azurewebsites.net/runtime/webhooks/mcp" `
-  --auth-type   "NoAuth" `
-  --tools       "echo,now"
-# → Entra アプリ2つ自動作成: <MCP_NAME>-A365Proxy / <MCP_NAME>-PublicClients
 ```
 
-> 承認はこのあと**第2部 §8**（管理者作業）で行う。承認前は利用不可。
+> この節では**道具を作る（デプロイする）だけ**。**Agent 365 への登録は §6、承認（管理下に置く）は §8** でエージェントとまとめて行う（手順が混ざらないよう分離）。
 
 ## 5. アプリを実装する（LLM / OBO / 観測）
 
@@ -205,16 +198,26 @@ a365 develop-mcp register-external-mcp-server `
 - [ ] `.env`：`ENABLE_A365_OBSERVABILITY=true` / `ENABLE_A365_OBSERVABILITY_EXPORTER=true`
 - [ ] `A365_EXPORTER_LOG_LEVEL=DEBUG` で **scp 付きトークン**の 200 送信を確認
 
-## 6. Azure にデプロイして公開する
+## 6. Azure にデプロイして「登録」する
+
+エージェント本体をクラウドにデプロイし、**エージェントと道具（MCP）をまとめて Agent 365 に登録**する（承認＝管理下配置は第2部 §8）。
 
 ```powershell
 az group create -n <RESOURCE_GROUP> -l <REGION>
 # App Service(Linux container)+ACR にデプロイ（Ollama を sidecar）
 a365 setup all                  # 実 URL を messaging endpoint に再スタンプ（冪等）
-a365 publish                    # manifest.zip 生成
+a365 publish                    # ① エージェントを登録（manifest.zip 生成）
+
+# ② 道具（MCP）を登録
+a365 develop-mcp register-external-mcp-server `
+  --server-name "<MCP_NAME>" `
+  --server-url  "https://<FUNCTION_APP_NAME>.azurewebsites.net/runtime/webhooks/mcp" `
+  --auth-type   "NoAuth" `
+  --tools       "echo,now"
+# → Entra アプリ2つ自動作成: <MCP_NAME>-A365Proxy / <MCP_NAME>-PublicClients
 ```
 
-`a365 publish` で登録すると、エージェントは **管理センター › Agents › All agents › Requests** に `Pending review` として現れる。**ここから先が第2部**（管理者による承認）。
+登録すると、**エージェントは Agents › Requests、道具（MCP）は Tools › Requests** に `Pending` として現れる。**ここから先が第2部**（管理者による承認＝管理下配置）。
 
 ---
 ---
