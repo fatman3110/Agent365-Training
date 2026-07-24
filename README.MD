@@ -50,53 +50,48 @@ flowchart LR
 | 項目 | 内容 | ライセンス / 要件 |
 |------|------|------------------|
 | Microsoft Agent 365 テナント | エージェント登録・観測・ガバナンスの基盤 | **Microsoft Agent 365** または **Microsoft 365 E7** |
-| Azure サブスクリプション | App Service（+ ACR / Functions）で自前ホスト。outbound HTTPS 必須 | 従量課金（**概算は下記 💰**） |
+| Azure サブスクリプション | App Service（+ ACR / Functions）で自前ホスト。outbound HTTPS 必須 | 従量課金（本トレーニング期間のみの利用であれば数ドル程度） |
 | 開発ツール | Node.js 18+ / Python 3.11+ / a365 CLI / Azure CLI / Azure Functions Core Tools | 無料 |
 | Agent 365 Skills | Copilot / Claude Code 用の自動化スキル集 | 無料（`microsoft/agent365-skills`） |
 | Frontier Preview（任意） | AI Teammate 機能に必要。**本教材は非 AI Teammate のため必須としない** | — |
-
-**💰 概算コスト（Azure 従量課金・目安）** — リージョン・SKU・実使用で変わるため、正確には [Azure Pricing Calculator](https://azure.microsoft.com/pricing/calculator/) で確認すること。
-
-| リソース | 目安 SKU | 概算（常時稼働・月） | コストの抑え方 |
-|---|---|---|---|
-| App Service Plan（**主コスト**。Ollama を載せるためメモリ 4〜8GB クラス） | B3 〜 P1v3 目安 | 約 **$30〜160** | 使わない時は **停止（Stop）**、学習後は **削除** |
-| Azure Container Registry | Basic | 約 **$5** | 低額。不要なら削除 |
-| Azure Functions（BYO MCP） | 従量課金（Consumption） | 学習規模なら **ほぼ無料〜$1** | 呼び出しが少なければ無視できる |
-
-> **合計目安**：常時稼働で **月 $40〜170 程度**。**学習時のみ起動し、終了後に `a365 cleanup` とリソース削除**をすれば **数ドル**に収まる。
 
 ### 操作に必要な権限とロール
 
 作業ごとに必要なロールを、**開発者（第1部）** と **AI 管理者（第2部）** の担当で分けて示す。
 
-| 作業 | 担当 | 必要なロール | 補足 |
+| 作業 | 想定される作業担当者 | 必要なロール | 補足 |
 |------|------|------------|------|
 | Blueprint / Agent ID 作成（`a365 setup all`） | 開発者 | **Application Administrator**（推奨・最小）/ Cloud Application Administrator / Global Administrator | テナント初回のみ管理者が `a365 setup requirements` を実行すれば、以降の開発者は引き継げる |
-| BYO MCP 登録（`register-external-mcp-server`） | 開発者 |  **Application Administrator** 相当 | プロキシ用 Entra アプリを自動作成するため。登録のみ（承認は下段） |
-| Azure へのデプロイ（App Service / ACR / Functions） | 開発者 | Azure RBAC: **Contributor**（リソース作成）/ **User Access Administrator**（RBAC 付与） | 自前ホストのため必須 |
-| エージェント登録の承認（Agents › Requests） | AI 管理者 | **AI Administrator** または **Global Administrator** | Requests タブで Publish |
-| BYO MCP 登録の承認（Tools › Requests） | AI 管理者 | **AI Administrator** または **Global Administrator** | 同意は組織全体に付与される |
+| 自作 MCP 登録（`register-external-mcp-server`） | 開発者 |  **Application Administrator** 相当 |  |
+| Azure へのデプロイ（App Service / ACR / Functions） | 開発者 | Azure RBAC: **Contributor**（リソース作成）/ **User Access Administrator**（RBAC 付与） |  |
+| エージェント登録の承認（Agents › Requests） | AI 管理者 | **AI Administrator** または **Global Administrator** |  |
+| 自作 MCP 登録の承認（Tools › Requests） | AI 管理者 | **AI Administrator** または **Global Administrator** | 組織全体に公開 |
 | Agent Registry / Single Agent Map の閲覧 | AI 管理者 | **AI Administrator** または **Global Administrator** |  |
-| Block（Kill Switch）/ 削除 | AI 管理者 | **AI Administrator** | 一時停止（Block）と完全削除（Delete）は別物 |
-| 条件付きアクセス（全 Agent ID 対象） | AI 管理者 | Entra: **Conditional Access Administrator** / Security Administrator | 本番適用前にレポート専用で影響確認 |
-
-> ロール名・付与手順は変更され得る。最新は公式ドキュメントを参照すること。
+| Block/ 削除 | AI 管理者 | **AI Administrator** | 一時停止（Block）と完全削除の違いに留意 |
+| 条件付きアクセス（Agent ID 対象） | AI 管理者 | **Conditional Access Administrator** / Security Administrator | |
 
 ### 構成ファイル（自前ホスト側）
 
+ファイルは **① あなたが用意するコード**、**② `a365 setup all` / Skills が自動生成**、**③ シークレット（コミット禁止）** の 3 種に分かれる。本リポジトリの [`src/`](./src) に ① のスターター（`echo`/`now` の MCP、LLM/OBO/観測のスケルトン）を同梱してある。②・③ は各自のテナント・マシンで生成されるためリポジトリには含めない。
+
 ```text
-<PROJECT_DIR>/                       # 例: myagent
-├── app.py                           # AgentApplication 本体（on_message で LLM 呼び出し）
-├── llm.py                           # OSS LLM（Ollama sidecar, OpenAI 互換）クライアント
-├── obo.py                           # OBO トークン交換（jwt-bearer）
-├── observability_setup.py           # Agent 365 Observability 配線（use_s2s_endpoint=False）
-├── start_server.py                  # aiohttp ホスティング層（Skills 生成）
-├── function_app.py                  # BYO MCP サーバー（echo / now） ※別プロジェクトでも可
-├── .env                             # a365 setup all がスタンプ（← .gitignore）
-├── a365.config.json                 # aiTeammate:false 等の手動 config
-├── a365.generated.config.json       # setup 生成（blueprint ID / 同意状況）← .gitignore
-└── appPackage/manifest.json         # 公開用 manifest
+<PROJECT_DIR>/
+├── src/                             # ① あなたが用意するコード（本リポジトリに同梱）
+│   ├── app.py                       #   AgentApplication 本体（on_message で LLM 呼び出し）
+│   ├── llm.py                       #   OSS LLM（Ollama, OpenAI 互換）クライアント
+│   ├── obo.py                       #   OBO トークン交換（jwt-bearer）
+│   ├── observability_setup.py       #   Agent 365 Observability 配線（use_s2s_endpoint=False）
+│   ├── function_app.py              #   BYO MCP サーバー（echo / now）
+│   ├── requirements.txt             #   依存パッケージ
+│   └── .env.example                 #   .env のテンプレ（実値は setup all がスタンプ）
+├── start_server.py                  # ② Skills 生成：aiohttp ホスティング層
+├── appPackage/manifest.json         # ② Skills 生成：公開用 manifest
+├── a365.config.json                 # ② setup の入力 config（aiTeammate:false 等）
+├── .env                             # ③ secret：a365 setup all がスタンプ（← .gitignore）
+└── a365.generated.config.json       # ③ secret：setup 生成（blueprint ID/同意状況）← .gitignore
 ```
+
+> ⚠️ **完全な "Out of the Box" は Agent 365 の仕様上不可**：② のホスティング層・manifest と ③ の ID/`.env` は **`a365 setup all` と Skills が各テナント・各マシンで生成**する（シークレットを含むためコミット不可）。本リポジトリは **① のコードだけをすぐ使える形**で同梱し、②③ は §2〜§3 の手順で生成する。
 
 ### 用語ミニ辞典
 
@@ -104,8 +99,7 @@ flowchart LR
 |------|------|
 | **Blueprint** | エージェントの「テンプレート」。ここから Agent ID を発行する。これ自体は実体ではない |
 | **Entra Agent ID** | エージェントに付与される Entra 上の ID。**instance 化して初めて実値になる** |
-| **OBO（委任）** | サインイン中ユーザーの権限で動く。監査は**ユーザー ID**、claim=`scp`、ユーザー同意 |
-| **S2S（アプリ専用）** | エージェント自身の権限で動く。監査は**エージェント ID**、claim=`roles`、管理者同意 |
+| **instance 化** | Blueprint（テンプレート）から、実際に使えるエージェントの実体を 1 つ払い出すこと。これで初めて Entra Agent ID が「—」から実値の GUID になり、利用可能になる |
 | **BYO MCP** | 自作の外部 MCP サーバーを Agent 365 に登録して使う仕組み |
 | **Kill Switch** | 管理センターの Block。構成を保持したまま即時停止（Unblock で復帰） |
 
@@ -125,8 +119,8 @@ a365 --version      # 無ければ: dotnet tool install -g Microsoft.Agents.A365
 func --version      # Azure Functions Core Tools（BYO MCP をクラウドにデプロイするのに使う）
 ```
 
-- [ ] 4 ツールすべてがバージョンを返す
-- [ ] `az login --tenant <TENANT_DOMAIN>` 済み
+- 4 ツールすべてがバージョンを返す
+- `az login --tenant <TENANT_DOMAIN>` 済み
 
 ## 2. Agent 365 Skills を導入する
 
@@ -203,8 +197,8 @@ func azure functionapp publish <FUNCTION_APP_NAME>
 - **OBO** は `use_s2s_endpoint=False`。受け取ったユーザートークンを `jwt-bearer` で観測スコープへ交換
 - **観測** は `InvokeAgentScope`（呼び出し全体）と `ExecuteToolScope`（ツール）を計装 → 後段の Single Agent Map の描画元になる
 
-- [ ] `.env`：`ENABLE_A365_OBSERVABILITY=true` / `ENABLE_A365_OBSERVABILITY_EXPORTER=true`
-- [ ] `A365_EXPORTER_LOG_LEVEL=DEBUG` で **scp 付きトークン**の 200 送信を確認
+- `.env`：`ENABLE_A365_OBSERVABILITY=true` / `ENABLE_A365_OBSERVABILITY_EXPORTER=true`
+- `A365_EXPORTER_LOG_LEVEL=DEBUG` で **scp 付きトークン**の 200 送信を確認
 
 ## 6. Azure にデプロイして「登録」する
 
@@ -290,10 +284,10 @@ a365 develop-mcp register-external-mcp-server `
 
 承認済み（§8）のエージェントを、クラウド経由で実際に使って観測データを溜める：
 
-- [ ] `echo` / `now` を**複数回**呼ぶ → Map の **Tool ノード**が出る（呼ぶほど線が太い）
-- [ ] **複数ユーザー**で叩く（OBO なので別ユーザーでサインイン）→ **User ノード**が増える
-- [ ] （デモ映え）ツールを**一定確率で失敗**させ exception rate を **>1%** に → Map で**赤いハイライト線**
-- [ ] 呼び出し方法：Copilot Studio カスタムエンジン / REST（App Service の `/chat`）/ OBO クライアント
+- `echo` / `now` を**複数回**呼ぶ → Map の **Tool ノード**が出る（呼ぶほど線が太い）
+- **複数ユーザー**で叩く（OBO なので別ユーザーでサインイン）→ **User ノード**が増える
+- （デモ映え）ツールを**一定確率で失敗**させ exception rate を **>1%** に → Map で**赤いハイライト線**
+- 呼び出し方法：Copilot Studio カスタムエンジン / REST（App Service の `/chat`）/ OBO クライアント
 
 **要件**：E7（Agent 365）＋ Global Administrator か AI Administrator。Usage/観測はテナント **< 4,000 ユーザー**で有効。
 
@@ -512,11 +506,11 @@ def now(context) -> str:
 
 ## 付録 D. セキュリティ必須チェック
 
-- [ ] `.env` / `a365.generated.config.json` を `.gitignore`
-- [ ] シークレットは本番で **Managed Identity / Workload Identity（FIC）** に移行
-- [ ] BYO MCP の Functions は `NoAuth`（学習用）。本番は認証を付与する
-- [ ] 最小権限（付与前に権限内容を必ず確認）
-- [ ] 学習後は `a365 cleanup` で後片付け
+- `.env` / `a365.generated.config.json` を `.gitignore`
+- シークレットは本番で **Managed Identity / Workload Identity（FIC）** に移行
+- BYO MCP の Functions は `NoAuth`（学習用）。本番は認証を付与する
+- 最小権限（付与前に権限内容を必ず確認）
+- 学習後は `a365 cleanup` で後片付け
 
 ## 参考リンク
 
