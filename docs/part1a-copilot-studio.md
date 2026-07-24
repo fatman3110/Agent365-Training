@@ -49,11 +49,9 @@ Microsoft 提供の **Microsoft Learn Docs MCP Server**（無償・認定コネ�
 1. 右上の **公開** でエージェントを ”最新バージョンを強制する” オプションを設定したうえで公開する
 2. 上部タブ **チャネル** → **Microsoft 365 と Microsoft Teams** を開く
 3. **Microsoft 365 をオンにする** のチェックを有効にして、**チャネルを追加**する
-4. 同じ設定パネルで **利用可否オプション（Availability options）** を開く（「組織に表示」の入口はここ）
-5. **組織内のすべてのユーザーに表示（Show to everyone in my org）** を選ぶ（「Added to Teams（同僚・共有ユーザーに表示済み）」になっている場合は先に解除する）
-6. 要件を確認して **管理者の承認を得るために送信（Submit for admin approval）** → 確認で **はい**（この操作で管理者承認へ回る）
-
-出典: [Connect and configure an agent for Teams and Microsoft 365（Show to the organization）](https://learn.microsoft.com/microsoft-copilot-studio/publication-add-bot-to-microsoft-teams#show-to-the-organization) ｜ [Manage requested agents](https://learn.microsoft.com/microsoft-365/copilot/agent-essentials/agent-lifecycle/agent-copilot-studio-requested)
+4. 同じ設定パネルで **可用性オプション** を開く
+5. **組織内の全員に表示する** を選ぶ
+6. 要件を確認して **組織カタログに送信**する → 確認で **はい**（この操作で管理者承認へ回る）
 
 ---
 
