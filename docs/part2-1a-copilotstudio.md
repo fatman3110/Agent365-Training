@@ -26,9 +26,9 @@ Copilot Studio から「組織に表示」を申請したエージェントは�
    4. **公開**
 
 > **テンプレートの適用の設定には「事前準備」が必要（重要）**
-> - **カスタムテンプレート**を使うなら**事前準備**が要る。CA だけでなくアクセスパッケージ・カスタムセキュリティ属性も束ねられる。**フル手順**は [Secure：カスタムポリシーテンプレートを作る](./part2-4-secure.md#5-カスタムポリシーテンプレートを作る) を参照。
-> - すぐ進めたいなら、まず **既定テンプレート（全エージェント用）** を選べばよい。
-> - ⚠️ **テンプレートは「新規アクティブ化時のみ」適用**。**承認済みには後付けできない**（[Learn FAQ](https://learn.microsoft.com/microsoft-agent-365/admin/policy-template#select-a-template)）。後から統制を変えるなら **Entra の CA を直接更新**する。
+> - **カスタムテンプレート**を使うなら**事前準備**が要る。アクセスパッケージ・カスタムセキュリティ属性も束ねられる。**フル手順**は [Secure：カスタムポリシーテンプレートを作る](./part2-4-secure.md#5-カスタムポリシーテンプレートを作る) を参照。
+> - すぐ進めたいなら、まず **既定テンプレート（全エージェント用）** を選ぶ。
+> - ⚠️ **テンプレートは「新規アクティブ化時のみ」適用**。**承認済みには後付けできない**（[Learn FAQ](https://learn.microsoft.com/microsoft-agent-365/admin/policy-template#select-a-template)）
 
 承認が完了するとエージェントは組織カタログに載り、利用可能になる。
 
@@ -43,6 +43,13 @@ Copilot Studio から「組織に表示」を申請したエージェントは�
 出典: [Connect and configure an agent for Teams and Microsoft 365](https://learn.microsoft.com/microsoft-copilot-studio/publication-add-bot-to-microsoft-teams)
 
 > エージェント作成の反映は非同期。承認・インストール後、Teams 検索に出るまで数分〜数時間かかることがある。
+
+> **「組織向けに開発（Built for your org）」に検索しても出ない場合の切り分け**
+> Microsoft 365 管理センターの **エージェント一覧で「使用可能」** と表示されても、それは **Agent 365 レジストリ上の状態**であり、**Teams アプリストアの「組織向けに開発」への掲載＝管理者承認済み**とは別物。以下を上から順に確認する。
+> 1. **管理者承認が未完了／伝播待ち** — 「組織向けに開発」は**管理者が承認したアプリだけ**が並ぶ。承認は Teams 管理センターの **[アプリを管理（Manage apps）](https://learn.microsoft.com/microsoftteams/submit-approve-custom-apps#validate)** 側で行い、Copilot Studio 側の **公開ページ → 承認状態が「承認済み（Approved）」** になっているかを確認する（[Learn](https://learn.microsoft.com/microsoft-copilot-studio/publication-add-bot-to-microsoft-teams#show-an-agent-in-the-teams-app-store-or-in-the-microsoft-365-agent-store)）。承認直後は反映に数分〜数時間かかる。
+> 2. **公開後に公開範囲を狭めた** — 管理者承認へ**送信した後にアクセス範囲を「組織全員」未満に変えると、ユーザーはインストールしても使えず、検索にも出ない**（[Learn 注記](https://learn.microsoft.com/microsoft-copilot-studio/publication-add-bot-to-microsoft-teams#show-an-agent-in-the-teams-app-store-or-in-the-microsoft-365-agent-store)）。範囲を「組織内のすべてのユーザー」に戻す。
+> 3. **検索したユーザーのライセンス／アプリポリシー** — 検索している本人が **Teams ライセンス＋Microsoft 365 Copilot ライセンス**を持ち、Teams のアプリ許可／セットアップポリシーでブロックされていないか。承認済みでも、アプリポリシーで対象外にされたユーザーには表示されない。
+> 4. **Power Platform アプリの Teams 追加が無効** — 「Built with Power Platform」セクション経由で探す場合は、テナントで Power Platform アプリの Teams 追加が許可されている必要がある（[Manage Power Platform apps](https://learn.microsoft.com/microsoftteams/manage-power-platform-apps)）。
 
 ## 2. エージェントを実際に動かす（観測データを作る）
 

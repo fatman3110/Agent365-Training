@@ -52,6 +52,7 @@ flowchart LR
 |------|------|---------|------------------|
 | Microsoft Agent 365 テナント | エージェント登録・観測・ガバナンスの基盤 | **A・B** | **Microsoft Agent 365** または **Microsoft 365 E7** |
 | Copilot Studio ライセンス | Copilot Studio でエージェントを作成・公開する | **A** | Microsoft 365 Copilot または 単体の Copilot Studio ライセンス。※ ツール（MCP）呼び出しを含む応答は Copilot Studio メッセージを消費（同ライセンス内／メッセージパック）。本教材の **Microsoft Learn Docs MCP は無償コネクタ（追加ライセンス不要）** |
+| Microsoft Teams ライセンス | 公開したエージェントを Teams で使う（作成者・利用者の双方） | **A** | **Teams を使うライセンス**が必要。Teams は多くの Microsoft 365 サブスクリプションに含まれるが、**Microsoft 365（Teams なし）** の場合は別途 Teams ライセンスの購入が要る。組織のユーザーがエージェントを使うには **Microsoft 365 Copilot** ライセンスも前提（[Connect and configure an agent for Teams and Microsoft 365 – Prerequisites](https://learn.microsoft.com/microsoft-copilot-studio/publication-add-bot-to-microsoft-teams#prerequisites)、[Copilot Studio licensing – Teams plan](https://learn.microsoft.com/microsoft-copilot-studio/requirements-licensing#teams-plan)） |
 | Azure サブスクリプション | App Service（+ ACR / Functions）で自前ホスト。outbound HTTPS 必須 | **B** | 従量課金（本トレーニング期間のみの利用であれば数ドル程度） |
 | 開発ツール | Node.js 18+ / Python 3.11+ / a365 CLI / Azure CLI / Azure Functions Core Tools | **B** | 無料 |
 | AI コーディングアシスタント | **GitHub Copilot** または **Claude Code** のいずれ。Agent 365 Skills を実行する“土台” | **B** | GitHub Copilot（無料枠あり）/ Claude Code |
