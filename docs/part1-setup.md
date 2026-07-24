@@ -84,7 +84,11 @@ Get-Content a365.generated.config.json | ConvertFrom-Json | Select-Object comple
 
 エージェントが使う「道具」を、Azure Functions として建てる。コードは [../src/mcp/](../src/mcp)（`echo` / `now` の 2 ツール）。
 
-### 4-1. Azure Functions をデプロイする
+作業は 2 ステップ。**4-1 で Azure に空の入れ物（Function App リソース）を作り**、**4-2 でそこに自作コードをアップロード**する。引っ越しに例えるなら 4-1 が「家を建てる」、4-2 が「家具を搬び入れる」。
+
+### 4-1. Azure に空の Function App（入れ物）を作る
+
+まだコードは入っていない。Functions を動かすための Azure リソース（リソースグループ・ストレージ・空の Function App）だけを作る。
 
 ```powershell
 az group create -n $RG -l $LOC
@@ -94,7 +98,9 @@ az functionapp create -n $FUNC -g $RG -s $STG `
   --runtime python --runtime-version 3.11 --functions-version 4 --os-type Linux
 ```
 
-### 4-2. MCP コードをデプロイ
+### 4-2. 作った入れ物に MCP コードをアップロードする
+
+4-1 で作った空の Function App（`$FUNC`）に、[../src/mcp/](../src/mcp) のコードを送り込む。
 
 ```powershell
 cd ..\src\mcp        # function_app.py / host.json / requirements.txt があるフォルダ
