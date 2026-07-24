@@ -30,21 +30,18 @@ Microsoft 提供の **Microsoft Learn Docs MCP Server**（無償・認定コネ�
 
 1. 上部タブ **ツール** → **+ ツールを追加する**
 2. フィルタリング対象を ”モデルコンテキストプロトコル” にしたうえで、 検索欄に `Microsoft Learn Docs MCP` と入力して検索
-3. **Microsoft Learn Docs MCP Server** を選ぶ → **追加と構成**
-4. 接続（Connection）の作成を求められる。**新しい接続を追加**（Create new connection）を選び、接続を作成する（Microsoft Learn Docs MCP は認証不要のため、そのまま **作成／接続** できる）
-5. 接続が「接続済み」になったら、**エージェントに追加**（Add to agent）で道具を確定する
-6. 上部タブ **Overview** に戻り、**Instructions** に道具の使いどきを書く：
+3. **Microsoft Learn Docs MCP Server** を選ぶ
+4. 接続（Connection）の作成を求められた場合、**新しい接続を追加**（Create new connection）を選び、接続を作成する
+5. **追加と構成** を押下してエージェントに追加する
+6. **接続を有効にする**：ツールを足しただけでは接続が未確立のことがある。**ツール** タブで **Microsoft Learn ドキュメント MCP サーバー** を開き、接続（コネクション）を作成・認可して「接続済み」にする（Learn Docs MCP は認証不要でも、初回は接続の作成が必要）
+7. 上部タブ **概要** に戻り、**指示** に MCP の利用タイミングを指定したうえで保存
    ```text
    Microsoft の製品・サービスに関する質問には、Microsoft Learn Docs MCP Server を使って回答を検索すること。
    ```
-7. **Save** → **Test** ペインで「Microsoft Entra の条件付きアクセスとは？」などと質問。Learn を検索して答えれば成功
+8. **テスト** ペインで「Microsoft Entra の条件付きアクセスとは？」などと質問。Learn を検索して答えれば成功
 
-出典: [Get started with Microsoft Learn MCP Server in Copilot Studio](https://learn.microsoft.com/training/support/mcp-get-started-copilot-studio)
+> **テストで「まずは接続して … この資格情報を『接続マネージャーを開く』で検証してください」と出たら**：ツールの接続がまだ確立されていない。メッセージ内の **接続マネージャーを開く**（またはツール詳細）から対象の接続を作成／認可し、「接続済み」になってから **再試行** する。接続ができるまで MCP は呼ばれない。
 
-> このエージェントが Learn Docs MCP を呼ぶたびに、Agent 365 の Observability に **ツール呼び出し（ExecuteTool）** が記録される。第2部の Observe（Single Agent Map の Tool ノード / Defender の `CloudAppEvents`）でこの呼び出しを確認できる。
-> **ライセンス**：Microsoft Learn Docs MCP コネクター自体は無償。ただしツール呼び出しを含む生成 AI 応答は **Copilot Studio のメッセージを消費**する（Microsoft 365 Copilot に含まれる範囲、または Copilot Studio メッセージパック）。
->
-> 組織へ公開する際、ツールにも管理者の承認・同意が要ることがある（第2部で扱う）。
 
 ## 3. 公開して組織に申請する
 
