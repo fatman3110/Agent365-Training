@@ -1,10 +1,10 @@
-# Agent 365 ハンズオン — 自前ホスト OSS LLM エージェント（非 AI Teammate / OBO）
+# Agent 365 ハンズオン 
 
-**「AI エージェント」を自分で作り、それを会社の管理画面から安全に管理できるようにするまで**を体験する、初学者向けの教材です。
+**「AI エージェント」を自分で作り、それを Agent 365 などの管理画面から安全に管理できるようにするまで**を体験する、初学者向けの教材です。
 
-この教材でやることは、ざっくり次の 4 つです（むずかしい用語は各章で説明します）。
+この教材でやることは、大きく次の 4 点です。
 
-1. 🤖 **自分の AI エージェントを用意する** — 無料で使える AI（LLM「Qwen」）を、自分のパソコンやクラウドで動かします。
+1. 🤖 **自分の AI エージェントを用意する** — 無料で使える AI を、クラウドにデプロイします。
 2. 🏢 **会社のシステムに登録する** — 作ったエージェントを **Microsoft Agent 365** に登録し、**管理画面（Microsoft 365 / Entra 管理センター）** で「誰が・どう使ったか」を見えるようにします。
 3. 🛡️ **管理者として統制する** — 管理者がエージェントを**ワンクリックで止める（Kill Switch）**など、ガバナンス（統制）が効くことを確認します。
 4. 🧩 **道具（ツール）を追加する** — エージェントに持たせる**自作の小さな道具**を作り、管理画面の**関係図（Single Agent Map）**に表示させます。
@@ -16,7 +16,7 @@
 <!-- 全体像の画像を使いたい場合は assets/overview.png を置き、次の行のコメントを外す:
 ![本教材の全体像](./assets/overview.png) -->
 
-> ⚠️ **教育目的の教材である。** 自前ホスト LLM・BYO MCP・devtunnel での外部公開を含むため、本番環境では使用しないこと。使い終わったら必ず後片付け（`a365 cleanup` / リソース削除）を行うこと。
+> ⚠️ **教育目的の教材である。** 自前ホスト LLM・BYO MCP（クラウド公開）を含むため、本番環境では使用しないこと。使い終わったら必ず後片づけ（`a365 cleanup` / リソース削除）を行うこと。
 > ⚠️ **Microsoft Agent 365 は Preview を多く含む。** UI・コマンド・仕様・提供条件は変わり得る。着手前に各節の「出典」で最新を確認すること。
 
 ---
@@ -30,8 +30,8 @@ flowchart LR
     subgraph P1["第1部：環境構築 ｜ 開発者（VS Code / ターミナル）"]
         direction TB
         A1["ツール導入"] --> A2["Skills 導入"] --> A3["Blueprint / Agent ID 作成"]
-        A3 --> A4["アプリ実装<br/>(LLM / OBO / 観測)"] --> A5["BYO MCP を建てる"]
-        A5 --> A6["ローカル確認"] --> A7["デプロイ & 公開"]
+        A3 --> A4["アプリ実装<br/>(LLM / OBO / 観測)"] --> A5["BYO MCP を建てる<br/>(Azure Functions)"]
+        A5 --> A6["Azure にデプロイ & 公開"]
     end
     subgraph P2["第2部：A365 ハンズオン ｜ AI 管理者（M365 / Entra 管理センター）"]
         direction TB
@@ -39,14 +39,14 @@ flowchart LR
         B2 --> B3["Agent Registry を確認"] --> B4["Single Agent Map で可視化"]
         B4 --> B5["ガバナンス<br/>(Block=Kill Switch / CA / 削除)"]
     end
-    A7 ==> B1
+    A6 ==> B1
 ```
 
 > 上の図は GitHub 上で自動的に図（ダイアグラム）として表示されます。
 
 | 部 | ゴール | 主な担当・画面 |
 |----|--------|---------------|
-| 第1部 環境構築 | エージェントが Agent 365 に登録され、ローカル/クラウドで動く | 開発者：VS Code・ターミナル・Azure |
+| 第1部 環境構築 | エージェントが Agent 365 に登録され、Azure（クラウド）で動く | 開発者：VS Code・ターミナル・Azure |
 | 第2部 A365 ハンズオン | 登録内容・アクティビティ・ガバナンスを実機で確認できる | AI 管理者：M365 管理センター・Entra 管理センター |
 
 ---
@@ -57,7 +57,7 @@ flowchart LR
 |------|------|------------------|
 | Microsoft Agent 365 テナント | エージェント登録・観測・ガバナンスの基盤 | **Microsoft Agent 365** または **Microsoft 365 E7**（前提として E5、または Business Premium + Defender/Purview） |
 | Azure サブスクリプション | App Service（+ ACR）で自前ホスト。outbound HTTPS 必須 | 従量課金 |
-| 開発ツール | Node.js 18+ / Python 3.11+ / a365 CLI / Azure CLI / devtunnel | 無料 |
+| 開発ツール | Node.js 18+ / Python 3.11+ / a365 CLI / Azure CLI / Azure Functions Core Tools | 無料 |
 | Agent 365 Skills | Copilot / Claude Code 用の自動化スキル集 | 無料（`microsoft/agent365-skills`） |
 | Frontier Preview（任意） | AI Teammate 機能に必要。**本教材は非 AI Teammate のため必須としない** | — |
 
@@ -111,7 +111,7 @@ flowchart LR
 
 # 第1部：環境構築
 
-> このパートは **開発者**（VS Code / ターミナル）の作業。完了すると、エージェントが Agent 365 に登録され、ローカル/クラウドで動く状態になる。
+> このパートは **開発者**（VS Code / ターミナル）の作業。完了すると、エージェントが Agent 365 に登録され、**Azure（クラウド）**で動く状態になる。
 
 ## 1. ツールを導入する
 
@@ -119,7 +119,7 @@ flowchart LR
 node --version      # 18+
 az version
 a365 --version      # 無ければ: dotnet tool install -g Microsoft.Agents.A365.DevTools.Cli
-devtunnel --version # 無ければ: winget install Microsoft.devtunnel
+func --version      # Azure Functions Core Tools（BYO MCP をクラウドにデプロイするのに使う）
 ```
 
 - [ ] 4 ツールすべてがバージョンを返す
@@ -171,7 +171,7 @@ Get-Content a365.generated.config.json | ConvertFrom-Json
 | `a365.config.json` の `aiTeammate` | `false` |
 | `completed` | `True`（setup 完走の証拠） |
 | `agentBlueprintId` | `.env` の clientId/agentId と整合 |
-| `messagingEndpoint` | 後で devtunnel / App Service URL を指す |
+| `messagingEndpoint` | 後で App Service の URL を指す |
 | `resourceConsents` | Graph / Tools / Messaging / Observability が `consentGranted=True` |
 
 > ⚠️ `.env` と `a365.generated.config.json` は**必ず `.gitignore`**。シークレット（保護済みでも）を含む。
@@ -189,15 +189,16 @@ Skills が生成した骨格に、①LLM 呼び出し ②OBO トークン交換 
 
 ## 5. BYO MCP サーバーを建てる（ダミーツール echo / now）
 
-学習用に、Azure Functions で MCP サーバーを建てて登録する。コードは [付録 A.4](#a4-byo-mcp-サーバーfunction_apppy)。
+学習用に、Azure Functions（クラウド）に MCP サーバーをデプロイして登録する。コードは [付録 A.4](#a4-byo-mcp-サーバーfunction_apppy)。
 
 ```powershell
-func host start                            # 既定 7071。MCP: /runtime/webhooks/mcp
-devtunnel host -p 7071 --allow-anonymous   # 公開 URL を控える
+# Azure Functions（クラウド）へデプロイ
+func azure functionapp publish <FUNCTION_APP_NAME>
+# → 公開 URL: https://<FUNCTION_APP_NAME>.azurewebsites.net/runtime/webhooks/mcp
 
 a365 develop-mcp register-external-mcp-server `
   --server-name "<MCP_NAME>" `
-  --server-url  "https://<TUNNEL>/runtime/webhooks/mcp" `
+  --server-url  "https://<FUNCTION_APP_NAME>.azurewebsites.net/runtime/webhooks/mcp" `
   --auth-type   "NoAuth" `
   --tools       "echo,now"
 # → Entra アプリ2つ自動作成: <MCP_NAME>-A365Proxy / <MCP_NAME>-PublicClients
@@ -205,20 +206,7 @@ a365 develop-mcp register-external-mcp-server `
 
 > 承認はこのあと**第2部 §8**（管理者作業）で行う。承認前は利用不可。
 
-## 6. ローカルで動作確認する（＋ Map 点灯用のアクティビティ）
-
-```powershell
-devtunnel host -p 3978 --allow-anonymous   # エージェント用（MCP の 7071 と 2 本になる）
-a365 develop get-token                     # OBO 用ユーザートークン（dev/test）
-```
-
-`test-local`（AgentsPlayground）で発話して応答を確認する。**Single Agent Map を点灯させるには「実際のアクティビティ」が必要**なので、ここで意図的に活動を作る：
-
-- [ ] `echo` / `now` を**複数回**呼ぶ → Map の **Tool ノード**が出る（呼ぶほど線が太い）
-- [ ] **複数ユーザー**で叩く（OBO なので別ユーザーでサインイン）→ **User ノード**が増える
-- [ ] （デモ映え）ツールを**一定確率で失敗**させ exception rate を **>1%** に → Map で**赤いハイライト線**
-
-## 7. デプロイ & 公開する
+## 6. Azure にデプロイして公開する
 
 ```powershell
 az group create -n <RESOURCE_GROUP> -l <REGION>
@@ -266,7 +254,7 @@ a365 publish                    # manifest.zip 生成
 
 <!-- ![Entra Agent ID 実値化](./assets/09-agentid.png) -->
 
-> **本教材は非 AI Teammate** のため、**agent user（UPN）や Teams の `@mention` は作られない**（それは AI Teammate 専用）。本エージェントの呼び出しは Copilot Studio カスタムエンジン / REST / AgentsPlayground / OBO クライアント経由で行う。
+> **本教材は非 AI Teammate** のため、**agent user（UPN）や Teams の `@mention` は作られない**（それは AI Teammate 専用）。本エージェントの呼び出しは Copilot Studio カスタムエンジン / REST（App Service の `/chat`）/ OBO クライアント経由で行う。
 > この Entra agent ID の値が、そのまま Observability の `agentId` になる（Single Agent Map の突き合わせキー）。
 
 ## 10. Agent Registry をタブ別に確認する
@@ -286,7 +274,16 @@ a365 publish                    # manifest.zip 生成
 
 ## 11. Single Agent Map で可視化する（Preview）
 
-観測データ（第1部 §6 で作ったアクティビティ）が、エージェント ↔ ユーザー ↔ ツールの関係図として描かれる。
+観測データが、エージェント ↔ ユーザー ↔ ツールの関係図として描かれる。**Map を点灯させるには、クラウド上のエージェントを実際に呼び出して活動を作る**必要がある。
+
+### 11.0 Map 点灯用のアクティビティを作る（クラウドのエージェントを呼ぶ）
+
+承認済み（§8）のエージェントを、クラウド経由で実際に使って観測データを溜める：
+
+- [ ] `echo` / `now` を**複数回**呼ぶ → Map の **Tool ノード**が出る（呼ぶほど線が太い）
+- [ ] **複数ユーザー**で叩く（OBO なので別ユーザーでサインイン）→ **User ノード**が増える
+- [ ] （デモ映え）ツールを**一定確率で失敗**させ exception rate を **>1%** に → Map で**赤いハイライト線**
+- [ ] 呼び出し方法：Copilot Studio カスタムエンジン / REST（App Service の `/chat`）/ OBO クライアント
 
 **要件**：E7（Agent 365）＋ Global Administrator か AI Administrator。Usage/観測はテナント **< 4,000 ユーザー**で有効。
 
@@ -301,7 +298,7 @@ a365 publish                    # manifest.zip 生成
 | Tool（top 50） | tool calls・exception 数・last activity（**echo / now** が出る） |
 
 - **線の太さ** = interaction volume、**exception >1% の線は赤**
-- 空表示なら §4（観測配線）と §6（アクティビティ生成）を見直す
+- 空表示なら §4（観測配線）と §11.0（アクティビティ生成）を見直す
 
 <!-- ![Single Agent Map](./assets/11-single-agent-map.png) -->
 
@@ -343,7 +340,7 @@ a365 publish                    # manifest.zip 生成
 - 一括（自前ホスト）: 作業ディレクトリで `a365 cleanup`（**破壊的**。config の blueprint 配下を一括削除）
 - orphan アプリ確認: `az ad app list --display-name "<blueprint名>" -o table` → `az ad app delete --id <appId>`
 
-> ⚠️ **後片付け必須**：学習が終わったら Block ではなく `a365 cleanup` で消し、devtunnel も停止する。連鎖クリーンアップは非同期で数時間〜数日かかることがある。
+> ⚠️ **後片づけ必須**：学習が終わったら Block ではなく `a365 cleanup` で消し、Azure リソース（App Service / Functions）も削除する。連鎖クリーンアップは非同期で数時間〜数日かかることがある。
 
 ✅ **完了条件**：管理センターで Block → 実際に停止、Unblock → 復帰、を確認できる。Single Agent Map に自分の agent・Tool（echo/now）・User が描画される。
 
@@ -507,7 +504,7 @@ def now(context) -> str:
 
 - [ ] `.env` / `a365.generated.config.json` を `.gitignore`
 - [ ] シークレットは本番で **Managed Identity / Workload Identity（FIC）** に移行
-- [ ] devtunnel の外部公開は学習中のみ。終わったら停止
+- [ ] BYO MCP の Functions は `NoAuth`（学習用）。本番は認証を付与する
 - [ ] 最小権限（付与前に権限内容を必ず確認）
 - [ ] 学習後は `a365 cleanup` で後片付け
 
