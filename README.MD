@@ -79,10 +79,10 @@ flowchart LR
 | エージェント登録の承認（Agents › Requests） | A・B | **AI Administrator** または **Global Administrator** |  |
 | 自作 MCP の承認（Tools › Requests） | B | **AI Administrator** または **Global Administrator** | 同意は組織全体に付与 |
 | Agent Registry / Single Agent Map の閲覧 | A・B | **AI Reader**（最小・推奨）/ Global Reader / AI Administrator / Global Administrator | 在庫の閲覧に特別なライセンスは不要（[Learn](https://learn.microsoft.com/microsoft-365/admin/manage/agent-roles-perms?view=o365-worldwide)） |
-| 観測ラボ(1): M365 管理センターで件数（Activity）を閲覧 | A・B | **AI Reader** 相当（Global Reader / Security Reader / Reports Reader でも可） | Activity タブ詳細の表示に **E7 または Agent 365** ライセンスが必要 |
-| 観測ラボ(2): Entra サインインログ（Agent）を閲覧 | A・B | 最低 **Reports Reader**（Global Reader / Security Reader でも可） | フィルタ Is Agent = Yes（[Learn](https://learn.microsoft.com/entra/agent-id/sign-in-audit-logs-agents)） |
-| 観測ラボ(3): Purview DSPM for AI で対話本文（Prompt/Response）を閲覧 | A・B | **本文閲覧**: Information Protection Investigators 相当（Data Classification Content Viewer を含む）。メタデータのみなら Purview 参照系ロール | 本文表示は「監査オン＋収集ポリシー（コンテンツ/ingestion）＋対象ユーザーの EXO メールボックス」が前提。Preview では本文が出ないことがある |
-| 観測ラボ(4): Defender 高度なハンティング（CloudAppEvents）を実行 | A・B | **Security Reader**（閲覧）/ Security Operator | 横断照合クエリの実行 |
+| M365 管理センターで件数（Activity）を閲覧 | A・B | **AI Reader** 相当（Global Reader / Security Reader / Reports Reader でも可） | Activity タブ詳細の表示に **E7 または Agent 365** ライセンスが必要 |
+| Entra サインインログ（Agent）を閲覧 | A・B |  **Reports Reader**（Global Reader / Security Reader でも可） |  |
+| Purview DSPM  で対話本文（Prompt/Response）を閲覧 | A・B | **本文閲覧**: Information Protection Investigators 相当（Data Classification Content Viewer を含む） |  |
+| Defender 高度なハンティング（CloudAppEvents）を実行 | A・B | **Security Reader**（閲覧）/ Security Operator | 横断照合クエリの実行 |
 | Block / 削除 | A・B | **AI Administrator** | 一時停止（Block）と完全削除の違いに留意 |
 | 条件付きアクセス（Agent ID 対象） | A・B | **Conditional Access Administrator** / Security Administrator | |
 
