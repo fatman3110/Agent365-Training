@@ -82,8 +82,8 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 条件付きアクセス（CA）は「**どのエージェント ID が・どんな条件のとき・アクセスを許すか／止めるか**」を決めるルール。ここでは「**エージェントのリスクが高いときだけトークン発行をブロックする**」ルールを、影響の出ない **Report-only**（記録のみ・実際には止めない）で作る。
 
 > **用語解説**
-> - **条件付きアクセス（CA）**：サインイン（トークン発行）のたびに「**誰が・どんな状況か**」を見て **許可／ブロック／追加条件** を自動判定するルール。人間向けの「リスクが高いときだけ MFA」と同じ仕組みを、エージェント ID にも適用できる。
-> - **Agent risk（エージェント リスク）**：エージェントの振る舞いから算出される危険度（Low / Medium / High）。CA の条件に使える。
+> - **条件付きアクセス（CA）**：サインインのたびに「**誰が・どんな状況か**」を見て **許可／ブロック** を自動判定するアクセス制御の仕組み
+> - **エージェント リスク**：エージェントの振る舞いから算出される危険度
 
 1. [Microsoft Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › 条件付きアクセス** で新規ポリシー作成
 2. 次のように構成（例「Block - High Risky Agent」）：
@@ -120,7 +120,7 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
      - **Approval**（承認）：**Require approval = No**（承認フロー無しで最短）
    - **Requestor information** / **Lifecycle** 以降は既定のまま **Create**
 
-**(c) カスタムセキュリティ属性 — ラベルを 1 つ付けるだけ（メタデータ付与のみで影響なし）**
+**(c) カスタムセキュリティ属性 — 属性（ラベル）を“定義”するだけ**
 
 > **用語解説**
 > - **カスタムセキュリティ属性**：Entra のオブジェクト（ユーザーやエージェント ID）に、組織独自の「タグ（キー＝値）」を付ける仕組み。例 `Environment = Training`。
@@ -128,10 +128,8 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 1. [Microsoft Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › カスタム セキュリティ属性 › 属性セットを追加する**（例 `AgentGovernance`）
 2. 作った属性セットを開き **属性の追加**（例 名前 `Environment`／型 String）
-3. **Entra ID › エンタープライズ アプリケーション › 対象のエージェント ID（サービス プリンシパル）› 管理 › カスタム セキュリティ属性 › 割り当ての追加** で `Environment = Training` を付与 ※割り当てには **Attribute Assignment Administrator** ロールが必要（[Learn](https://learn.microsoft.com/entra/identity/enterprise-apps/custom-security-attributes-apps)）
 
-> CA の「すべてのエージェント ID」スコープは、[Microsoft 365 管理センター](https://admin.microsoft.com/) 側で自動選択され上書きできない。
-> ⚠️ これらの Entra ポリシーは、エージェントが **Entra 認証で**リソースへアクセスする前提。Entra 認証でないエージェントには割り当てても実行時に強制されないことがある。
+> **個々のエージェントへ手動で割り当てる必要はない**：5-1 で作るのは**属性の“定義”（属性セット＋属性）**まで。テンプレート（5-2）に束ねると、そのテンプレートで新規アクティブ化するエージェントに**ポリシーとして適用**される。テンプレートを使わず個別に付けたい場合だけ、**Entra ID › エンタープライズ アプリケーション › 対象のエージェント ID › 管理 › カスタム セキュリティ属性 › 割り当ての追加**（要 **Attribute Assignment Administrator**）で手動付与する（[Learn](https://learn.microsoft.com/entra/identity/enterprise-apps/custom-security-attributes-apps)）。
 
 
 ### 5-2. M365 管理センターでテンプレートを作る
