@@ -13,7 +13,7 @@
   - [3. 公開して組織に申請する](#3-公開して組織に申請する)
 
 
-| ![Copilot Studio 画面](../assets/1a-copilotstudio.png) |
+| ![Copilot Studio 画面](../assets/part1a-01-copilot-studio.png) |
 |:-:|
 
 ## 1. エージェントを作る

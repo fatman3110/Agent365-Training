@@ -25,7 +25,7 @@ Agent 365 の 3 本柱の 2 つ目。ライフサイクル管理と一貫した�
 ## 2. 統制対象を棚卸しする
 
 
-| ![概要画面](../assets/govern-2-registry-inventory.png) |
+| ![概要画面](../assets/part2-3-01-registry-inventory.png) |
 |:-:|
 
 まず「どのエージェントを統制するか」を絞る。KQL は不要で、[Microsoft 365 管理センター](https://admin.microsoft.com/) の画面で一覧・フィルタできる。
@@ -39,7 +39,7 @@ Agent 365 の 3 本柱の 2 つ目。ライフサイクル管理と一貫した�
 
 ## 3. Block（Kill Switch）— 構成保持のまま即時停止
 
-| ![Block ダイアログ](../assets/govern-3-block.png) |
+| ![Block ダイアログ](../assets/part2-3-02-block.png) |
 |:-:|
 
 Block には 2 つの粒度がある。**本節の手順（下記 1〜4）はエージェント全体の Block**。インスタンス単位の Block は、AI Teammate エージェントにのみ存在するため本教材では対象外。
@@ -69,7 +69,7 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 片付けはルートによって異なる。
 
-**パターン A（Copilot Studio）**：Copilot Studio 製エージェントは、[Microsoft 365 管理センター](https://admin.microsoft.com/) の詳細画面からは **アンインストール**（組織カタログ／ユーザーから外す）と **ブロック** までしかできず、**「完全に削除する」は出ない**。エージェント本体（定義）の所有者が Copilot Studio 側のため、管理センターは在庫・可用性・ブロックのみを扱う。完全に消すには [Copilot Studio](https://copilotstudio.microsoft.com/) で対象エージェントを開き **削除（Delete）** する（削除するとレジストリからも消える）。
+**パターン A（Copilot Studio）**：完全に消すには [Copilot Studio](https://copilotstudio.microsoft.com/) で対象エージェントを開き **削除（Delete）** する。
 
 **パターン B（自前ホスト）**：
 
@@ -91,7 +91,7 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 **(a) 条件付きアクセス**
 
-| ![条件付きアクセスポリシー作成画面（Select agents / エージェントリスク / ブロック / Report-only）](../assets/govern-5-1a-conditional-access.png) |
+| ![条件付きアクセスポリシー作成画面（Select agents / エージェントリスク / ブロック / Report-only）](../assets/part2-3-03-conditional-access.png) |
 |:-:|
 
 条件付きアクセスは「**どのエージェント ID が・どんな条件のとき・アクセスを許すか／止めるか**」を決めるルール。ここでは「**エージェントのリスクが高いときだけトークン発行をブロックする**」ルールを、影響の出ない **Report-only**（記録のみ・実際には止めない）で作る。
@@ -116,7 +116,7 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 **(b) アクセスパッケージ**
 
-| ![アクセスパッケージ作成の Requests タブ（For users, service principals, and agent identities / All agents 選択）](../assets/govern-5-1b-access-package.png) |
+| ![アクセスパッケージ作成の Requests タブ（For users, service principals, and agent identities / All agents 選択）](../assets/part2-3-04-access-package.png) |
 |:-:|
 
 テスト目的で「エージェントに空のグループのメンバー権を渡す」構成。特定の記載がない場所はデフォルトの設定で進める。
@@ -140,7 +140,7 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 **(c) カスタムセキュリティ属性**
 
-| ![属性セットの追加と、属性（キー）の定義画面](../assets/govern-5-1c-custom-attribute.png) |
+| ![属性セットの追加と、属性（キー）の定義画面](../assets/part2-3-05-custom-attribute.png) |
 |:-:|
 
 > **用語解説**
@@ -152,7 +152,7 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 ### 5-2. M365 管理センターでテンプレートを作る
 
-| ![3 つのカスタムポリシーを選択する画面](../assets/govern-5-2-template.png) |
+| ![3 つのカスタムポリシーを選択する画面](../assets/part2-3-06-template.png) |
 |:-:|
 
 1. [Microsoft 365 管理センター](https://admin.microsoft.com/) › **エージェント › 設定 › 新しいポリシーテンプレートを追加**
