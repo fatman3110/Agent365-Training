@@ -168,16 +168,16 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 ## 付録. LAB 未実施メニューの概念
 
-[Microsoft 365 管理センター](https://admin.microsoft.com/) の **Agents › Settings** には、本 LAB で扱ったポリシーテンプレート（5 節）以外にも、テナント全体に効く組織レベル設定がある。ここでは操作手順ではなく、**どんなときに使うか（ユースケース）と、設定するとどうなるか（効果）**を概念だけまとめる。いずれもテナント全体に波及するため、実運用では影響範囲に注意する。
+[Microsoft 365 管理センター](https://admin.microsoft.com/) の **エージェント › 設定** には、本 LAB で扱った以外にも、テナント全体に効く組織レベル設定がある。
 
 | メニュー | 主なユースケース | 設定による効果・ポイント |
 |---|---|---|
-| **エージェント管理ルール**（Agent management rules）※Preview | 全社に Microsoft 製エージェントをまとめて配布したい／退職者が残した所有者不在エージェントを整理したい | 条件に合うエージェントへ一括アクションを実行する。現状 (1) Microsoft 製エージェントを全ユーザーへ一括インストール、(2) 所有者不在エージェントを元所有者の上司（Entra 階層）へ一括再割り当て、の 2 種。(2) は **Microsoft 365 Copilot Agent Builder 製のみ**対象 |
-| **許可されているエージェントの種類**（Allowed agent types） | ストアに出す／出さないエージェントを出所で絞りたい（外部製を禁止したい等） | **Microsoft 製／自組織製／外部発行元製** の 3 トグルで、ストアでの閲覧・インストール可否を制御する。オフにするとストアに出ない（ただし Microsoft 製は表示だけは残り、インストール不可になる） |
-| **ユーザー アクセス**（User access） | 一部のユーザー／グループにだけエージェント利用を許したい | **All users（既定）／No users／Specific users・groups** の 3 択。Registry にインストール権があっても、ここで許可した相手だけが実際に使える。No users は全員停止のため影響が大きい |
-| **共有**（Sharing） | エージェントの社内共有を誰に・どの方法で許すか制御したい | **All／No／Specific users** で共有可否を制御する。**対象は Microsoft 365 Copilot Agent Builder 製エージェントのみ**（本教材の Copilot Studio／自前ホストのエージェントは対象外） |
+| **エージェント管理ルール**| 全社に Microsoft 製エージェントをまとめて配布したい／退職者が残した所有者不在エージェントを整理したい | 条件に合うエージェントへ一括アクションを実行する。現状 (1) Microsoft 製エージェントを全ユーザーへ一括インストール、(2) 所有者不在エージェントを元所有者の上司（Entra 階層）へ一括再割り当て、の 2 種。(2) は **Microsoft 365 Copilot Agent Builder 製のみ**対象 |
+| **許可されているエージェントの種類** | ストアに出す／出さないエージェントを出所で絞りたい（外部製を禁止したい等） | **Microsoft 製／自組織製／外部発行元製** の 3 トグルで、ストアでの閲覧・インストール可否を制御する。 |
+| **ユーザー アクセス** | 一部のユーザー／グループにだけエージェント利用を許したい | **All users（既定）／No users／Specific users・groups** の 3 択。Registry にインストール権があっても、ここで許可した相手だけが実際に使える。 |
+| **共有**| エージェントの社内共有を誰に・どの方法で許すか制御したい | **All／No／Specific users** で共有可否を制御する。**対象は Microsoft 365 Copilot Agent Builder 製エージェントのみ** |
 
-> 出典：[Agent settings in Microsoft 365 admin center](https://learn.microsoft.com/microsoft-365/admin/manage/agent-settings)（Last updated 2026-07-08）。Preview を含むため UI 名・提供状況は変わり得る。
+> 出典：[Agent settings in Microsoft 365 admin center](https://learn.microsoft.com/microsoft-365/admin/manage/agent-settings)
 
 ---
 

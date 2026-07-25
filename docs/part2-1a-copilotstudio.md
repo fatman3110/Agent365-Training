@@ -16,6 +16,9 @@ Copilot Studio から「組織に表示」を申請したエージェントは�
 
 ### 1-1. 申請されたエージェントを承認する（Requests → Publish）
 
+| ![承認画面](../assets/1a-1-approve.png) |
+|:-:|
+
 1. [Microsoft 365 管理センター](https://admin.microsoft.com/) にサインイン
 2. **Agents › All agents › Requests** を開き、Copilot Studio から申請されたエージェントを確認
 3. 対象を開き、詳細を確認したうえで **ストアに公開** 
@@ -34,6 +37,9 @@ Copilot Studio から「組織に表示」を申請したエージェントは�
 
 ### 1-2. Teams / Copilot で使えるようにする
 
+| ![エージェントを検索する画面](../assets/1a-2-copilot.png) |
+|:-:|
+
 1. [Teams](https://teams.cloud.microsoft/) › **アプリ** で作成したエージェントを検索
 2. **追加**（管理者が特定ユーザーへ事前インストールすることも可能）
 3. Microsoft 365 Copilot でも使う設定にしていれば、Copilot のサイドバーからも呼び出せる
@@ -45,6 +51,9 @@ Copilot Studio から「組織に表示」を申請したエージェントは�
 **この節が [Observe](./part2-2-observe.md) 以降の前提**。Observe 以降の画面は、エージェントを一度も動かしていないと**何も表示されない**。
 
 ### 2-1. Teams / Copilot で話しかける
+
+| ![エージェントに質問を送り、応答が返っている画面](../assets/1a-3-chat.png) |
+|:-:|
 
 1. [Teams](https://teams.cloud.microsoft/)（または [Microsoft 365 Copilot](https://m365.cloud.microsoft/)）で、追加したエージェントを開く
 2. エージェントの機能に応じた質問を送る（例：「条件付きアクセスについて教えて」など、ツールを使う質問だと後段の観測が見やすい）
