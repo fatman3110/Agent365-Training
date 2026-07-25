@@ -78,14 +78,14 @@ flowchart LR
 |------|---------|------------|------|
 | エージェント登録の承認（Agents › Requests） | A・B | **AI Administrator** または **Global Administrator** |  |
 | 自作 MCP の承認（Tools › Requests） | B | **AI Administrator** または **Global Administrator** | 同意は組織全体に付与 |
-| Agent Registry / Single Agent Map の閲覧 | A・B | **AI Reader**（最小・推奨）/ Global Reader / AI Administrator / Global Administrator | 在庫の閲覧に特別なライセンスは不要（[Learn](https://learn.microsoft.com/microsoft-365/admin/manage/agent-roles-perms?view=o365-worldwide)） |
-| M365 管理センターで件数（Activity）を閲覧 | A・B | **AI Reader** 相当（Global Reader / Security Reader / Reports Reader でも可） | Activity タブ詳細の表示に **E7 または Agent 365** ライセンスが必要 |
-| Entra サインインログ（Agent）を閲覧 | A・B |  **Reports Reader**（Global Reader / Security Reader でも可） |  |
+| Agent Registry / Single Agent Map の閲覧 | A・B | **AI Reader** 以上 | 在庫の閲覧に特別なライセンスは不要（[Learn](https://learn.microsoft.com/microsoft-365/admin/manage/agent-roles-perms?view=o365-worldwide)） |
+| M365 管理センターで件数（Activity）を閲覧 | A・B | **AI Reader** 以上 | Activity タブ詳細の表示に **E7 または Agent 365** ライセンスが必要 |
+| Entra サインインログ（Agent）を閲覧 | A・B |  **Reports Reader** 以上 |  |
 | Purview DSPM  で対話本文（Prompt/Response）を閲覧 | A・B | **本文閲覧**: Information Protection Investigators 相当（Data Classification Content Viewer を含む） |  |
 | Defender 高度なハンティング（CloudAppEvents）を実行 | A・B | **Security Reader**（閲覧）/ Security Operator | 横断照合クエリの実行 |
 | Block / 削除 | A・B | **AI Administrator** | 一時停止（Block）と完全削除の違いに留意 |
 | 条件付きアクセス（Agent ID 対象） | A・B | **Conditional Access Administrator** / Security Administrator | |
-| カスタムポリシーテンプレートの前提ポリシー作成（Entra） | A・B | CA→**Conditional Access Administrator**、アクセスパッケージ→**Identity Governance Administrator**、カスタムセキュリティ属性→**Attribute Definition Administrator**（定義）＋**Attribute Assignment Administrator**（割り当て） | **Global 管理者でもカスタムセキュリティ属性の権限は既定で持たない**ため別途付与が必要。テンプレート適用に Agent 365 ライセンス |
+| カスタムポリシーテンプレートの前提ポリシー作成（Entra） | A・B | 条件付きアクセス→**Conditional Access Administrator**<br>アクセスパッケージ→**Identity Governance Administrator**<br>カスタムセキュリティ属性→**Attribute Definition Administrator**（定義）＋**Attribute Assignment Administrator**（割り当て） | 特に、**Global 管理者でもカスタムセキュリティ属性の権限は既定で持たない**ため別途付与が必要 |
 
 ### 用語ミニ辞典
 

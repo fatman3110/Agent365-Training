@@ -67,8 +67,6 @@ Copilot Studio から「組織に表示」を申請したエージェントは�
 - **複数ユーザー**で使う → User ノードが増える
 - ツールを使う質問を混ぜる → Tool ノードが出る
 
-> **要件**：E7（Agent 365）＋ Global Administrator か AI Administrator。Usage / 観測はテナント **< 4,000 ユーザー**で有効。反映には数分〜十数分のタイムラグがある。
-
 ---
 
 ← 戻る：**[第1部 A：Copilot Studio で作る](./part1a-copilot-studio.md)** ｜ 次：**[第2部：Observe（観察する）](./part2-2-observe.md)** ｜ [README（概要）](../README.MD)
