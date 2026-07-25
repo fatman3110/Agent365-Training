@@ -69,7 +69,7 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 片付けはルートによって異なる。
 
-**パターン A（Copilot Studio）**：[Microsoft 365 管理センター](https://admin.microsoft.com/) › **Agents › 対象エージェント › 完全に削除する**（または [Copilot Studio](https://copilotstudio.microsoft.com/) 側で **Agents › 対象 › … › Delete**）
+**パターン A（Copilot Studio）**：Copilot Studio 製エージェントは、[Microsoft 365 管理センター](https://admin.microsoft.com/) の詳細画面からは **アンインストール**（組織カタログ／ユーザーから外す）と **ブロック** までしかできず、**「完全に削除する」は出ない**。エージェント本体（定義）の所有者が Copilot Studio 側のため、管理センターは在庫・可用性・ブロックのみを扱う。完全に消すには [Copilot Studio](https://copilotstudio.microsoft.com/) で対象エージェントを開き **削除（Delete）** する（削除するとレジストリからも消える）。
 
 **パターン B（自前ホスト）**：
 
