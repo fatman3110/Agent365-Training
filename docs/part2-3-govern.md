@@ -132,14 +132,18 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 1. **属性セットを作る**：[Microsoft Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › カスタム セキュリティ属性 › 属性セットを追加する**（例 名前 `AgentGovernance`）
 2. **属性（キー）を定義する**：作った属性セットを開き **属性の追加**（例 名前 `Environment`／データ型 `文字列`）。
 
-> ここで作るのは属性の**“定義”（キー）まで**。エージェントへの**値の割り当て（例 `Environment = Training`）は 5-2 のテンプレート作成時に指定**する。
-
 
 ### 5-2. M365 管理センターでテンプレートを作る
 
 1. [Microsoft 365 管理センター](https://admin.microsoft.com/) › **Agents › Settings › Templates › Add a New Template**
-2. テンプレート名・説明を入力し、「自分のアクセスで動くエージェントに適用するか」を指定
-3. **Next** → 追加したいカスタムポリシー（5-1 で作った 条件付きアクセス / アクセスパッケージ / カスタムセキュリティ属性）を選ぶ。**カスタムセキュリティ属性を選ぶ場合は、エージェントへ割り当てる値（例 `Environment = Training`）をここで指定**する（テンプレートを当てたエージェントにこの値が付与される）
+2. 次を入力する：
+   - **テンプレート名**（例 `Agent-Training-Template`）
+   - **説明**（例 `勉強用：条件付きアクセス／アクセスパッケージ／環境タグを束ねたテンプレート`）
+   - **「自分のアクセスで動くエージェントに適用するか」**：エージェント自身の資格情報（アプリ権限）で動くエージェントを対象にするかの指定。勉強用は**既定のまま**で進めてよい
+3. **Next** → 追加するカスタムポリシーを選ぶ（5-1 で作った 3 つ）：
+   - **条件付きアクセス**：`Block - High Risky Agent`
+   - **アクセスパッケージ**：`Agent-Training-Package`
+   - **カスタムセキュリティ属性**：属性 `Environment` を選び、**エージェントへ割り当てる値 `Training` をここで指定**する（テンプレートを当てたエージェントに `Environment = Training` が付与される）
 4. 内容を確認して **Save template**
 
 > **カスタムセキュリティ属性の値付与に必要なロール**：上記の値の割り当てが含まれるため、テンプレート作成には Global 管理者・AI 管理者ともに **Attribute Assignment Administrator** ロールが必要（[Learn](https://learn.microsoft.com/microsoft-agent-365/admin/policy-template)）。Global 管理者は自分自身に同ロールを付与する同意ができる。
