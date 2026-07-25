@@ -9,7 +9,7 @@ Agent 365 の 3 本柱の 3 つ目。Learn の Secure は、**Purview（情報�
 | **Microsoft Purview** | 情報保護・DLP・リスクセーフガードで機密データ露出を防ぐ | [2 節](#2-purview--機密データの保護情報保護--dlp) |
 | **Microsoft Defender ／ レジストリ** | AI アラートの確認（Defender ポータル）＋リスクのあるエージェントの把握（M365 管理センター レジストリ） | [3 節](#3-脅威とリスクを確認する) |
 
-> リスクベースのアクセス制御（Entra 条件付きアクセス・Agent risk）は、テンプレートと併せて [Govern の 6 節](./part2-3-govern.md#6-条件付きアクセス--agent-risk--high-を-blockreport-only--on) で扱う。
+> リスクベースのアクセス制御（Entra 条件付きアクセス・Agent risk）は、テンプレートと併せて [Govern の 5-1 節](./part2-3-govern.md#5-1-entra-で-3-種のポリシーを作成) で扱う。
 
 **目次**
 

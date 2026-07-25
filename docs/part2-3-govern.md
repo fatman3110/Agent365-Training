@@ -14,7 +14,6 @@ Agent 365 の 3 本柱の 2 つ目。ライフサイクル管理と一貫した�
   - [5. カスタムポリシーテンプレートを作る](#5-カスタムポリシーテンプレートを作る)
     - [5-1. Entra で 3 種のポリシーを作成](#5-1-entra-で-3-種のポリシーを作成)
     - [5-2. M365 管理センターでテンプレートを作る](#5-2-m365-管理センターでテンプレートを作る)
-  - [6. 条件付きアクセス — Agent risk = High を Block（Report-only → On）](#6-条件付きアクセス--agent-risk--high-を-blockreport-only--on)
 
 ## 1. ガバナンスの前提（Agent ID が無いと統制は効かない）
 
@@ -31,7 +30,7 @@ Agent 365 の 3 本柱の 2 つ目。ライフサイクル管理と一貫した�
 3. **Agents › Overview › Top actions for you** の **Agents without owners（所有者不在）** / **Agents at risk（リスクあり）** から、要対応のエージェントを直接開く
 4. 必要なら **Export** で一覧を Excel / CSV に出し、棚卸し記録にする
 
-> 補足：一括処理・自動化したい場合は [Microsoft Defender ポータル](https://security.microsoft.com/) › Advanced hunting の `AgentsInfo` テーブルを KQL で引く方法もある
+> 補足：一括処理・自動化したい場合は [Microsoft Defender ポータル](https://security.microsoft.com/) › Advanced hunting の [`AgentsInfo`](https://learn.microsoft.com/ja-jp/defender-xdr/advanced-hunting-agentsinfo-table) テーブル等を KQL で引く方法もある
 
 ## 3. Block（Kill Switch）— 構成保持のまま即時停止
 
@@ -43,9 +42,9 @@ Block には 2 つの粒度がある。**本節の手順（下記 1〜4）はエ
 | **インスタンス単位** | エージェント詳細の **Instances** タブ › 対象 instance › **Block** | その instance だけ停止（実行中の動作も止まる）。**Instances タブは AI Teammate エージェントにのみ表示**されるため、本教材では対象外 |
 
 1. [Microsoft 365 管理センター](https://admin.microsoft.com/) › **Agents › All agents** で対象を開く（`Available`）→ 右上 **Block**
-2. **Block agent** にチェック、任意で Reason を記入 → **Save**
-3. ステータスが **Blocked** に。
-4. 解除は **Unblock** → チェック → Save で `Available` に復帰
+2. **エージェントのブロック** にチェック、任意で 理由など を記入 → **保存**
+3. ステータスが **ブロック済み** に。
+4. 解除は **ブロックを解除** ボタンから実行する
 
 > **「Block ＝ ID を止める」であって「プロセスを止める」ではない（重要）**：Block が止めるのは、エージェントの **Entra Agent ID による認証（トークンの発行）**。エージェントの中身（サーバープロセス）まで止まるかは、**外部（LLM や MCP）を呼ぶときに何の資格情報を使っているか**による。
 > - エージェントが **Agent ID のトークンで外部を呼ぶ**構成なら、Block でその呼び出しも失敗する（＝キルスイッチ成立）。
@@ -80,14 +79,29 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 **(a) 条件付きアクセス（CA）— Report-only（影響ゼロ）**
 
-Report-only なら実際のブロックは起きない。作成手順は本ファイルの [6 節](#6-条件付きアクセス--agent-risk--high-を-blockreport-only--on) を参照（**Assignments › Agents › Select agents** で対象 Agent ID を 1 つ以上選ぶのが必須）。
+条件付きアクセス（CA）は「**どのエージェント ID が・どんな条件のとき・アクセスを許すか／止めるか**」を決めるルール。ここでは「**エージェントのリスクが高いときだけトークン発行をブロックする**」ルールを、影響の出ない **Report-only**（記録のみ・実際には止めない）で作る。
+
+1. [Microsoft Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › 条件付きアクセス** で新規ポリシー作成
+2. 次のように構成（例「Block - High Risky Agent」）：
+
+   | 設定 | 値 | 意味（自然言語） |
+   |------|----|------|
+   | ユーザー、エージェント、またはワークロード ID | **すべてのエージェント ID** | すべてのエージェントの認証を評価対象にする |
+   | ターゲット リソース | All agent resources | エージェントが使うすべてのリソースへのアクセスを対象にする |
+   | 条件 | **エージェント リスク = 高** | リスクが「高」と判定されたときだけこのルールを効かせる |
+   | 許可 | **アクセスのブロック** | 条件に当てはまったらトークンを発行せず遮断する |
+   | ポリシーの有効化 | **Report-only** | まず記録のみ（実際には止めない）。影響を確認してから**オン**に切り替える |
+
+> つまりこのポリシーは「**普段は素通り、リスクが高いエージェントだけ自動で締め出す**」安全弁。Report-only の間は実際には止めず、サインインログに「**もしオンなら遮断していた（Would block）**」とだけ残る。影響が想定内なら **オン** に切り替える。
+> テンプレートに束ねる場合は、対象化で **すべてのエージェント ID** ではなく **Select agents** で対象 Agent ID を 1 つ以上選ぶ（選ばないとテンプレート一覧に出ない）。
+> 出典: [エージェント向け条件付きアクセス](https://learn.microsoft.com/entra/identity/conditional-access/agent-id)
 
 **(b) アクセスパッケージ — リソースを付けない空パッケージ（権限を与えないので影響なし）**
 
 1. [Microsoft Entra 管理センター](https://entra.microsoft.com/) › **ID ガバナンス › エンタイトルメント管理 › アクセス パッケージ › + 新しいアクセス パッケージ**
-2. **基本**：名前（例 `Agent-Training-Package`）を入力
-3. **リソース ロール**：勉強用は**何も追加しない**（権限付与ゼロ＝影響なし）
-4. **要求**：要求できる相手として **エージェント ID／サービス プリンシパル** を許可（[Learn](https://learn.microsoft.com/entra/id-governance/entitlement-management-access-package-create#allow-users-service-principals-and-agent-identities-in-your-directory-to-request-the-access-package)）
+2. **Basics** タブ：名前（例 `Agent-Training-Package`）を入力
+3. **Resouce roles** タブ：勉強用は**何も追加しない**（権限付与ゼロ＝影響なし）
+4. **Requests** タブ：要求できる相手として **For users, service principals, and agent identities in your directory** で **All agents**を選択
 5. 残りは既定のまま **作成**
 
 **(c) カスタムセキュリティ属性 — ラベルを 1 つ付けるだけ（メタデータ付与のみで影響なし）**
@@ -106,29 +120,6 @@ Report-only なら実際のブロックは起きない。作成手順は本フ�
 2. テンプレート名・説明を入力し、「自分のアクセスで動くエージェントに適用するか」を指定
 3. **Next** → 追加したいカスタムポリシー（5-1 で作った CA / アクセスパッケージ / カスタムセキュリティ属性）を選ぶ
 4. 内容を確認して **Save template**
-
-## 6. 条件付きアクセス — Agent risk = High を Block（Report-only → On）
-
-条件付きアクセス（CA）は、5 節のテンプレートに束ねられる「前提ポリシー」の 1 つ。Entra の CA で「**すべてのエージェント ID**」を対象に、**Agent risk = High**（Preview）のときトークン発行をブロックする。エージェント ID を主体にしたリスクベースの自動遮断で、**いきなり On にせず、まず Report-only で影響を確認**してから有効化するのが定石。
-
-1. [Entra 管理センター](https://entra.microsoft.com/) › **Protection › Conditional Access** で新規ポリシー作成
-2. 次のように構成（例「Block - High Risky Agent」に対応）：
-
-   | 設定 | 値 |
-   |------|----|
-   | Users / Target | **All agent identities**（対象＝エージェント ID） |
-   | Target resources | All agent resources |
-   | Conditions | **Agent risk (Preview) = High** |
-   | Grant | **Block access** |
-   | Enable policy | **Report-only** で作成 |
-
-3. Report-only のまま対象エージェントを数回動かす
-4. **Sign-in logs › Service principal sign-ins** で対象を開き、詳細の **Conditional Access** タブが **「Report-only: Would block」** と評価されていることを確認
-5. 影響が想定内なら、ポリシーを **On** に切り替える → 以後は実際に Block される
-
-> **CA の対象化・属性適用には Global Administrator が必要**（AI Administrator では不足）。CA の対象化には Entra ID **P1/P2 ＋ ユーザーごとの Agent 365 ライセンス**も要る。
-> 条件付きアクセスはリスクベースのアクセス制御（[Secure](./part2-4-secure.md) の考え方）でもあるが、テンプレートに束ねる前提ポリシーとして本節（Govern）でまとめて扱う。
-> 出典: [エージェント向け条件付きアクセス](https://learn.microsoft.com/entra/identity/conditional-access/agent-id)
 
 ---
 
