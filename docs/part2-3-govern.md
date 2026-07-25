@@ -100,18 +100,21 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 テスト目的で「エージェントに空のグループのメンバー権を渡す」構成。特定の記載がない場所はデフォルトの設定で進める。
 
 > **用語（初学者向け）**
-> - **セキュリティ グループ**：メンバーをまとめる入れ物。グループに権限を付ければメンバー全員へ一括で効く（今回は空＝権限なしなので無害）。
-> - **カタログ**：配れるリソース（グループ等）をまとめた「棚」。アクセス パッケージはこの棚の中のものだけを配れる。
-> - **アクセス パッケージ**：「誰が・何を・どう受け取れるか」を 1 つにまとめた“申請できる権限セット”。エージェントが要求すると、束ねたリソース（今回はグループのメンバー権）が付与される。
+> - **セキュリティ グループ**：メンバーをまとめる入れ物。グループに権限を付ければメンバー全員へ一括で効く（今回は空＝権限なし）。
+> - **カタログ**：配れるリソース（グループ等）をまとめた「カタログ」。アクセス パッケージではこのカタログの中にあるものだけを指定できる。
+> - **アクセス パッケージ**：「誰が・何を・どう受け取れるか」を 1 つにまとめた“権限セット”。エージェントが要求すると、束ねたリソース（今回はグループのメンバー権）が付与される。
 
 1. **準備**：[Microsoft Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › グループ › 新しいグループ** で空のセキュリティ グループ（例 `Agent-Training-Group`）を作る
 2. **カタログを作る**：**ID ガバナンス › エンタイトルメント管理 › カタログ › + 新しいカタログ**（例 `Agent-Training-Catalog`）
 3. **カタログにリソースを追加**：作ったカタログ › **リソース › + リソースの追加 › グループとチーム** で `Agent-Training-Group` を追加
 4. **アクセス パッケージを作る**：**エンタイトルメント管理 › アクセス パッケージ › + 新しいアクセス パッケージ**
    - **Basics**：名前（例 `Agent-Training-Package`）／カタログ＝`Agent-Training-Catalog`
-   - **Resource roles**：**+ Groups and Teams** から`Agent-Training-Group` を追加し、ロール＝**メンバー**
-   - **要求**：要求できる相手として **ディレクトリ内のユーザー・サービス プリンシパル・エージェント ID** を許可（[Learn](https://learn.microsoft.com/entra/id-governance/entitlement-management-access-package-create#allow-users-service-principals-and-agent-identities-in-your-directory-to-request-the-access-package)）
-   - 残りは既定のまま **作成**
+   - **Resource roles**：**+ Groups and Teams** から`Agent-Training-Group` を追加し、ロール＝**member**
+   - **Requests** タブ（3 ブロックに分かれる）：
+     - **Who can get access**（誰が受け取れるか）：**For users, service principals, and agent identities in your directory** を選ぶ → その下の **Select specific scope** で **All agents** を選択（＝エージェントに配れる）（[Learn](https://learn.microsoft.com/entra/id-governance/entitlement-management-access-package-create#allow-users-service-principals-and-agent-identities-in-your-directory-to-request-the-access-package)）
+     - **Who can request access**（誰が要求できるか）：勉強用は既定の **Admin** のまま（管理者が直接割り当て。**Self** はオフのまま）
+     - **Approval**（承認）：**Require approval = No**（承認フロー無しで最短）
+   - **Requestor information** / **Lifecycle** 以降は既定のまま **Review + create → 作成**
 
 **(c) カスタムセキュリティ属性 — ラベルを 1 つ付けるだけ（メタデータ付与のみで影響なし）**
 
