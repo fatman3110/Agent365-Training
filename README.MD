@@ -46,6 +46,31 @@ flowchart LR
 
 ---
 
+# 手順（第1部・第2部）
+
+## 第1部：エージェントの作成と申請（開発者）
+
+作り方を 2 つから選ぶ：
+
+- **A：Copilot Studio で作る（ノーコード）** → [docs/part1a-copilot-studio.md](./docs/part1a-copilot-studio.md)
+- **B：独自エージェント＋独自 MCP（フルコード）** → [docs/part1b-custom-agent.md](./docs/part1b-custom-agent.md)
+
+## 第2部：承認・観察・管理・保護（AI 管理者）
+
+まず承認と観測データ作成（作成ルートに対応する方）：
+
+- **A：Copilot Studio 版** → [docs/part2-1a-copilotstudio.md](./docs/part2-1a-copilotstudio.md)
+- **B：独自エージェント版** → [docs/part2-1b-custom.md](./docs/part2-1b-custom.md)
+
+続いて 3 本柱（A/B 共通）：
+
+- **Observe（観察）** → [docs/part2-2-observe.md](./docs/part2-2-observe.md)
+- **Govern（管理）** → [docs/part2-3-govern.md](./docs/part2-3-govern.md)
+- **Secure（保護）** → [docs/part2-4-secure.md](./docs/part2-4-secure.md)
+
+---
+
+
 ## 前提条件
 
 | 項目 | 内容 | 対象ルート | ライセンス / 要件 |
@@ -78,14 +103,14 @@ flowchart LR
 |------|---------|------------|------|
 | エージェント登録の承認（Agents › Requests） | A・B | **AI Administrator** または **Global Administrator** |  |
 | 自作 MCP の承認（Tools › Requests） | B | **AI Administrator** または **Global Administrator** | 同意は組織全体に付与 |
-| Agent Registry / Single Agent Map の閲覧 | A・B | **AI Reader** 以上 | 在庫の閲覧に特別なライセンスは不要（[Learn](https://learn.microsoft.com/microsoft-365/admin/manage/agent-roles-perms?view=o365-worldwide)） |
+| Agent Registry / Single Agent Map の閲覧 | A・B | **AI Reader** 以上 |  |
 | M365 管理センターで件数（Activity）を閲覧 | A・B | **AI Reader** 以上 | Activity タブ詳細の表示に **E7 または Agent 365** ライセンスが必要 |
 | Entra サインインログ（Agent）を閲覧 | A・B |  **Reports Reader** 以上 |  |
-| Purview DSPM  で対話本文（Prompt/Response）を閲覧 | A・B | **本文閲覧**: Information Protection Investigators 相当（Data Classification Content Viewer を含む） |  |
-| Defender 高度なハンティング（CloudAppEvents）を実行 | A・B | **Security Reader**（閲覧）/ Security Operator | 横断照合クエリの実行 |
+| Purview DSPM  で対話本文（Prompt/Response）を閲覧 | A・B | Information Protection Investigators 相当（Data Classification Content Viewer を含む） |  |
+| Defender 高度なハンティング（CloudAppEvents）を実行 | A・B | **Security Reader**（閲覧）/ Security Operator |  |
 | Block / 削除 | A・B | **AI Administrator** | 一時停止（Block）と完全削除の違いに留意 |
 | 条件付きアクセス（Agent ID 対象） | A・B | **Conditional Access Administrator** / Security Administrator | |
-| カスタムポリシーテンプレートの前提ポリシー作成（Entra） | A・B | 条件付きアクセス→**Conditional Access Administrator**<br>アクセスパッケージ→**Identity Governance Administrator**<br>カスタムセキュリティ属性→**Attribute Definition Administrator**（定義）＋**Attribute Assignment Administrator**（割り当て） | 特に、**Global 管理者でもカスタムセキュリティ属性の権限は既定で持たない**ため別途付与が必要 |
+| カスタムポリシーテンプレートの前提ポリシー作成（Entra） | A・B | 条件付きアクセス→**Conditional Access Administrator**<br>アクセスパッケージ→**Identity Governance Administrator**<br>カスタムセキュリティ属性→**Attribute Definition Administrator** | 特に、**Global 管理者でもカスタムセキュリティ属性の権限は既定で持たない**ため別途付与が必要 |
 
 ### 用語ミニ辞典
 
@@ -96,30 +121,6 @@ flowchart LR
 | **instance 化** | Blueprint（テンプレート）から実際に使えるエージェントの実体を払い出すこと。|
 | **BYO MCP** | 自作の外部 MCP サーバーを Agent 365 に登録して使う仕組み |
 | **Kill Switch** | 管理センターの Block。構成を保持したまま即時停止（Unblock で復帰） |
-
----
-
-# 手順（第1部・第2部）
-
-## 第1部：エージェントの作成と申請（開発者）
-
-作り方を 2 つから選ぶ：
-
-- **A：Copilot Studio で作る（ノーコード）** → [docs/part1a-copilot-studio.md](./docs/part1a-copilot-studio.md)
-- **B：独自エージェント＋独自 MCP（フルコード）** → [docs/part1b-custom-agent.md](./docs/part1b-custom-agent.md)
-
-## 第2部：承認・観察・管理・保護（AI 管理者）
-
-まず承認と観測データ作成（作成ルートに対応する方）：
-
-- **A：Copilot Studio 版** → [docs/part2-1a-copilotstudio.md](./docs/part2-1a-copilotstudio.md)
-- **B：独自エージェント版** → [docs/part2-1b-custom.md](./docs/part2-1b-custom.md)
-
-続いて 3 本柱（A/B 共通）：
-
-- **Observe（観察）** → [docs/part2-2-observe.md](./docs/part2-2-observe.md)
-- **Govern（管理）** → [docs/part2-3-govern.md](./docs/part2-3-govern.md)
-- **Secure（保護）** → [docs/part2-4-secure.md](./docs/part2-4-secure.md)
 
 ---
 
