@@ -19,12 +19,12 @@
 
 1. [Microsoft 365 管理センター](https://admin.microsoft.com/) にサインイン
 2. **Agents › All agents › Requests** を開く（`Pending review` / `Pending activate` を確認）
-3. 対象エージェントを開く（この時点では **Entra agent ID は「—」**）→ **Publish to store**（承認）
-4. 「**Publish new agent**」ウィザードを進める：
-   1. **Select users** — インストール可能なユーザー（All users / 特定）を選択
-   2. **Apply template** — ポリシーテンプレート（既定 / カスタム）を選ぶ（下の注記参照）
-   3. **Review permissions** — エージェントが要求する権限を確認し、必要なら管理者同意
-   4. **Review and finish → Publish**
+3. 対象エージェントを開く（この時点では **Entra agent ID は「—」**）→ **ストアに公開**（承認）
+4. ウィザードを進める：
+   1. **ユーザを選択する** — インストール可能なユーザー（All users / 特定）を選択
+   2. **テンプレートの適用** — ポリシーテンプレート（既定 / カスタム）を選ぶ（下の注記参照）
+   3. **アクセス許可を承諾する** — エージェントが要求する権限を確認し、必要なら管理者同意
+   4. **公開**
 
 <!-- 画像を貼るには assets/08-requests.png を置き、この行と最終行の枠（<!-- / --＞）を外す
 | ![Requests タブ](../assets/08-requests.png) |
