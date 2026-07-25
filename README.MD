@@ -85,6 +85,7 @@ flowchart LR
 | Defender 高度なハンティング（CloudAppEvents）を実行 | A・B | **Security Reader**（閲覧）/ Security Operator | 横断照合クエリの実行 |
 | Block / 削除 | A・B | **AI Administrator** | 一時停止（Block）と完全削除の違いに留意 |
 | 条件付きアクセス（Agent ID 対象） | A・B | **Conditional Access Administrator** / Security Administrator | |
+| カスタムポリシーテンプレートの前提ポリシー作成（Entra） | A・B | CA→**Conditional Access Administrator**、アクセスパッケージ→**Identity Governance Administrator**、カスタムセキュリティ属性→**Attribute Definition Administrator**（定義）＋**Attribute Assignment Administrator**（割り当て） | **Global 管理者でもカスタムセキュリティ属性の権限は既定で持たない**ため別途付与が必要。テンプレート適用に Agent 365 ライセンス |
 
 ### 用語ミニ辞典
 
