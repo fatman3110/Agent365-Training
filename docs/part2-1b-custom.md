@@ -26,7 +26,10 @@
    3. **Review permissions** — エージェントが要求する権限を確認し、必要なら管理者同意
    4. **Review and finish → Publish**
 
-<!-- ![Requests タブ](../assets/08-requests.png) -->
+<!-- 画像を貼るには assets/08-requests.png を置き、この行と最終行の枠（<!-- / --＞）を外す
+| ![Requests タブ](../assets/08-requests.png) |
+|:-:|
+-->
 
 > **ポリシーテンプレート／条件付きアクセスは「事前準備」が要る（重要）**
 > - **カスタムテンプレート**を使うなら、**先に Entra でポリシーを作成**しておく必要がある（未作成だとテンプレート作成時に選べない）。CA・アクセスパッケージ・カスタムセキュリティ属性の**フル手順**は [Govern：カスタムポリシーテンプレートを作る](./part2-3-govern.md#5-カスタムポリシーテンプレートを作る) を参照。作成後、テンプレートに束ねてこのウィザードで選ぶ。
@@ -45,7 +48,10 @@
 3. 求められた管理者同意を付与する（`-A365Proxy` / `-BYO` / ランタイム用のアプリ登録に対する同意）
 4. Status が **Available** に変われば承認完了（承認まではエージェントから呼び出せない）
 
-<!-- ![Tools Requests](../assets/08b-tools-requests.png) -->
+<!-- 画像を貼るには assets/08b-tools-requests.png を置き、この行と最終行の枠（<!-- / --＞）を外す
+| ![Tools Requests](../assets/08b-tools-requests.png) |
+|:-:|
+-->
 
 > **エージェント（1-1 節）と MCP（1-2 節）は別々に承認する**。両方を Approve して初めて、エージェントが道具を呼べる状態になる。
 
@@ -61,7 +67,10 @@
 
 出典: [Learn: エージェントインスタンスの作成](https://learn.microsoft.com/microsoft-agent-365/developer/create-instance)
 
-<!-- ![Teams Developer Portal 設定](../assets/09-devportal.png) -->
+<!-- 画像を貼るには assets/09-devportal.png を置き、この行と最終行の枠（<!-- / --＞）を外す
+| ![Teams Developer Portal 設定](../assets/09-devportal.png) |
+|:-:|
+-->
 
 > **AI Teammate との違い**：`@mention`・専用メールボックス・組織図掲載まで行う「AI Teammate」は **Frontier Preview 限定**（[Learn](https://learn.microsoft.com/microsoft-agent-365/developer/get-started#types-of-agents)）。本教材の非 AI Teammate エージェントは **API ベースの bot として Teams で会話**できるところまで。
 > この blueprint の Entra agent ID（`agentBlueprintId`）が、そのまま Observability の `agentId` になる（Single Agent Map の突き合わせキー）。

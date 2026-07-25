@@ -23,8 +23,10 @@ Agent 365 の 3 本柱の 2 つ目。ライフサイクル管理と一貫した�
 
 ## 2. 統制対象を棚卸しする
 
-<!-- スクショを貼るには assets/govern-2-registry-inventory.png を置き、下行の <!-- と --＞ を外す -->
-<!-- ![Registry の一覧とフィルタ（Status / Publisher type / Platform / Channel）、および Overview の Top actions for you](../assets/govern-2-registry-inventory.png) -->
+<!-- 画像を貼るには assets/govern-2-registry-inventory.png を置き、この行と最終行の枠（<!-- / --＞）を外す
+| ![Registry の一覧とフィルタ（Status / Publisher type / Platform / Channel）、および Overview の Top actions for you](../assets/govern-2-registry-inventory.png) |
+|:-:|
+-->
 
 まず「どのエージェントを統制するか」を絞る。KQL は不要で、[Microsoft 365 管理センター](https://admin.microsoft.com/) の画面で一覧・フィルタできる。
 
@@ -37,8 +39,10 @@ Agent 365 の 3 本柱の 2 つ目。ライフサイクル管理と一貫した�
 
 ## 3. Block（Kill Switch）— 構成保持のまま即時停止
 
-<!-- スクショを貼るには assets/govern-3-block.png を置き、下行の <!-- と --＞ を外す -->
-<!-- ![対象エージェントの Block ダイアログと、ブロック済みステータス表示](../assets/govern-3-block.png) -->
+<!-- 画像を貼るには assets/govern-3-block.png を置き、この行と最終行の枠（<!-- / --＞）を外す
+| ![対象エージェントの Block ダイアログと、ブロック済みステータス表示](../assets/govern-3-block.png) |
+|:-:|
+-->
 
 Block には 2 つの粒度がある。**本節の手順（下記 1〜4）はエージェント全体の Block**。インスタンス単位の Block は、AI Teammate エージェントにのみ存在するため本教材では対象外。
 
@@ -58,8 +62,10 @@ Block には 2 つの粒度がある。**本節の手順（下記 1〜4）はエ
 
 ## 4. 削除（リタイア）
 
-<!-- スクショを貼るには assets/govern-4-delete.png を置き、下行の <!-- と --＞ を外す -->
-<!-- ![（パターン A）Copilot Studio / M365 管理センターの「完全に削除する」画面、または（パターン B）a365 cleanup 実行ログ](../assets/govern-4-delete.png) -->
+<!-- 画像を貼るには assets/govern-4-delete.png を置き、この行と最終行の枠（<!-- / --＞）を外す
+| ![（パターン A）Copilot Studio / M365 管理センターの「完全に削除する」画面、または（パターン B）a365 cleanup 実行ログ](../assets/govern-4-delete.png) |
+|:-:|
+-->
 
 Block は「一時停止」。完全に削除したい場合は、ルートに応じた手順でエージェント本体（と、自前ホストなら Azure リソースまで）消す。
 
@@ -92,8 +98,10 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 **(a) 条件付きアクセス**
 
-<!-- スクショを貼るには assets/govern-5-1a-conditional-access.png を置き、下行の <!-- と --＞ を外す -->
-<!-- ![条件付きアクセスポリシー作成画面（Select agents / エージェントリスク / ブロック / Report-only）](../assets/govern-5-1a-conditional-access.png) -->
+<!-- 画像を貼るには assets/govern-5-1a-conditional-access.png を置き、この行と最終行の枠（<!-- / --＞）を外す
+| ![条件付きアクセスポリシー作成画面（Select agents / エージェントリスク / ブロック / Report-only）](../assets/govern-5-1a-conditional-access.png) |
+|:-:|
+-->
 
 条件付きアクセスは「**どのエージェント ID が・どんな条件のとき・アクセスを許すか／止めるか**」を決めるルール。ここでは「**エージェントのリスクが高いときだけトークン発行をブロックする**」ルールを、影響の出ない **Report-only**（記録のみ・実際には止めない）で作る。
 
@@ -117,8 +125,10 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 **(b) アクセスパッケージ**
 
-<!-- スクショを貼るには assets/govern-5-1b-access-package.png を置き、下行の <!-- と --＞ を外す -->
-<!-- ![アクセスパッケージ作成の Requests タブ（For users, service principals, and agent identities / All agents 選択）](../assets/govern-5-1b-access-package.png) -->
+<!-- 画像を貼るには assets/govern-5-1b-access-package.png を置き、この行と最終行の枠（<!-- / --＞）を外す
+| ![アクセスパッケージ作成の Requests タブ（For users, service principals, and agent identities / All agents 選択）](../assets/govern-5-1b-access-package.png) |
+|:-:|
+-->
 
 テスト目的で「エージェントに空のグループのメンバー権を渡す」構成。特定の記載がない場所はデフォルトの設定で進める。
 
@@ -141,8 +151,10 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 **(c) カスタムセキュリティ属性**
 
-<!-- スクショを貼るには assets/govern-5-1c-custom-attribute.png を置き、下行の <!-- と --＞ を外す -->
-<!-- ![属性セットの追加と、属性（キー）の定義画面](../assets/govern-5-1c-custom-attribute.png) -->
+<!-- 画像を貼るには assets/govern-5-1c-custom-attribute.png を置き、この行と最終行の枠（<!-- / --＞）を外す
+| ![属性セットの追加と、属性（キー）の定義画面](../assets/govern-5-1c-custom-attribute.png) |
+|:-:|
+-->
 
 > **用語解説**
 > - **カスタムセキュリティ属性**：Entra のオブジェクト（ユーザーやエージェント ID）に、組織独自の「タグ（キー＝値）」を付ける仕組み。例 `Environment = Training`。
@@ -153,8 +165,10 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 ### 5-2. M365 管理センターでテンプレートを作る
 
-<!-- スクショを貼るには assets/govern-5-2-template.png を置き、下行の <!-- と --＞ を外す -->
-<!-- ![Add a New Template の入力画面と、3 つのカスタムポリシー（属性値の指定を含む）を選択した画面](../assets/govern-5-2-template.png) -->
+<!-- 画像を貼るには assets/govern-5-2-template.png を置き、この行と最終行の枠（<!-- / --＞）を外す
+| ![Add a New Template の入力画面と、3 つのカスタムポリシー（属性値の指定を含む）を選択した画面](../assets/govern-5-2-template.png) |
+|:-:|
+-->
 
 1. [Microsoft 365 管理センター](https://admin.microsoft.com/) › **エージェント › 設定 › 新しいポリシーテンプレートを追加**
 2. 次を入力する：

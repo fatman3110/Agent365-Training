@@ -16,7 +16,8 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 
 ## 1. Agent Registry からエージェントの詳細を確認する
 
-![Registry エージェント詳細画面](../assets/observe-1-registry.png) 
+| ![Registry エージェント詳細画面](../assets/observe-1-registry.png) |
+|:-:| 
 
 **[Microsoft 365 管理センター](https://admin.microsoft.com/) › Agents › All agents › Registry** で確認対象のエージェントを選択し、組織に存在する AI エージェントの詳細を確認する。
 
@@ -31,7 +32,8 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 
 ## 2. Single Agent Map で可視化する
 
-![Single Agent Map（ツール ↔ エージェント ↔ ユーザーの関係図）](../assets/observe-2-agent-map.png) 
+| ![Single Agent Map（ツール ↔ エージェント ↔ ユーザーの関係図）](../assets/observe-2-agent-map.png) |
+|:-:| 
 
 観測データが、ツール ↔ エージェント ↔ ユーザー の関係図として描かれる。
 
@@ -49,14 +51,16 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 
 **(1) M365 管理センターで「件数」を確認（メトリクス）**
 
-![Activity タブのメトリクス（Active users / Sessions / Exceptions の件数・時系列グラフ）](../assets/observe-3-1-activity-metrics.png)
+| ![Activity タブのメトリクス（Active users / Sessions / Exceptions の件数・時系列グラフ）](../assets/observe-3-1-activity-metrics.png) |
+|:-:|
 
 - [Microsoft 365 管理センター](https://admin.microsoft.com/) › **Agents › All agents › 対象 › Activity**
 - ここで見えるのは「実行があった」という**メトリクス（件数）** で、対話の中身は見えない
   
 **(2) Entra サインインログで「誰が利用したか」を確認（ログ）**
 
- ![Entra エージェント ID の Sign-in logs）](../assets/observe-3-2-entra-signin.png) 
+ | ![Entra エージェント ID の Sign-in logs）](../assets/observe-3-2-entra-signin.png) |
+|:-:| 
 
 - [Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › Agents › Agent identities › 対象 › Activity › Sign-in logs**
 - 「何を話したか」ではなく「**いつ・どの ID として認証されたか**」のログ
@@ -64,7 +68,8 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 
 **(3) Purview Activity explorer で「対話の中身」を確認**
 
-![Purview アクティビティエクスプローラーの AI アクティビティと Prompt / Response 詳細](../assets/observe-3-3-purview-activity.png) 
+| ![Purview アクティビティエクスプローラーの AI アクティビティと Prompt / Response 詳細](../assets/observe-3-3-purview-activity.png) |
+|:-:| 
 
 - [Microsoft Purview ポータル](https://purview.microsoft.com/) › **DSPM › 発見 › アクティビティエクスプローラー › AI アクティビティ**
 - 特定のレコードを選択し、**Prompt / Response** でユーザが送信した実際のプロンプトとレスポンスを確認
