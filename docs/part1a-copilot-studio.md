@@ -2,8 +2,7 @@
 
 ノーコード／ローコードの **Microsoft Copilot Studio** でエージェントを作り、Teams / Microsoft 365 Copilot チャネルに公開して、組織のカタログに**申請**するまで。今回は具体例として、**無償の Microsoft Learn Docs MCP Server** を道具に使う「**Learn ヘルパー**」（Microsoft / Azure の質問に Learn の公式情報で答えるエージェント）を作る。MCP を呼ぶので、第2部の Observability（観測）に「ツール呼び出し」の記録が残る。
 
-> 💡 自前ホストの LLM やコードでフル制御したいなら **[第1部 B：独自エージェント＋独自 MCP](./part1b-custom-agent.md)** を選ぶ。本ファイル（A）は最短ルート。
->
+
 > ⚠️ Microsoft Agent 365 / Copilot Studio は Preview を多く含む。UI 名やメニュー位置は変わり得るので、詰まったら Microsoft Learn で最新を確認すること。
 
 **目次**
@@ -12,6 +11,10 @@
   - [1. エージェントを作る](#1-エージェントを作る)
   - [2. 無償の Microsoft MCP を道具として足す](#2-無償の-microsoft-mcp-を道具として足す)
   - [3. 公開して組織に申請する](#3-公開して組織に申請する)
+
+
+| ![Copilot Studio 画面](../assets/1a-copilotstudio.png) |
+|:-:|
 
 ## 1. エージェントを作る
 
