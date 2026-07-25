@@ -26,11 +26,6 @@ Agent 365 の 3 本柱の 3 つ目。**Purview（情報保護 / DLP）・Defende
 
 ## 2. Purview — 機密データの保護（情報保護 / DLP）
 
-<!-- 画像を貼るには assets/secure-2-purview-dspm.png を置き、この行と最終行の枠（<!-- / --＞）を外す
-| ![Purview DSPM でエージェントの AI アクティビティに含まれる機密情報の種類・件数、および DLP ポリシー画面](../assets/secure-2-purview-dspm.png) |
-|:-:|
--->
-
 [Observe の ラボ](./part2-2-observe.md) で Purview を**観察**（Prompt/Response を読む）に使ったが、Secure では**保護**に使う。エージェントが機密データを扱う／外部へ出す動きを、情報保護ラベル・DLP・リスクセーフガードで抑止する。
 
 - [Microsoft Purview ポータル](https://purview.microsoft.com/) › **DSPM** で、エージェントの AI アクティビティに含まれる機密情報の種類・件数を把握
@@ -40,26 +35,14 @@ Agent 365 の 3 本柱の 3 つ目。**Purview（情報保護 / DLP）・Defende
 
 ### 3-1. リスクのあるエージェントを把握する（M365 管理センター レジストリ）
 
-<!-- 画像を貼るには assets/secure-3-1-agents-at-risk.png を置き、この行と最終行の枠（<!-- / --＞）を外す
-| ![エージェント › 概要 の Agents at risk（またはリスク列）](../assets/secure-3-1-agents-at-risk.png) |
-|:-:|
--->
-
 - [Microsoft 365 管理センター](https://admin.microsoft.com/) › **エージェント › 概要** の **Agents at risk（リスクのあるエージェント）** (または、すべてのエージェントのリスク列)で、セキュリティプラットフォームが検出した高リスクなエージェントを確認できる
 - 対象エージェントの **Security** タブから [Microsoft Defender ポータル](https://security.microsoft.com/)（もしくは [Microsoft Purview ポータル](https://purview.microsoft.com/)）を開き、リスクの詳細と推奨対応を確認できる
 
 ### 3-2. AI に関するアラートを確認する（Defender ポータル）
 
-<!-- 画像を貼るには assets/secure-3-2-defender-alerts.png を置き、この行と最終行の枠（<!-- / --＞）を外す
-| ![Defender ポータルのインシデントとアラート（jailbreak / XPIA 等のエージェント関連アラート）](../assets/secure-3-2-defender-alerts.png) |
-|:-:|
--->
-
 Defender は Agent 365 管理下のエージェント活動を常時監視し、**jailbreak／プロンプトインジェクション（XPIA）／資格情報の漏えい／回避手法／不審なユーザーアクセス** などの疑わしい振る舞いを、**Defender ポータルの準リアルタイムのアラート**として上げる。アラートはインシデントに相関され、**インシデントとアラート** メニューから調査できる。
 
 - [Defender ポータル](https://security.microsoft.com/) でエージェント関連のアラート／インシデントを確認
-
-
 
 ---
 
