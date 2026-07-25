@@ -81,6 +81,10 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 条件付きアクセス（CA）は「**どのエージェント ID が・どんな条件のとき・アクセスを許すか／止めるか**」を決めるルール。ここでは「**エージェントのリスクが高いときだけトークン発行をブロックする**」ルールを、影響の出ない **Report-only**（記録のみ・実際には止めない）で作る。
 
+> **用語解説**
+> - **条件付きアクセス（CA）**：サインイン（トークン発行）のたびに「**誰が・どんな状況か**」を見て **許可／ブロック／追加条件** を自動判定するルール。人間向けの「リスクが高いときだけ MFA」と同じ仕組みを、エージェント ID にも適用できる。
+> - **Agent risk（エージェント リスク）**：エージェントの振る舞いから算出される危険度（Low / Medium / High）。CA の条件に使える。
+
 1. [Microsoft Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › 条件付きアクセス** で新規ポリシー作成
 2. 次のように構成（例「Block - High Risky Agent」）：
 
@@ -99,7 +103,7 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 テスト目的で「エージェントに空のグループのメンバー権を渡す」構成。特定の記載がない場所はデフォルトの設定で進める。
 
-> **用語（初学者向け）**
+> **用語解説**
 > - **セキュリティ グループ**：メンバーをまとめる入れ物。グループに権限を付ければメンバー全員へ一括で効く（今回は空＝権限なし）。
 > - **カタログ**：配れるリソース（グループ等）をまとめた「カタログ」。アクセス パッケージではこのカタログの中にあるものだけを指定できる。
 > - **アクセス パッケージ**：「誰が・何を・どう受け取れるか」を 1 つにまとめた“権限セット”。エージェントが要求すると、束ねたリソース（今回はグループのメンバー権）が付与される。
@@ -111,14 +115,18 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
    - **Basics**：名前（例 `Agent-Training-Package`）／カタログ＝`Agent-Training-Catalog`
    - **Resource roles**：**+ Groups and Teams** から`Agent-Training-Group` を追加し、ロール＝**member**
    - **Requests** タブ（3 ブロックに分かれる）：
-     - **Who can get access**（誰が受け取れるか）：**For users, service principals, and agent identities in your directory** を選ぶ → その下の **Select specific scope** で **All agents** を選択（＝エージェントに配れる）（[Learn](https://learn.microsoft.com/entra/id-governance/entitlement-management-access-package-create#allow-users-service-principals-and-agent-identities-in-your-directory-to-request-the-access-package)）
-     - **Who can request access**（誰が要求できるか）：勉強用は既定の **Admin** のまま（管理者が直接割り当て。**Self** はオフのまま）
+     - **Who can get access**（誰が受け取れるか）：**For users, service principals, and agent identities in your directory** を選ぶ → **Select specific scope** で **All agents** を選択（＝エージェントに配れる）（[Learn](https://learn.microsoft.com/entra/id-governance/entitlement-management-access-package-create#allow-users-service-principals-and-agent-identities-in-your-directory-to-request-the-access-package)）
+     - **Who can request access**（誰が要求できるか）：勉強用は既定の **Admin** のまま
      - **Approval**（承認）：**Require approval = No**（承認フロー無しで最短）
-   - **Requestor information** / **Lifecycle** 以降は既定のまま **Review + create → 作成**
+   - **Requestor information** / **Lifecycle** 以降は既定のまま **Create**
 
 **(c) カスタムセキュリティ属性 — ラベルを 1 つ付けるだけ（メタデータ付与のみで影響なし）**
 
-1. [Microsoft Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › カスタム セキュリティ属性 › 属性セットの追加**（例 `AgentGovernance`）※定義には **Attribute Definition Administrator** ロールが必要。**Global 管理者でも既定ではこの権限を持たない**（[Learn](https://learn.microsoft.com/entra/fundamentals/custom-security-attributes-add)）
+> **用語解説**
+> - **カスタムセキュリティ属性**：Entra のオブジェクト（ユーザーやエージェント ID）に、組織独自の「タグ（キー＝値）」を付ける仕組み。例 `Environment = Training`。
+> - **何に使う**：付けたタグを条件に、**きめ細かいアクセス制御（Azure ABAC）や、フィルタ・レポート・棚卸し**ができる。エージェントを「本番／検証」「部門」などで分類し、CA や運用の絞り込みに活かせる。
+
+1. [Microsoft Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › カスタム セキュリティ属性 › 属性セットを追加する**（例 `AgentGovernance`）
 2. 作った属性セットを開き **属性の追加**（例 名前 `Environment`／型 String）
 3. **Entra ID › エンタープライズ アプリケーション › 対象のエージェント ID（サービス プリンシパル）› 管理 › カスタム セキュリティ属性 › 割り当ての追加** で `Environment = Training` を付与 ※割り当てには **Attribute Assignment Administrator** ロールが必要（[Learn](https://learn.microsoft.com/entra/identity/enterprise-apps/custom-security-attributes-apps)）
 
