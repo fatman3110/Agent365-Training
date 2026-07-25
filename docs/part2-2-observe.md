@@ -16,8 +16,7 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 
 ## 1. Agent Registry からエージェントの詳細を確認する
 
-<!-- スクショを貼るには assets/observe-1-registry.png を置き、下行の <!-- と --＞ を外す -->
-<!-- ![Registry で対象エージェントを選び、各タブ（Details / Users / Data & tools / Security / Permissions / Activity）を開いた画面](../assets/observe-1-registry.png) -->
+![Registry エージェント詳細画面](../assets/observe-1-registry.png) 
 
 **[Microsoft 365 管理センター](https://admin.microsoft.com/) › Agents › All agents › Registry** で確認対象のエージェントを選択し、組織に存在する AI エージェントの詳細を確認する。
 
@@ -32,8 +31,7 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 
 ## 2. Single Agent Map で可視化する
 
-<!-- スクショを貼るには assets/observe-2-agent-map.png を置き、下行の <!-- と --＞ を外す -->
-<!-- ![Single Agent Map（ツール ↔ エージェント ↔ ユーザーの関係図）](../assets/observe-2-agent-map.png) -->
+![Single Agent Map（ツール ↔ エージェント ↔ ユーザーの関係図）](../assets/observe-2-agent-map.png) 
 
 観測データが、ツール ↔ エージェント ↔ ユーザー の関係図として描かれる。
 
@@ -51,8 +49,7 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 
 **(1) M365 管理センターで「件数」を確認（メトリクス）**
 
-<!-- スクショを貼るには assets/observe-3-1-activity-metrics.png を置き、下行の <!-- と --＞ を外す -->
-<!-- ![Activity タブのメトリクス（Active users / Sessions / Exceptions の件数・時系列グラフ）](../assets/observe-3-1-activity-metrics.png) -->
+![Activity タブのメトリクス（Active users / Sessions / Exceptions の件数・時系列グラフ）](../assets/observe-3-1-activity-metrics.png)
 
 - [Microsoft 365 管理センター](https://admin.microsoft.com/) › **Agents › All agents › 対象 › Activity**
 - ここで見えるのは「実行があった」という**メトリクス（件数）** で、対話の中身は見えない
