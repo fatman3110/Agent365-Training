@@ -56,8 +56,7 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
   
 **(2) Entra サインインログで「誰が利用したか」を確認（ログ）**
 
-<!-- スクショを貼るには assets/observe-3-2-entra-signin.png を置き、下行の <!-- と --＞ を外す -->
-<!-- ![Entra エージェント ID の Sign-in logs（対象ユーザー列を含む）](../assets/observe-3-2-entra-signin.png) -->
+ ![Entra エージェント ID の Sign-in logs）](../assets/observe-3-2-entra-signin.png) 
 
 - [Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › Agents › Agent identities › 対象 › Activity › Sign-in logs**
 - 「何を話したか」ではなく「**いつ・どの ID として認証されたか**」のログ
@@ -65,16 +64,12 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 
 **(3) Purview Activity explorer で「対話の中身」を確認**
 
-<!-- スクショを貼るには assets/observe-3-3-purview-activity.png を置き、下行の <!-- と --＞ を外す -->
-<!-- ![Purview アクティビティエクスプローラーの AI アクティビティと Prompt / Response 詳細](../assets/observe-3-3-purview-activity.png) -->
+![Purview アクティビティエクスプローラーの AI アクティビティと Prompt / Response 詳細](../assets/observe-3-3-purview-activity.png) 
 
 - [Microsoft Purview ポータル](https://purview.microsoft.com/) › **DSPM › 発見 › アクティビティエクスプローラー › AI アクティビティ**
 - 特定のレコードを選択し、**Prompt / Response** でユーザが送信した実際のプロンプトとレスポンスを確認
 
 **(4) Defender Advanced Hunting で横断照合（実行トレース）**
-
-<!-- スクショを貼るには assets/observe-3-4-defender-hunting.png を置き、下行の <!-- と --＞ を外す -->
-<!-- ![Defender 高度な追求で KQL を実行した結果一覧](../assets/observe-3-4-defender-hunting.png) -->
 
 - [Microsoft Defender ポータル](https://security.microsoft.com/) › **調査と対応 › 追求 › 高度な追求** で、AI Agent 活動について横断的にログ分析する
 
@@ -98,9 +93,6 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
   ```
 
 ## 付録. Registry Sync（外部プラットフォームの取り込み）
-
-<!-- スクショを貼るには assets/observe-appendix-registry-sync.png を置き、下行の <!-- と --＞ を外す -->
-<!-- ![Registry sync の接続一覧とプラットフォーム接続の入力画面](../assets/observe-appendix-registry-sync.png) -->
 
 **Amazon Bedrock・Google Vertex AI・Salesforce Agentforce・Databricks Genie** など Microsoft 外のプラットフォームで作ったエージェントは、**Registry Sync** でレジストリに取り込める。
 
