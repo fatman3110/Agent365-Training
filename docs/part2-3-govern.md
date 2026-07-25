@@ -73,11 +73,16 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 テンプレートは、複数のポリシーを束ねてエージェントへ**一括適用するガバナンスの仕組み**。承認タイミングで「テンプレートの適用」で選べる**カスタムテンプレート**は、ここで事前に作る。テンプレートでは **条件付きアクセス・アクセスパッケージ・カスタムセキュリティ属性** の 3 種の Entra ポリシーを束ねられる。
 
+> **用語解説**
+> - **（ポリシー）テンプレート**：複数の Entra ポリシー（条件付きアクセス・アクセスパッケージ・カスタムセキュリティ属性）を **1 つに束ねた“型紙”**。エージェントの承認（アクティブ化）時にこの型紙を選ぶと、束ねたポリシーがまとめて適用される。
+> - **既定テンプレート／カスタムテンプレート**：Microsoft 提供の既定テンプレート（編集不可）と、組織が独自に作るカスタムテンプレートがある。本節で作るのは後者。
+> - **適用タイミング**：テンプレートは**新規アクティブ化時のみ**適用され、承認済みのエージェントには後からは効かない（[Learn](https://learn.microsoft.com/microsoft-agent-365/admin/policy-template#select-a-template)）。
+
 ### 5-1. Entra で 3 種のポリシーを作成
 
 テンプレートに束ねる前提として、対象ポリシーを先に作る。ここでは**影響の少ない具体例**で 1 つずつ作る（必要なものだけでよい）。いずれも [Microsoft Entra 管理センター](https://entra.microsoft.com/) で行う。
 
-**(a) 条件付きアクセス — Report-only（影響ゼロ）**
+**(a) 条件付きアクセス**
 
 条件付きアクセスは「**どのエージェント ID が・どんな条件のとき・アクセスを許すか／止めるか**」を決めるルール。ここでは「**エージェントのリスクが高いときだけトークン発行をブロックする**」ルールを、影響の出ない **Report-only**（記録のみ・実際には止めない）で作る。
 
@@ -99,7 +104,7 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 > このポリシーは「**リスクが高いエージェントだけ自動で締め出す**」セーフティネット。Report-only の間は実際には止めず、サインインログに「**もしオンなら遮断していた（Would block）**」とだけ残る。影響が想定内なら **オン** に切り替える。
 > 出典: [エージェント向け条件付きアクセス](https://learn.microsoft.com/entra/identity/conditional-access/agent-id)
 
-**(b) アクセスパッケージ — 空のセキュリティ グループのメンバーシップを渡す（無害だが“意味のある”付与）**
+**(b) アクセスパッケージ**
 
 テスト目的で「エージェントに空のグループのメンバー権を渡す」構成。特定の記載がない場所はデフォルトの設定で進める。
 
@@ -115,21 +120,21 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
    - **Basics**：名前（例 `Agent-Training-Package`）／カタログ＝`Agent-Training-Catalog`
    - **Resource roles**：**+ Groups and Teams** から`Agent-Training-Group` を追加し、ロール＝**member**
    - **Requests** タブ（3 ブロックに分かれる）：
-     - **Who can get access**（誰が受け取れるか）：**For users, service principals, and agent identities in your directory** を選ぶ → **Select specific scope** で **All agents** を選択（＝エージェントに配れる）（[Learn](https://learn.microsoft.com/entra/id-governance/entitlement-management-access-package-create#allow-users-service-principals-and-agent-identities-in-your-directory-to-request-the-access-package)）
+     - **Who can get access**（誰が受け取れるか）：**For users, service principals, and agent identities in your directory** を選ぶ → **Select specific scope** で **All agents** を選択（＝エージェントに配れる）
      - **Who can request access**（誰が要求できるか）：勉強用は既定の **Admin** のまま
      - **Approval**（承認）：**Require approval = No**（承認フロー無しで最短）
    - **Requestor information** / **Lifecycle** 以降は既定のまま **Create**
 
-**(c) カスタムセキュリティ属性 — 属性（ラベル）を“定義”する**
+**(c) カスタムセキュリティ属性**
 
 > **用語解説**
 > - **カスタムセキュリティ属性**：Entra のオブジェクト（ユーザーやエージェント ID）に、組織独自の「タグ（キー＝値）」を付ける仕組み。例 `Environment = Training`。
-> - **今回の想定用途（主）**：**属性ドリブンの条件付きアクセス**。(a) では対象を **Select agents** で 1 つずつ手選びしたが、この属性を付けておくと条件付きアクセス側で「**この属性を持つエージェント全部**」を条件に指定でき、**将来追加されるエージェントにも自動で効く**（[Learn](https://learn.microsoft.com/entra/identity/conditional-access/agent-id?tabs=custom-security-attributes)）。副次的に **Azure ABAC**（属性を条件にしたリソースアクセス制御）や、Entra 上での**フィルタ・レポート・棚卸し**にも使える。
+> - **“定義”と“値の割り当て”は別ステップ**：まずテナント全体で「`Environment` というキー」を**定義**し、次にエージェントごとに「`Training` という**値**」を**割り当てる**。定義だけではどのエージェントが何の値かは決まらず、値を割り当てて初めて条件付きアクセス等で絞り込めるようになる。
 
-1. [Microsoft Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › カスタム セキュリティ属性 › 属性セットを追加する**（例 `AgentGovernance`）
-2. 作った属性セットを開き **属性の追加**（例 名前 `Environment`／型 String）
-
-> 属性の“定義”（属性セット＋属性）を作成し、テンプレートに加えることで、新規アクティブ化するエージェントに**ポリシーとして適用**される。
+1. **属性セットを作る**：[Microsoft Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › カスタム セキュリティ属性 › 属性セットを追加する**（例 名前 `AgentGovernance`）
+2. **属性（キー）を定義する**：作った属性セットを開き **属性の追加**（例 名前 `Environment`／データ型 `文字列`）。入力ミスを防ぎたければ **定義済みの値のみ割り当てを許可** を有効にし、候補値 `Training` `Production` `Development` を登録する
+   - ここまでは「**定義**」。まだどのエージェントにも付いていない。
+3. **エージェントに値を割り当てる**：**Entra ID › エンタープライズ アプリケーション › 対象のエージェント ID（サービス プリンシパル）› 管理 › カスタム セキュリティ属性 › 割り当ての追加** で `Environment = Training` を付与 ※割り当てには **Attribute Assignment Administrator** ロールが必要（[Learn](https://learn.microsoft.com/entra/identity/enterprise-apps/custom-security-attributes-apps)）
 
 
 ### 5-2. M365 管理センターでテンプレートを作る
