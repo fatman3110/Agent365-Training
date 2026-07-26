@@ -75,7 +75,7 @@ $MCP   = "agent365-training-mcp"               # 自作 MCP サーバーの表�
 # 教材（本リポジトリ）を clone して作業ディレクトリに入る
 git clone https://github.com/fatman3110/Agent365-Training.git
 cd Agent365-Training
-$ROOT = (Get-Location).Path   # リポジトリ直下を記憶（以降の各手順はこの $ROOT を起点にする）
+cd src/agent
 ```
 
 次に必要なツールを確認する（無ければ各コメントのコマンドで導入）。
@@ -102,7 +102,7 @@ node .\agent365-skills\scripts\install.js   # VS Code の chat.agentSkillsLocati
 
 ## 3. エージェントの「土台」を作る（Blueprint / Agent ID）
 
-> **作業ディレクトリ（重要）**：`a365-setup` / `a365 setup all` は「実行したフォルダ」を**エージェントのプロジェクト**とみなし、そこに `a365.config.json` / `a365.generated.config.json` / `.env` を生成する。本教材ではエージェント本体のコードがある **`src/agent`** をプロジェクトとして扱う。AI チャットを開く前にターミナルで `cd "$ROOT\src\agent"` しておき、**AI にも「作業ディレクトリは `src/agent`」と伝える**。以降の `a365 ...` コマンドもすべて `src/agent` で実行する（生成された設定ファイルを参照するため）。
+> **作業ディレクトリ（重要）**：`a365-setup` / `a365 setup all` は「実行したフォルダ」を**エージェントのプロジェクト**とみなし、そこにリソースを生成する。本教材ではエージェント本体のコードがある **`src/agent`** をプロジェクトとして扱う。
 
 **ターミナルのコマンドではなく、AI チャットに次の指示を送る**と、先ほど導入した Skill が起動し、必要なコマンドを AI が代わりに実行してくれる。
 
@@ -131,10 +131,6 @@ Skill が内部で `a365 setup all`を実行し、以下を**自動で**行う�
 a365 query-entra                                   # Entra 登録状態
 Get-Content a365.generated.config.json | ConvertFrom-Json | Select-Object completed, agentBlueprintId
 ```
-
-- `completed` が `True`、`a365.config.json` の `aiTeammate` が `false` なら成功
-- ⚠️ `.env` と `a365.generated.config.json` は**コミット禁止**（`.gitignore` 済み）
-
 ## 4. 道具（MCP）を作ってクラウドに置く
 
 エージェントが使う「道具」を、Azure Functions として建てる。コードは [../src/mcp/](../src/mcp)（`echo` / `now` の 2 ツール）。
@@ -145,8 +141,6 @@ Functions を動かすための Azure リソース（リソースグループ・
 
 ```powershell
 az group create -n $RG -l $LOC
-# ストレージは「公開 Blob アクセス無効」で作成する。多くのテナントはセキュリティ ベースライン
-# ポリシー「Storage account public access should be disallowed」で、これを付けないと作成が拒否される。
 az storage account create -n $STG -g $RG -l $LOC --sku Standard_LRS `
   --allow-blob-public-access false --min-tls-version TLS1_2
 az functionapp create -n $FUNC -g $RG -s $STG `
@@ -159,10 +153,10 @@ az functionapp create -n $FUNC -g $RG -s $STG `
 4-1 で作った空の Function App（`$FUNC`）に、[../src/mcp/](../src/mcp) のコードを送り込む。
 
 ```powershell
-Set-Location "$ROOT\src\mcp"   # function_app.py / host.json / requirements.txt があるフォルダ
+cd ..\mcp        # src/agent から src/mcp へ（function_app.py / host.json / requirements.txt があるフォルダ）
 func azure functionapp publish $FUNC
 # → 公開 URL: https://$FUNC.azurewebsites.net/runtime/webhooks/mcp
-Set-Location $ROOT              # リポジトリ直下に戻る
+cd ..\agent      # src/agent に戻る
 ```
 
 
@@ -208,8 +202,8 @@ Set-Location $ROOT              # リポジトリ直下に戻る
 # コンテナレジストリ
 az acr create -n $ACR -g $RG --sku Basic --admin-enabled true
 
-# エージェントのコンテナを ACR 上でビルド（src/agent の Dockerfile を使う）
-az acr build -r $ACR -t agent:latest "$ROOT\src\agent"
+# エージェントのコンテナを ACR 上でビルド（カレント = src/agent。その Dockerfile を使う）
+az acr build -r $ACR -t agent:latest .
 
 # Linux プラン（Ollama を載せるためメモリ多めの P1v3。学習後は必ず削除）
 az appservice plan create -n $PLAN -g $RG --is-linux --sku P1V3
@@ -233,7 +227,7 @@ App Service の **sidecar コンテナ**機能で `ollama/ollama` を横に足�
 ここまでで、エージェント本体はクラウド（App Service）で動く URL を持った。最後に、その **URL（＝メッセージの届け先＝messaging endpoint）を Agent 365 に教え**、エージェントと道具（MCP）を**登録**する。
 
 ```powershell
-Set-Location "$ROOT\src\agent"   # 3 節で生成した a365 設定ファイルがあるフォルダで実行
+# 3 節で生成した a365 設定ファイルがある src/agent で実行する（1 節以降ここが作業フォルダ。他フォルダにいる場合は `cd ..\agent`）
 # (1) デプロイ後の実 URL を messaging endpoint に反映（＝エージェントの住所を最新化。）
 #    --m365 を付けると Teams / Microsoft 365 Copilot チャネル用に messaging endpoint を登録する
 a365 setup all --m365
