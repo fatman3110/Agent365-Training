@@ -185,8 +185,8 @@ az acr create -n $ACR -g $RG --sku Basic --admin-enabled true
 # エージェントのコンテナを ACR 上でビルド（カレント = src/agent。その Dockerfile を使う）
 az acr build -r $ACR -t agent:latest .
 
-# Linux プラン（学習用途ではコスト最小の Basic B3 を既定）
-az appservice plan create -n $PLAN -g $RG --is-linux --sku B3
+# Linux プラン（学習用途ではコスト最小の Basic B1 を既定）
+az appservice plan create -n $PLAN -g $RG --is-linux --sku B1
 
 # Web アプリ（コンテナ）
 az webapp create -n $APP -g $RG -p $PLAN `
@@ -204,7 +204,7 @@ az webapp config appsettings set -n $APP -g $RG --settings $settings
 >    1. [Azure Portal](https://portal.azure.com) の検索ボックスで「**クォータ**」を開く。
 >    2. プロバイダー一覧から **App Service** を選ぶ。
 >    3. 上部フィルターで**サブスクリプション**と**リージョン**（App Service を作った場所）を選ぶ。
->    4. 対象 SKU の枠（`Basic B3` なら **B3 VMs**）の行で **鉛筆アイコン** をクリックし、新しい上限値を入力 → **送信**。数分でレビューされる。
+>    4. 対象 SKU の枠（`Basic B1` なら **B1 VMs**）の行で **鉛筆アイコン** をクリックし、新しい上限値を入力 → **送信**。数分でレビューされる。
 > 参考: [クォータ増加を申請する](https://learn.microsoft.com/azure/quotas/quickstart-increase-quota-portal)
 
 ### 6-2. Ollama（LLM）を sidecar で追加
