@@ -30,7 +30,7 @@ from microsoft.opentelemetry.a365.core import (
     UserDetails,
 )
 
-from llm import chat_complete
+from llm import chat_complete_with_tools
 from token_cache import cache_agentic_token
 
 # start_server.py が提供（ホスティング層＝受付・起動。baggage 配線もここ）。
@@ -91,7 +91,7 @@ async def _on_message(ctx: TurnContext, _: TurnState):
 
     if not has_observability_identity:
         # 身元が解決できないターンは観測をスキップして応答だけ返す。
-        reply = chat_complete(user_text)
+        reply = await chat_complete_with_tools(user_text)
         await ctx.send_activity(reply)
         return
 
@@ -124,7 +124,7 @@ async def _on_message(ctx: TurnContext, _: TurnState):
     # LLM 呼び出し自体は distro が自動計装し gen_ai span を出す（Python + OpenAI SDK は自動計装対象）。
     with InvokeAgentScope.start(request, scope_details, agent_details, caller_details) as scope:
         scope.record_input_messages([user_text])
-        reply = chat_complete(user_text)
+        reply = await chat_complete_with_tools(user_text)
         scope.record_output_messages([reply])
 
     await ctx.send_activity(reply)

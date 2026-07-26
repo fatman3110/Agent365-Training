@@ -159,30 +159,18 @@ cd ..\agent      # src/agent に戻る
 
 ## 5. エージェント本体を実装する
 
-1. `.env` に ローカル LLM 関連の設定 とモニタリング関連の設定を追記
+1. `.env` に ローカル LLM 関連の設定とモニタリング関連の設定、及び MCP エンドポイントを追記
    ```dotenv
    OLLAMA_BASE_URL=http://localhost:11434/v1
    OLLAMA_MODEL=qwen2.5:3b-instruct-q4_K_M
    ENABLE_A365_OBSERVABILITY=true
    ENABLE_A365_OBSERVABILITY_EXPORTER=true
+   MCP_SERVER_URL=https://<FUNC>.azurewebsites.net/runtime/webhooks/mcp
    ```
 2. 観測の詳細配線は **Skill に任せる**。下の指示を AI チャットに送ると、Skill（`instrument-observability`）が現行ディストロ `use_microsoft_opentelemetry(...)` とスコープ（InvokeAgentScope 等）の配線コードを生成する：
    ```text
    このエージェントに Agent 365 の観測を OBO（委任）で追加して。
    ```
-   > **意味**：`observability_setup.py` の入口（`token_cache.py` の `get_cached_agentic_token` を解決器に設定）に加え、
-   > `app.py` のメッセージハンドラにターン毎のトークン交換（`_setup_observability_token`）と `InvokeAgentScope` を
-   > 現行 SDK に沿った形で追加する。LLM 呼び出し（`openai` SDK）は distro が自動計装するため `InferenceScope` の
-   > 手動配線は不要（Python + OpenAI/Agent Framework/Google ADK は自動計装対象）。`ExecuteToolScope` は、
-   > このエージェントがまだ MCP 道具をコード内で呼び出していない（6 節で登録するのみ）ため未配線。
-   > 呼び出すようになったら追加する。
-   >
-   > **既知の落とし穴**（実パッケージ `microsoft-agents-hosting-core/aiohttp` 1.2.0 系で検証済み）：
-   > `CloudAdapter` は `microsoft_agents.hosting.aiohttp`（トップレベル `microsoft_agents_hosting_aiohttp` ではない）、
-   > `MsalConnectionManager` は別パッケージ `microsoft-agents-authentication-msal`（`requirements.txt` に明記が必要）、
-   > かつ `from_environment()` は存在しないため `microsoft_agents.activity.config.load_configuration_from_env(os.environ)`
-   > の戻り値を `MsalConnectionManager(**config)` に渡す。`AgentApplication` にも `connection_manager` と `**config`
-   > を渡さないと `AGENTAPPLICATION.USERAUTHORIZATION.HANDLERS`（`AGENTIC`）が認識されない。
 
 ## 6. Azure にデプロイして「登録」する
 
@@ -197,13 +185,27 @@ az acr create -n $ACR -g $RG --sku Basic --admin-enabled true
 # エージェントのコンテナを ACR 上でビルド（カレント = src/agent。その Dockerfile を使う）
 az acr build -r $ACR -t agent:latest .
 
-# Linux プラン（Ollama を載せるためメモリ多めの P1v3。学習後は必ず削除）
-az appservice plan create -n $PLAN -g $RG --is-linux --sku P1V3
+# Linux プラン（学習用途ではコスト最小の Basic B3 を既定）
+az appservice plan create -n $PLAN -g $RG --is-linux --sku B3
 
 # Web アプリ（コンテナ）
 az webapp create -n $APP -g $RG -p $PLAN `
   --deployment-container-image-name "$ACR.azurecr.io/agent:latest"
+
+# App Service の環境変数を反映
+$settings = Get-Content ".env" | Where-Object { $_ -match '^[^#\s][^=]*=' }
+az webapp config appsettings set -n $APP -g $RG --settings $settings
 ```
+
+> **補足: 作成時に「quota」エラーが出る場合**
+> App Service プラン（`Basic B3` など Free/Consumption 以外の tier）は専用 VM を消費するため、サブスクリプション／リージョンの VM 枠が `0` だと `Operation cannot be completed without additional quota`（`Current Limit (Total VMs): 0`）というエラーで失敗する。次のいずれかで対処する。
+> 1. **別リージョンで作り直す**（最も手軽。ただし内部サンドボックス系サブスクリプションではリージョンを変えても同じ枠 0 のことがある）。
+> 2. **クォータ増加を申請する**:
+>    1. [Azure Portal](https://portal.azure.com) の検索ボックスで「**クォータ**」を開く。
+>    2. プロバイダー一覧から **App Service** を選ぶ。
+>    3. 上部フィルターで**サブスクリプション**と**リージョン**（App Service を作った場所）を選ぶ。
+>    4. 対象 SKU の枠（`Basic B3` なら **B3 VMs**）の行で **鉛筆アイコン** をクリックし、新しい上限値を入力 → **送信**。数分でレビューされる。
+> 参考: [クォータ増加を申請する](https://learn.microsoft.com/azure/quotas/quickstart-increase-quota-portal)
 
 ### 6-2. Ollama（LLM）を sidecar で追加
 

@@ -1,6 +1,7 @@
 # エージェント本体の依存パッケージ（現行 A365 SDK に準拠）
 openai                              # LLM（Ollama 互換）呼び出し。distro が自動計装する
 python-dotenv                       # .env 読み込み
+mcp                                 # MCP クライアント（§4 の Function App の echo/now ツールを呼び出す）
 
 # Microsoft 365 Agents SDK（ホスティング）
 microsoft-agents-hosting-core

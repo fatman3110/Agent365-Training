@@ -1,0 +1,13 @@
+# .dockerignore — シークレットや不要ファイルを Docker ビルドコンテキストから除外する
+# Dockerfile は `COPY . .` でカレントディレクトリを丸ごとコピーするため、
+# ここに書かれていないファイルはすべてコンテナイメージに焼き込まれる。
+.env
+.env.*
+a365.config.json
+a365.generated.config.json
+*.local.json
+.venv/
+.venv_check/
+__pycache__/
+*.pyc
+.git
