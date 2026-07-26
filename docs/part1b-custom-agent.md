@@ -69,6 +69,16 @@ $MCP   = "agent365-training-mcp"               # 自作 MCP サーバーの表�
 
 ## 1. ツールを用意して Azure にログインする
 
+まず教材リポジトリ（`src/` の雛形コードを含む）を取得し、その中で作業する。
+
+```powershell
+# 教材（本リポジトリ）を clone して作業ディレクトリに入る
+git clone https://github.com/fatman3110/Agent365-Training.git
+cd Agent365-Training
+```
+
+次に必要なツールを確認する（無ければ各コメントのコマンドで導入）。
+
 ```powershell
 # バージョンが返れば OK（無ければ各コメントのコマンドで導入）
 node --version   # 無ければ: winget install OpenJS.NodeJS.LTS
