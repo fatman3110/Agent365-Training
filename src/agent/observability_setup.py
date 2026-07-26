@@ -1,36 +1,25 @@
-# observability_setup.py — Agent 365 Observability 配線（OBO エンドポイント）
+# observability_setup.py — Agent 365 Observability 初期化（現行 microsoft-opentelemetry distro）
 #
-# ★ スターター（Preview 前提）。パッケージ名・API は現行 SDK で要確認。
-# use_s2s_endpoint=False で OBO 用の /observability/... エンドポイントへ送る。
-from microsoft_agents_a365.observability.core import configure
-from microsoft_agents_a365.observability.core.exporters.agent365_exporter_options import (
-    Agent365ExporterOptions,
-)
+# ★ 参考実装。ここでは「配線の入口」だけを示す。ターン毎のトークン交換や
+#   InvokeAgentScope / InferenceScope などの詳細計装は、instrument-observability Skill が
+#   現行 SDK に沿った検証済みの形で生成する（「このエージェントに Agent 365 の観測を OBO で追加して」）。
+#
+# 旧 API（microsoft_agents_a365.observability.core.configure + Agent365ExporterOptions）は非推奨。
+from microsoft.opentelemetry import use_microsoft_opentelemetry
+from microsoft.opentelemetry.a365.hosting.token_cache_helpers import AgenticTokenCache
 
-from obo import exchange_obo
-
-# per-request のユーザートークンを供給するための簡易ストア。
-# 実装では request context（ミドルウェア等）からアサーションを渡す。
-_current_user_token: dict[str, str] = {}
+# 観測トークンの解決器（OBO / agentic-user）。exporter がエクスポート毎に呼ぶ。
+_token_cache = AgenticTokenCache()
 
 
-def set_user_assertion(assertion: str) -> None:
-    """メッセージ処理の入口で、そのターンのユーザートークンを登録する。"""
-    _current_user_token["assertion"] = assertion
+def configure_observability() -> None:
+    """OpenTelemetry + Agent 365 exporter を初期化する。
 
-
-def _token_resolver(agent_id: str, tenant_id: str) -> str | None:
-    assertion = _current_user_token.get("assertion")
-    return exchange_obo(assertion) if assertion else None
-
-
-def setup_observability(agent_name: str = "myagent") -> None:
-    """OBO エンドポイント向けに Observability exporter を初期化する。"""
-    configure(
-        service_name=f"{agent_name}-runtime",
-        service_namespace="ai.agents.selfhosted",
-        exporter_options=Agent365ExporterOptions(
-            token_resolver=_token_resolver,
-            use_s2s_endpoint=False,  # ★OBO: /observability/... (agentic token cache)
-        ),
+    他モジュール（openai / LangChain 等）を import する「前」に呼ぶこと。
+    そうすると対象ライブラリが自動計装され、gen_ai span が自動で出る。
+    """
+    use_microsoft_opentelemetry(
+        enable_a365=True,
+        a365_enable_observability_exporter=True,  # ★この2つ目のフラグが無いと span を送らない
+        a365_token_resolver=_token_cache.get_observability_token,
     )

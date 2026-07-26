@@ -1,6 +1,8 @@
 # llm.py — OSS LLM（Ollama sidecar, OpenAI 互換）クライアント
 #
-# ★ スターター（Preview 前提）。着手時に現行 SDK / Learn で確認すること。
+# ★ スターター（Preview 前提）。
+# observability_setup.configure_observability() を先に呼んでおけば、この openai 呼び出しは
+# microsoft-opentelemetry ディストロにより自動計装され、gen_ai span が出る（手動計装は不要）。
 # 起動時ブロック回避のため、LLM 接続は遅延初期化（初回メッセージ時）にする。
 from os import environ
 import time

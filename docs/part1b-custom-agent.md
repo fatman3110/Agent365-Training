@@ -37,13 +37,13 @@ Agent365-Training/
 │   ├── agent/                       #   エージェント本体（App Service にデプロイ）
 │   │   ├── app.py                   #     頭脳：発言を受け取り AI に渡して返答する
 │   │   ├── llm.py                   #     AI（自前ホストの Qwen）に質問して答えをもらう
-│   │   ├── obo.py                   #     「ログイン中ユーザーの代理」で動くためのトークン取得
-│   │   ├── observability_setup.py   #     「誰が・どの道具を使ったか」を Agent 365 に送る設定
+│   │   ├── observability_setup.py   #     観測の初期化の入口（現行 distro use_microsoft_opentelemetry）
 │   │   ├── requirements.txt         #     必要な Python ライブラリ
 │   │   └── Dockerfile               #     コンテナ化の定義
 │   └── mcp/                         #   自作の道具（MCP・Azure Functions にデプロイ）
 │       ├── function_app.py          #     道具の中身（echo / now）
 │       ├── host.json                #     Functions 設定（MCP 拡張）
+│       ├── local.settings.json      #     Functions のローカル設定（言語=python の判定に必須）
 │       └── requirements.txt         #     必要な Python ライブラリ
 ├── start_server.py                  # (2) Skills が自動生成：受付と起動（外部からのメッセージを (1) へ橋渡し）
 ├── appPackage/manifest.json         # (2) Skills が自動生成：エージェントを登録するための情報（名前など）
@@ -121,16 +121,12 @@ Skill が内部で `a365 setup all`を実行し、以下を**自動で**行う�
 要件チェック ─▶ Blueprint 作成 ─▶ 資格情報 ─▶ 委任権限の継承 ─▶ Agent Identity 作成(UPN無し) ─▶ 登録 ─▶ ローカルの .env へ接続情報を書き込み
 ```
 
-途中で **2 回**、画面の指示に従って承認する：
-1. **アプリ権限の付与** … `Assign this application permission now? [y/N]:` → `y`
-2. **委任権限の管理者同意** … ブラウザが開く → サインイン → **Allow**
+途中で 、複数回、画面の指示に従って指示や認証を行う：
+1. `XXX? [y/N]:` → `y`
+2. ブラウザが開く → サインインと権限の承認
 
-確認：
+- **成功の判定**：ローカルに作成された `a365.generated.config.json` の **`agentBlueprintId` に ID が入っていること** 
 
-```powershell
-a365 query-entra                                   # Entra 登録状態
-Get-Content a365.generated.config.json | ConvertFrom-Json | Select-Object completed, agentBlueprintId
-```
 ## 4. 道具（MCP）を作ってクラウドに置く
 
 エージェントが使う「道具」を、Azure Functions として建てる。コードは [../src/mcp/](../src/mcp)（`echo` / `now` の 2 ツール）。
@@ -153,9 +149,8 @@ az functionapp create -n $FUNC -g $RG -s $STG `
 4-1 で作った空の Function App（`$FUNC`）に、[../src/mcp/](../src/mcp) のコードを送り込む。
 
 ```powershell
-cd ..\mcp        # src/agent から src/mcp へ（function_app.py / host.json / requirements.txt があるフォルダ）
+cd ..\mcp        # src/agent から src/mcp へ
 func azure functionapp publish $FUNC
-# → 公開 URL: https://$FUNC.azurewebsites.net/runtime/webhooks/mcp
 cd ..\agent      # src/agent に戻る
 ```
 
@@ -177,7 +172,7 @@ cd ..\agent      # src/agent に戻る
 `make-a365-agent` が **`start_server.py`（(2)受付・起動）** を生成する。ここに **[../src/agent/](../src/agent) の中身（(1)あなたのコード）を配置・接続**する。
 
 やること（B・具体手順）：
-1. `../src/agent/` の `app.py` / `llm.py` / `obo.py` / `observability_setup.py` を、生成されたプロジェクト直下（`start_server.py` と同じ場所）にコピー
+1. `../src/agent/` の `app.py` / `llm.py` / `observability_setup.py` を、生成されたプロジェクト直下（`start_server.py` と同じ場所）にコピー
 2. `app.py` はすでに `from start_server import build_adapter` で (2) に差し込む形になっている（そのまま使える）
 3. `.env` に LLM と観測の設定を追記
    ```dotenv
@@ -186,11 +181,11 @@ cd ..\agent      # src/agent に戻る
    ENABLE_A365_OBSERVABILITY=true
    ENABLE_A365_OBSERVABILITY_EXPORTER=true
    ```
-4. 観測配線は Skill に任せてもよい。下の指示を AI チャットに送ると、Skill（`instrument-observability`）が OpenTelemetry の配線コードを生成する：
+4. 観測の詳細配線は **Skill に任せるのが推奨**（手書きより現行 SDK に沿った検証済みのコードになる）。下の指示を AI チャットに送ると、Skill（`instrument-observability`）が現行ディストロ `use_microsoft_opentelemetry(...)` とスコープ（InvokeAgentScope 等）の配線コードを生成する：
    ```text
    このエージェントに Agent 365 の観測を OBO（委任）で追加して。
    ```
-   > **意味**：「このエージェントに Agent 365 の観測（誰が・どの道具を使ったかの記録送信）を、**OBO（委任）**で追加して」という依頼。`observability_setup.py` 相当の配線を代わりに書いてくれる。
+   > **意味**：`observability_setup.py` の入口に加えて、ターン毎のトークン交換や InvokeAgentScope などの詳細を、現行 SDK に沿った形で代わりに書いてくれる。旧 API（`configure()` ・手組み MSAL）は使わない。
 
 ## 6. Azure にデプロイして「登録」する
 
@@ -227,9 +222,7 @@ App Service の **sidecar コンテナ**機能で `ollama/ollama` を横に足�
 ここまでで、エージェント本体はクラウド（App Service）で動く URL を持った。最後に、その **URL（＝メッセージの届け先＝messaging endpoint）を Agent 365 に教え**、エージェントと道具（MCP）を**登録**する。
 
 ```powershell
-# 3 節で生成した a365 設定ファイルがある src/agent で実行する（1 節以降ここが作業フォルダ。他フォルダにいる場合は `cd ..\agent`）
 # (1) デプロイ後の実 URL を messaging endpoint に反映（＝エージェントの住所を最新化。）
-#    --m365 を付けると Teams / Microsoft 365 Copilot チャネル用に messaging endpoint を登録する
 a365 setup all --m365
 
 # (2) エージェントを登録申請（Agents › Requests に Pending で出る）
