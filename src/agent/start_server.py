@@ -1,15 +1,16 @@
 # start_server.py — ホスティング層（受付・起動）
 #
 # 非 AI Teammate エージェント用の最小 aiohttp ホスティング。
-# app.py（頭脳）が `from start_server import build_adapter` で使う。
+# app.py（頭脳）が `from start_server import build_adapter, load_agent_configuration` で使う。
 #
-# ★ 参考実装の出典：agent365-skills の make-ai-teammate リファレンス
-#   （plugins/agent365/skills/make-ai-teammate/references/python-ai-teammate.md の
-#    host_agent_server.py、nodejs-ai-teammate.md の src/index.ts）から、AI Teammate
-#    固有の要素（AgentNotification 通知配線・メール通知処理）を除いた最小形。
-#   `AgentApplication` + `CloudAdapter.process(request, agent)` の正確なシグネチャは
-#   `microsoft-agents-hosting-aiohttp` のバージョンにより変わり得るため、
-#   着手時に Microsoft Learn / インストール済みパッケージのソースで確認すること。
+# 実装済みパッケージ（microsoft-agents-hosting-core/aiohttp/authentication-msal 1.2.0）の
+# ソースで実際に検証済み：
+#   - CloudAdapter は `microsoft_agents.hosting.aiohttp`（トップレベル `microsoft_agents_hosting_aiohttp` ではない）
+#   - MsalConnectionManager は `microsoft_agents.authentication.msal`（別 pip パッケージ
+#     `microsoft-agents-authentication-msal`。requirements.txt に追記済み）
+#   - MsalConnectionManager に `from_environment()` は無い。
+#     `microsoft_agents.activity.config.load_configuration_from_env(os.environ)` で
+#     CONNECTIONS__* 等をパースし、`MsalConnectionManager(**config)` に渡す
 from __future__ import annotations
 
 import asyncio
@@ -22,21 +23,47 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from aiohttp import web
-from microsoft_agents_hosting_aiohttp import CloudAdapter
-from microsoft_agents.hosting.core.authorization import MsalConnectionManager
+from microsoft_agents.activity.config import load_configuration_from_env
+from microsoft_agents.authentication.msal import MsalConnectionManager
+from microsoft_agents.hosting.aiohttp import CloudAdapter
+from microsoft.opentelemetry.a365.hosting import (
+    ObservabilityHostingManager,
+    ObservabilityHostingOptions,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def build_adapter() -> CloudAdapter:
-    """CloudAdapter を構築する。
-
-    MsalConnectionManager が CONNECTIONS__* / AGENTAPPLICATION__* 環境変数
-    （`a365 setup all` が .env に書き込む）から認証設定を読み込む。
-    client_id / client_secret / tenant_id を直接渡さない。
+def load_agent_configuration() -> dict:
+    """.env の CONNECTIONS__* / AGENTAPPLICATION__* / CONNECTIONSMAP__* を
+    dict にパースする（`microsoft_agents.activity.config.load_configuration_from_env`）。
+    戻り値は {"AGENTAPPLICATION": ..., "CONNECTIONS": ..., "CONNECTIONSMAP": ...}。
     """
-    connection_manager = MsalConnectionManager.from_environment()
-    return CloudAdapter(connection_manager=connection_manager)
+    return load_configuration_from_env(dict(os.environ))
+
+
+def build_adapter(config: dict) -> tuple[CloudAdapter, MsalConnectionManager]:
+    """CloudAdapter と ConnectionManager を構築する。
+
+    `config` は `load_agent_configuration()` の戻り値をそのまま渡す
+    （`MsalConnectionManager(**config)` が config["CONNECTIONS"] / config["CONNECTIONSMAP"]
+    を読み込む。client_id / client_secret / tenant_id を直接渡さない）。
+    呼び出し側（app.py）は返る connection_manager を
+    `AgentApplication(connection_manager=..., **config)` にも渡し、
+    AGENTAPPLICATION.USERAUTHORIZATION（AGENTIC ハンドラ設定）を Authorization に伝播させること。
+    """
+    connection_manager = MsalConnectionManager(**config)
+    adapter = CloudAdapter(connection_manager=connection_manager)
+
+    # A365 Observability — best-effort instrumentation (verify against official sample)
+    # TurnContext から baggage（tenant/agent 識別子）を自動的に配線する。
+    # enable_baggage / enable_output_logging は既定 False のため明示的に True にする。
+    ObservabilityHostingManager.configure(
+        adapter.middleware_set,
+        ObservabilityHostingOptions(enable_baggage=True, enable_output_logging=True),
+    )
+    return adapter, connection_manager
+
 
 
 async def _handle_messages(request: web.Request, agent_app) -> web.Response:

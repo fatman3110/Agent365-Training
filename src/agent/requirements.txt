@@ -5,6 +5,7 @@ python-dotenv                       # .env 読み込み
 # Microsoft 365 Agents SDK（ホスティング）
 microsoft-agents-hosting-core
 microsoft-agents-hosting-aiohttp
+microsoft-agents-authentication-msal        # MsalConnectionManager はここ（hosting-core には無い）
 
 # Agent 365 Observability（統一ディストロ。旧 microsoft-agents-a365-observability-* は非推奨）
 microsoft-opentelemetry

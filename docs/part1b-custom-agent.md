@@ -159,21 +159,30 @@ cd ..\agent      # src/agent に戻る
 
 ## 5. エージェント本体を実装する
 
-**(1) のコード（`app.py` / `llm.py` / `start_server.py` / `observability_setup.py`）はすでに [../src/agent/](../src/agent) に揃っている**。3 節で `a365 setup all` を実行したのと同じ `src/agent` に配置されているため、コピーや配置作業は不要。
-
-やること：
-1. `.env` に LLM と観測の設定を追記
+1. `.env` に ローカル LLM 関連の設定 とモニタリング関連の設定を追記
    ```dotenv
    OLLAMA_BASE_URL=http://localhost:11434/v1
    OLLAMA_MODEL=qwen2.5:3b-instruct-q4_K_M
    ENABLE_A365_OBSERVABILITY=true
    ENABLE_A365_OBSERVABILITY_EXPORTER=true
    ```
-2. 観測の詳細配線は **Skill に任せるのが推奨**（手書きより現行 SDK に沿った検証済みのコードになる）。下の指示を AI チャットに送ると、Skill（`instrument-observability`）が現行ディストロ `use_microsoft_opentelemetry(...)` とスコープ（InvokeAgentScope 等）の配線コードを生成する：
+2. 観測の詳細配線は **Skill に任せる**。下の指示を AI チャットに送ると、Skill（`instrument-observability`）が現行ディストロ `use_microsoft_opentelemetry(...)` とスコープ（InvokeAgentScope 等）の配線コードを生成する：
    ```text
    このエージェントに Agent 365 の観測を OBO（委任）で追加して。
    ```
-   > **意味**：`observability_setup.py` の入口に加えて、ターン毎のトークン交換や InvokeAgentScope などの詳細を、現行 SDK に沿った形で代わりに書いてくれる。旧 API（`configure()` ・手組み MSAL）は使わない。
+   > **意味**：`observability_setup.py` の入口（`token_cache.py` の `get_cached_agentic_token` を解決器に設定）に加え、
+   > `app.py` のメッセージハンドラにターン毎のトークン交換（`_setup_observability_token`）と `InvokeAgentScope` を
+   > 現行 SDK に沿った形で追加する。LLM 呼び出し（`openai` SDK）は distro が自動計装するため `InferenceScope` の
+   > 手動配線は不要（Python + OpenAI/Agent Framework/Google ADK は自動計装対象）。`ExecuteToolScope` は、
+   > このエージェントがまだ MCP 道具をコード内で呼び出していない（6 節で登録するのみ）ため未配線。
+   > 呼び出すようになったら追加する。
+   >
+   > **既知の落とし穴**（実パッケージ `microsoft-agents-hosting-core/aiohttp` 1.2.0 系で検証済み）：
+   > `CloudAdapter` は `microsoft_agents.hosting.aiohttp`（トップレベル `microsoft_agents_hosting_aiohttp` ではない）、
+   > `MsalConnectionManager` は別パッケージ `microsoft-agents-authentication-msal`（`requirements.txt` に明記が必要）、
+   > かつ `from_environment()` は存在しないため `microsoft_agents.activity.config.load_configuration_from_env(os.environ)`
+   > の戻り値を `MsalConnectionManager(**config)` に渡す。`AgentApplication` にも `connection_manager` と `**config`
+   > を渡さないと `AGENTAPPLICATION.USERAUTHORIZATION.HANDLERS`（`AGENTIC`）が認識されない。
 
 ## 6. Azure にデプロイして「登録」する
 
@@ -224,7 +233,6 @@ a365 develop-mcp register-external-mcp-server `
   --tools       "echo,now"
 ```
 
-- **`--m365`** … Teams / Copilot から話しかけられる「M365 エージェント」として messaging endpoint を登録する（[Learn: setup](https://learn.microsoft.com/microsoft-agent-365/developer/registration)）。
 - 登録すると、**エージェントは Agents › Requests、道具（MCP）は Tools › Requests** に `Pending` として現れる。**承認と Teams への接続は [第2部 B](./part2-1b-custom.md)** で行う。
 
 ---
