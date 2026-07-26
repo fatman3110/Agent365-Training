@@ -107,7 +107,7 @@ node .\agent365-skills\scripts\install.js   # VS Code の chat.agentSkillsLocati
 **ターミナルのコマンドではなく、AI チャットに次の指示を送る**と、先ほど導入した Skill が起動し、必要なコマンドを AI が代わりに実行してくれる。
 
 ```text
-a365-setup を実行して。UPN を持たない Agent を OBO（委任）認可で作りたい。
+a365-setup を実行して。作業ディレクトリは src/agent。UPN を持たない Agent を OBO（委任）認可で作りたい。
 ```
 
 > **この指示の意味**
