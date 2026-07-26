@@ -29,7 +29,7 @@ flowchart LR
     end
     subgraph P2["第2部：Agent 365 ハンズオン ｜ AI 管理者（M365 / Entra 管理センター）"]
         direction TB
-        B1["承認して管理下に置く<br/>（A/B 共通）"] --> B2["エージェントを実際に動かす<br/>（観測データを作る）"]
+        B1["承認して管理下に置く<br/>（A/B 共通）"] --> B2["エージェントを動かす<br/>（観測データを作る）"]
         B2 --> B3["Observe：観測"]
         B3 --> B4["Govern：管理"]
         B4 --> B5["Secure：保護"]
@@ -57,12 +57,12 @@ flowchart LR
 
 ## 第2部：承認・観察・管理・保護（AI 管理者）
 
-まず承認と観測データ作成（作成ルートに対応する方）：
+承認と観測データ作成：
 
 - **A：Copilot Studio 版** → [docs/part2-1a-copilotstudio.md](./docs/part2-1a-copilotstudio.md)
 - **B：独自エージェント版** → [docs/part2-1b-custom.md](./docs/part2-1b-custom.md)
 
-続いて 3 本柱（A/B 共通）：
+3 本柱（A/B 共通）：
 
 - **Observe（観察）** → [docs/part2-2-observe.md](./docs/part2-2-observe.md)
 - **Govern（管理）** → [docs/part2-3-govern.md](./docs/part2-3-govern.md)
@@ -120,7 +120,6 @@ flowchart LR
 | **Entra Agent ID** | エージェントに付与される Entra 上の ID（blueprint の `agentBlueprintId`）。Observability の突き合わせキーになる |
 | **instance 化** | Blueprint（テンプレート）から実際に使えるエージェントの実体を払い出すこと。|
 | **BYO MCP** | 自作の外部 MCP サーバーを Agent 365 に登録して使う仕組み |
-| **Kill Switch** | 管理センターの Block。構成を保持したまま即時停止（Unblock で復帰） |
 
 ---
 

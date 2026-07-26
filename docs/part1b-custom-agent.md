@@ -8,14 +8,20 @@
 
 **目次**
 
-- [0. 名前（変数）を決める](#0-最初に名前を決める1-回だけ)
-- [1. ツール導入と Azure ログイン](#1-ツールを用意して-azure-にログインする)
-- [2. Agent 365 Skills を導入](#2-agent-365-skills-を導入する)
-- [3. 土台（Blueprint / Agent ID）を作る](#3-エージェントの土台を作るblueprint--agent-id)
-- [4. 道具（MCP）を作ってクラウドに置く](#4-道具mcpを作ってクラウドに置く)
-- [5. エージェント本体を実装する](#5-エージェント本体を実装する)
-- [6. デプロイして登録](#6-azure-にデプロイして登録する)
-- [構成ファイル（参考）](#構成ファイル参考)
+- [第1部 B：独自エージェント＋独自 MCP を作る（開発者）](#第1部-b独自エージェント独自-mcp-を作る開発者)
+  - [構成ファイル（参考）](#構成ファイル参考)
+  - [0. 最初に「名前」を決める（1 回だけ）](#0-最初に名前を決める1-回だけ)
+  - [1. ツールを用意して Azure にログインする](#1-ツールを用意して-azure-にログインする)
+  - [2. Agent 365 Skills を導入する](#2-agent-365-skills-を導入する)
+  - [3. エージェントの「土台」を作る（Blueprint / Agent ID）](#3-エージェントの土台を作るblueprint--agent-id)
+  - [4. 道具（MCP）を作ってクラウドに置く](#4-道具mcpを作ってクラウドに置く)
+    - [4-1. Azure に空の Function App（入れ物）を作る](#4-1-azure-に空の-function-app入れ物を作る)
+    - [4-2. 作った入れ物に MCP コードをアップロードする](#4-2-作った入れ物に-mcp-コードをアップロードする)
+  - [5. エージェント本体を実装する](#5-エージェント本体を実装する)
+  - [6. Azure にデプロイして「登録」する](#6-azure-にデプロイして登録する)
+    - [6-1. コンテナレジストリと App Service を作る](#6-1-コンテナレジストリと-app-service-を作る)
+    - [6-2. Ollama（LLM）を sidecar で追加](#6-2-ollamallmを-sidecar-で追加)
+    - [6-3. エージェントの endpoint を Agent 365 に登録する](#6-3-エージェントの-endpoint-を-agent-365-に登録する)
 
 完了後は **[第2部 B：承認と観測データ作成](./part2-1b-custom.md)** で承認・Teams 接続・観測データ作成を行い、その後 Observe / Govern / Secure に進む。
 
@@ -51,14 +57,14 @@ Agent365-Training/
 以降のコマンドはこの変数をそのまま使う。**`xxxx` を自分用のユニークな文字列に変えて**、ターミナルに貼り付ける（PowerShell）。
 
 ```powershell
-$RG    = "rg-agent365-training"        # リソースグループ
-$LOC   = "japaneast"                   # リージョン
-$ACR   = "acragent365xxxx"             # コンテナレジストリ（世界で一意・小文字英数のみ）
-$PLAN  = "plan-agent365"               # App Service プラン
-$APP   = "app-agent365-xxxx"           # エージェント本体の Web アプリ（世界で一意）
-$FUNC  = "func-agent365-mcp-xxxx"      # MCP 用 Functions（世界で一意）
-$STG   = "stagent365mcpxxxx"           # Functions 用ストレージ（世界で一意・小文字英数のみ）
-$MCP   = "mymcp"                        # MCP サーバーの表示名
+$RG    = "rg-agent365-training"                # リソースグループ（トレーニング一式をまとめる箱）
+$LOC   = "japaneast"                           # リージョン
+$ACR   = "acragent365trainingxxxx"             # コンテナレジストリ：Qwen エージェントのコンテナ格納（世界で一意・小文字英数のみ）
+$PLAN  = "plan-agent365-training"              # App Service プラン（エージェント本体をホストする土台）
+$APP   = "app-agent365-training-agent-xxxx"    # エージェント本体（頭脳）の Web アプリ（世界で一意）
+$FUNC  = "func-agent365-training-mcp-xxxx"     # 自作 MCP（道具 echo / now）用の Functions（世界で一意）
+$STG   = "sta365trainingmcpxxxx"               # 上記 Functions 用ストレージ（世界で一意・小文字英数のみ・24 文字以内。短縮: a365）
+$MCP   = "agent365-training-mcp"               # 自作 MCP サーバーの表示名（管理センターに出る名前）
 ```
 
 ## 1. ツールを用意して Azure にログインする
@@ -67,7 +73,7 @@ $MCP   = "mymcp"                        # MCP サーバーの表示名
 # バージョンが返れば OK（無ければ各コメントのコマンドで導入）
 node --version   # 無ければ: winget install OpenJS.NodeJS.LTS
 az   version     # 無ければ: winget install Microsoft.AzureCLI
-func --version   # 無ければ:npm i -g azure-functions-core-tools@4
+func --version   # 無ければ: npm i -g azure-functions-core-tools@4
 a365 --version   # 無ければ: dotnet tool install -g Microsoft.Agents.A365.DevTools.Cli
 
 # Azure にサインイン
