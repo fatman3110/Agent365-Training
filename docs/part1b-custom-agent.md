@@ -159,14 +159,17 @@ cd ..\agent      # src/agent に戻る
 
 ## 5. エージェント本体を実装する
 
-1. `.env` に ローカル LLM 関連の設定とモニタリング関連の設定、及び MCP エンドポイントを追記
-   ```dotenv
+1. `.env` に ローカル LLM 関連の設定とモニタリング関連の設定、及び MCP エンドポイントを追記。
+   ```powershell
+   Add-Content ".env" @"
    OLLAMA_BASE_URL=http://localhost:11434/v1
    OLLAMA_MODEL=qwen2.5:3b-instruct-q4_K_M
    ENABLE_A365_OBSERVABILITY=true
    ENABLE_A365_OBSERVABILITY_EXPORTER=true
-   MCP_SERVER_URL=https://<FUNC>.azurewebsites.net/runtime/webhooks/mcp
+   MCP_SERVER_URL=https://$FUNC.azurewebsites.net/runtime/webhooks/mcp
+   "@
    ```
+   > `.env` を直接編集する場合は、`MCP_SERVER_URL` の `<FUNC>` を **`$FUNC` の実際の値**（例: `echo $FUNC` で確認できる文字列）に置き換えること。この値は §6-1 の `az webapp config appsettings set` でそのまま App Service に反映されるため、ここで直し忘れると本番でも道具に繋がらない。
 2. 観測の詳細配線は **Skill に任せる**。下の指示を AI チャットに送ると、Skill（`instrument-observability`）が現行ディストロ `use_microsoft_opentelemetry(...)` とスコープ（InvokeAgentScope 等）の配線コードを生成する：
    ```text
    このエージェントに Agent 365 の観測を OBO（委任）で追加して。
@@ -174,7 +177,26 @@ cd ..\agent      # src/agent に戻る
 
 ## 6. Azure にデプロイして「登録」する
 
-エージェント本体（(1)＋(2)）をコンテナにして App Service へ。**LLM（Qwen）は隣に置く Ollama コンテナ（sidecar）**で動かす。
+エージェント本体（(1)＋(2)）をコンテナにして App Service へ。LLM（Qwen）は隣に置く 
+
+```mermaid
+flowchart LR
+    Teams["Microsoft Teams / Copilot"] -->|"messaging endpoint"| Agent
+
+    subgraph AppSvc["App Service（Linux, マルチコンテナ）"]
+        direction LR
+        Agent["メインコンテナ\nagent（Python）\napp.py / llm.py"]
+        Ollama["サイドカー コンテナ\nollama/ollama\nqwen2.5:3b-instruct"]
+        Agent -->|"http://localhost:11434\n（OpenAI 互換 API）"| Ollama
+    end
+
+    Agent -->|"MCP over HTTPS"| MCP["Azure Functions\n（echo / now ツール）"]
+    Agent -->|"OTel export"| MAC["Agent 365 Observability（MAC）"]
+```
+
+> **なぜ sidecar 構成にするか**
+> - **Ollama** LLM をローカル環境やコンテナ内でそのまま動かせるランタイム
+> - **攻撃対象面を増やさない** sidecar 方式にすることで Ollama を外部に公開する必要がなく、認証やネットワーク越しの追加ホップも不要
 
 ### 6-1. コンテナレジストリと App Service を作る
 
