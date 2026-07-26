@@ -64,7 +64,7 @@ $PLAN  = "plan-agent365-training"              # App Service プラン（エー�
 $APP   = "app-agent365-training-agent-xxxx"    # エージェント本体（頭脳）の Web アプリ（世界で一意）
 $FUNC  = "func-agent365-training-mcp-xxxx"     # 自作 MCP（道具 echo / now）用の Functions（世界で一意）
 $STG   = "sta365trainingmcpxxxx"               # 上記 Functions 用ストレージ（世界で一意・小文字英数のみ・24 文字以内。短縮: a365）
-$MCP   = "agent365-training-mcp"               # 自作 MCP サーバーの表示名（管理センターに出る名前）
+$MCP   = "ext_a365trainingmcp"                 # 自作 MCP サーバー名
 ```
 
 ## 1. ツールを用意して Azure にログインする
@@ -191,7 +191,7 @@ flowchart LR
     end
 
     Agent -->|"MCP over HTTPS"| MCP["Azure Functions\n（echo / now ツール）"]
-    Agent -->|"OTel export"| MAC["Agent 365 Observability（MAC）"]
+    Agent -->|"観測値 export"| MAC["Agent 365 Observability"]
 ```
 
 > **なぜ sidecar 構成にするか**
@@ -233,23 +233,37 @@ az webapp config appsettings set -n $APP -g $RG --settings $settings
 
 App Service の **sidecar コンテナ**機能で `ollama/ollama` を横に足し、エージェントは `http://localhost:11434` で呼ぶ。
 
-- [Azure ポータル](https://portal.azure.com/) → 対象 Web アプリ → **デプロイ センター → コンテナー（サイドカー）** → **追加**
-  - イメージ：`ollama/ollama:latest`／ポート：`11434`
-- 参考：[App Service の sidecar コンテナー](https://learn.microsoft.com/azure/app-service/tutorial-custom-container-sidecar)
-
+- [Azure ポータル](https://portal.azure.com/) > App Services > 作成したアプリの管理画面 > 左ナビの「デプロイ」配下 **デプロイ センター** を選択
+  - 上部タブで **コンテナー** を選択（メインコンテナ1つだけが表示されている）
+  - **追加 → カスタム コンテナー** を選択すると、右側に「コンテナーの追加」ペインが開く。**種類** は自動的に「**サイドカー**」に設定される（選択不要）
+  - ペインの入力項目：
+    - **名前**：任意（例: `ollama`）
+    - **イメージのソース**：**「その他のコンテナー レジストリ」** を選ぶ（`ollama/ollama` は ACR ではなく Docker Hub の公開イメージのため）
+    - **イメージの種類**：**パブリック**（認証不要の公開イメージ）
+    - **レジストリ サーバー URL**：`https://index.docker.io`（Docker Hub 本体の URL）
+    - **イメージとタグ**：`ollama/ollama:latest`（「イメージ」と「タグ」が1つの入力欄にまとまっている）
+    - **ポート**：`11434`
+    - **スタートアップ コマンド**：空欄のまま（イメージ既定の起動コマンドを使う）
+  - **適用** を選択（メイン／サイドカーの2コンテナ構成になる）
 
 ### 6-3. エージェントの endpoint を Agent 365 に登録する
 
 ここまでで、エージェント本体はクラウド（App Service）で動く URL を持った。最後に、その **URL（＝メッセージの届け先＝messaging endpoint）を Agent 365 に教え**、エージェントと道具（MCP）を**登録**する。
 
 ```powershell
-# (1) デプロイ後の実 URL を messaging endpoint に反映（＝エージェントの住所を最新化。）
+# 次のコマンドの実行時に入力を求められるURLを出力する
+echo "https://$APP.azurewebsites.net/api/messages"
+
+# (1) デプロイ後の実 URL を messaging endpoint に反映。エージェントの登録もこの1コマンドで完了する。
+# 複数回、画面の指示に従って指示や認証を行う
 a365 setup all --m365
 
-# (2) エージェントを登録申請（Agents › Requests に Pending で出る）
-a365 publish
+# (2) 道具（MCP）を登録申請（Tools › Requests に出るようになる）
+#Enter description for tool `echo` → Echoes back the input text.
+#Enter description for tool `now` → Returns the current server time.
+#Enter publisher name  →  thiraga
+#Enter server description  → Custom MCP server for the Agent 365 hands-on training, providing echo and now tools.
 
-# (3) 道具（MCP）を登録申請（Tools › Requests に Pending で出る）
 a365 develop-mcp register-external-mcp-server `
   --server-name "$MCP" `
   --server-url  "https://$FUNC.azurewebsites.net/runtime/webhooks/mcp" `
@@ -257,7 +271,44 @@ a365 develop-mcp register-external-mcp-server `
   --tools       "echo,now"
 ```
 
-- 登録すると、**エージェントは Agents › Requests、道具（MCP）は Tools › Requests** に `Pending` として現れる。**承認と Teams への接続は [第2部 B](./part2-1b-custom.md)** で行う。
+- **エージェント**は登録すると承認不要でそのまま 使用可能になる（[Register 段階の仕様](https://learn.microsoft.com/microsoft-agent-365/developer/get-started#adding-agent-365-capabilities-incrementally)。
+- 一方、**道具（MCP）は Tools › Requests** に `Pending` として現れ、[管理者の承認と Entra 委任アクセス許可への同意が必須](https://learn.microsoft.com/microsoft-365/admin/manage/manage-tools-for-agent?view=o365-worldwide#review-and-approve-tool-requests)（。
+- エージェントを **Teams で使えるようにするフローは [第2部 B](./part2-1b-custom.md)** で別途発生。
+
+> **補足: `a365 setup all` が `wids` クレーム不足で失敗する場合**
+> `a365` CLI は、ユーザーの Entra ロールを、アクセストークンに含まれる **`wids` クレーム**から読み取って判定しているため、このクレームが不足していると、必要な権限をもったユーザによる手動作業が必要だと判断されてしまう。
+> - **マニフェスト エディターで追加する方法**：
+>   1. [Microsoft Entra 管理センター](https://entra.microsoft.com/) を開く
+>   2. **Entra ID** >  **アプリの登録** を選択
+>   3. すべてのアプリケーションの一覧から対象アプリ（`Agent 365 CLI`）を選んで開く
+>   4. そのアプリの詳細画面で左ナビ **マニフェスト** を選択
+>   5. JSON 内の `"optionalClaims": null,` を次のブロックに置き換える：
+>      ```json
+>      "optionalClaims": {
+>          "idToken": [],
+>          "accessToken": [
+>              { "name": "wids", "source": null, "essential": false, "additionalProperties": [] }
+>          ],
+>          "saml2Token": []
+>      },
+>      ```
+>   6. 上部の **保存** を選択
+>   7. `az logout` → `az login` でトークンを取り直したうえでコマンドを再実行。
+
+> **補足: `a365 setup all` の委任アクセス許可（delegated permissions）の同意が 失敗する場合**
+> **状況の確認：CLI 検証コマンド**
+> ```powershell
+> a365 query-entra inheritance
+> ```
+> 最後の行が `Summary: 5 of 5 resource(s) have effective inheritance ...` になっていれば、実際には全リソースへの許可が揃っている。
+>
+> **対応：Microsoft Entra 管理センター**
+> 1. [Microsoft Entra 管理センター](https://entra.microsoft.com/) を開く
+> 2. 左ナビで **Entra ID** > **Agents** > **Agent blueprints** を選択（
+> 3. 対象のブループリント（例: `A365-Training-Agent Blueprint`）を選ぶ
+> 4. 左ナビ **Access** 配下の **Granted permissions (Preview)** を選択
+> 5. **管理者の同意** タブで、要求している全リソース（Microsoft Graph / Agent Tools / Messaging Bot API / Observability API / Power Platform API）の各行が付与済み になっていれば許可済み。付与されていない場合は、手動で付与を行う。
+
 
 ---
 
