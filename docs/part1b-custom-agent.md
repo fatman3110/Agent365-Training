@@ -27,9 +27,9 @@
 
 ## 構成ファイル（参考）
 
-このルートで扱うファイルは **(1) 自作コード**、**(2) `a365 setup all` / Skills が自動生成するもの**、**(3) シークレット** の 3 種に分かれる。本リポジトリの [`../src/`](../src) は (1) に相当する。(2)・(3) は各自の環境で生成されるためリポジトリには含まれない。
+このルートで扱うファイルは **(1) 自作コード**、**(2) `a365 setup all` が自動生成するもの**、**(3) シークレット** の 3 種に分かれる。本リポジトリの [`../src/`](../src) は (1) に相当する。(2)・(3) は各自の環境で生成されるためリポジトリには含まれない。
 
-> 💡 (1)＝エージェントの“頭脳”（何を答え・どの道具を呼ぶか）、(2)＝“受付と起動”（外部からのメッセージを受け取り (1) に渡すサーバー部分）の役割。(2) は定型の認証・ルーティング等で SDK に紐づくため、Skills に自動生成させる。
+> 💡 (1)＝エージェントの“頭脳”（何を答え・どの道具を呼ぶか）と“受付・起動”（外部からのメッセージを受け取り頭脳に渡す aiohttp サーバー）。非 AI Teammate 向けにこのホスティング層を自動生成する Skill は無いため、`start_server.py` も (1) として本リポジトリに同梱している。
 
 ```text
 Agent365-Training/
@@ -37,6 +37,7 @@ Agent365-Training/
 │   ├── agent/                       #   エージェント本体（App Service にデプロイ）
 │   │   ├── app.py                   #     頭脳：発言を受け取り AI に渡して返答する
 │   │   ├── llm.py                   #     AI（自前ホストの Qwen）に質問して答えをもらう
+│   │   ├── start_server.py          #     受付と起動：aiohttp サーバーで外部からのメッセージを app.py へ橋渡し
 │   │   ├── observability_setup.py   #     観測の初期化の入口（現行 distro use_microsoft_opentelemetry）
 │   │   ├── requirements.txt         #     必要な Python ライブラリ
 │   │   └── Dockerfile               #     コンテナ化の定義
@@ -45,8 +46,7 @@ Agent365-Training/
 │       ├── host.json                #     Functions 設定（MCP 拡張）
 │       ├── local.settings.json      #     Functions のローカル設定（言語=python の判定に必須）
 │       └── requirements.txt         #     必要な Python ライブラリ
-├── start_server.py                  # (2) Skills が自動生成：受付と起動（外部からのメッセージを (1) へ橋渡し）
-├── appPackage/manifest.json         # (2) Skills が自動生成：エージェントを登録するための情報（名前など）
+├── appPackage/manifest.json         # (2) `a365 setup all --m365` が自動生成：エージェントを登録するための情報（名前など）
 ├── a365.config.json                 # (2) `a365 setup all` に渡す設定ファイル
 ├── .env                             # (3) 秘密情報：接続キー等。`a365 setup all` が自動で書き込む（共有・コミット禁止）
 └── a365.generated.config.json       # (3) 秘密情報：`a365 setup all` が作る ID・同意状況（共有・コミット禁止）
@@ -93,7 +93,7 @@ az login
 
 ## 2. Agent 365 Skills を導入する
 
-これを導入すると、Github Copilot / Claude Code に自然言語で指示したときに、(2)「受付と起動」のサーバー部分（`start_server.py`）等を自動生成してくれる。
+これを導入すると、Github Copilot / Claude Code に自然言語で指示したときに、Blueprint 作成（`a365-setup`）や観測の詳細配線（`instrument-observability`）を Skill が代わりに実行してくれる。
 
 ```powershell
 git clone https://github.com/microsoft/agent365-skills.git
@@ -122,7 +122,7 @@ Skill が内部で `a365 setup all`を実行し、以下を**自動で**行う�
 ```
 
 途中で 、複数回、画面の指示に従って指示や認証を行う：
-1. `XXX? [y/N]:` → `y`
+1. `[y/N]:` の選択  → `y`
 2. ブラウザが開く → サインインと権限の承認
 
 - **成功の判定**：ローカルに作成された `a365.generated.config.json` の **`agentBlueprintId` に ID が入っていること** 
@@ -159,29 +159,17 @@ cd ..\agent      # src/agent に戻る
 
 ## 5. エージェント本体を実装する
 
-これも 3 節 と同じく、**AI チャットに打ち込む自然言語の指示**。Copilot Chat（または Claude Code）に次を送ると、Skill（`make-a365-agent`）が (2) の受付・起動サーバーを生成する。
+**(1) のコード（`app.py` / `llm.py` / `start_server.py` / `observability_setup.py`）はすでに [../src/agent/](../src/agent) に揃っている**。3 節で `a365 setup all` を実行したのと同じ `src/agent` に配置されているため、コピーや配置作業は不要。
 
-```text
-非 AI Teammate のエージェントを OBO（委任）で作りたい。(2) の受付・起動サーバーを Python / aiohttp で生成して。
-```
-
-> **この指示の意味（初学者向け）**
-> - **非 AI Teammate のエージェントを OBO（委任）で** … 3 節 で作ったのと同じ種類のエージェントとして扱う合図。Skill はこの言葉で生成するコードの形（認証の配線など）を判定する
-> - **(2) の受付・起動サーバーを Python / aiohttp で生成して** … (2)「受付と起動」（`start_server.py`）を、Python の Web サーバーライブラリ **aiohttp** で作ってほしい、という依頼。このサーバーが外部からのメッセージを受け付けて (1)（`app.py`）に渡す
-
-`make-a365-agent` が **`start_server.py`（(2)受付・起動）** を生成する。ここに **[../src/agent/](../src/agent) の中身（(1)あなたのコード）を配置・接続**する。
-
-やること（B・具体手順）：
-1. `../src/agent/` の `app.py` / `llm.py` / `observability_setup.py` を、生成されたプロジェクト直下（`start_server.py` と同じ場所）にコピー
-2. `app.py` はすでに `from start_server import build_adapter` で (2) に差し込む形になっている（そのまま使える）
-3. `.env` に LLM と観測の設定を追記
+やること：
+1. `.env` に LLM と観測の設定を追記
    ```dotenv
    OLLAMA_BASE_URL=http://localhost:11434/v1
    OLLAMA_MODEL=qwen2.5:3b-instruct-q4_K_M
    ENABLE_A365_OBSERVABILITY=true
    ENABLE_A365_OBSERVABILITY_EXPORTER=true
    ```
-4. 観測の詳細配線は **Skill に任せるのが推奨**（手書きより現行 SDK に沿った検証済みのコードになる）。下の指示を AI チャットに送ると、Skill（`instrument-observability`）が現行ディストロ `use_microsoft_opentelemetry(...)` とスコープ（InvokeAgentScope 等）の配線コードを生成する：
+2. 観測の詳細配線は **Skill に任せるのが推奨**（手書きより現行 SDK に沿った検証済みのコードになる）。下の指示を AI チャットに送ると、Skill（`instrument-observability`）が現行ディストロ `use_microsoft_opentelemetry(...)` とスコープ（InvokeAgentScope 等）の配線コードを生成する：
    ```text
    このエージェントに Agent 365 の観測を OBO（委任）で追加して。
    ```
