@@ -201,8 +201,8 @@ flowchart LR
 ### 6-1. コンテナレジストリと App Service を作る
 
 ```powershell
-# コンテナレジストリ
-az acr create -n $ACR -g $RG --sku Basic --admin-enabled true
+# コンテナレジストリ（後述の通りマネージドID経由でpullするため管理者ユーザーは無効のままでよい）
+az acr create -n $ACR -g $RG --sku Basic --admin-enabled false
 
 # エージェントのコンテナを ACR 上でビルド（カレント = src/agent。その Dockerfile を使う）
 az acr build -r $ACR -t agent:latest .
@@ -217,6 +217,31 @@ az webapp create -n $APP -g $RG -p $PLAN `
 # App Service の環境変数を反映
 $settings = Get-Content ".env" | Where-Object { $_ -match '^[^#\s][^=]*=' }
 az webapp config appsettings set -n $APP -g $RG --settings $settings
+
+# システム割り当てマネージドIDを有効化し、ACR からの Image pull 権限（AcrPull）を付与する
+az webapp identity assign -n $APP -g $RG
+$principalId = az webapp identity show -n $APP -g $RG --query principalId -o tsv
+$acrId = az acr show -n $ACR -g $RG --query id -o tsv
+az role assignment create --assignee $principalId --scope $acrId --role AcrPull 2>$null
+
+# 認証方式をマネージドIDに切り替え、待受ポート（3978）を明示する
+$subId = az account show --query id -o tsv
+$body = @{
+  properties = @{
+    isMain = $true
+    inheritAppSettingsAndConnectionStrings = $true
+    image = "$ACR.azurecr.io/agent:latest"
+    userManagedIdentityClientId = "SystemIdentity"
+    authType = "SystemIdentity"
+    targetPort = "3978"
+  }
+} | ConvertTo-Json -Compress
+$body | Out-File -FilePath sitecontainer-main.json -Encoding utf8 -NoNewline
+
+az rest --method PUT `
+  --url "https://management.azure.com/subscriptions/$subId/resourceGroups/$RG/providers/Microsoft.Web/sites/$APP/sitecontainers/main?api-version=2024-04-01" `
+  --headers "Content-Type=application/json" `
+  --body "@sitecontainer-main.json"
 ```
 
 > **補足: 作成時に「quota」エラーが出る場合**
@@ -257,6 +282,14 @@ echo "https://$APP.azurewebsites.net/api/messages"
 # (1) デプロイ後の実 URL を messaging endpoint に反映。エージェントの登録もこの1コマンドで完了する。
 # 複数回、画面の指示に従って指示や認証を行う
 a365 setup all --m365
+
+# a365 コマンドで作成された認証情報を App Service に反映
+$settings = Get-Content ".env" | Where-Object { $_ -match '^[^#\s][^=]*=' }
+az webapp config appsettings set -n $APP -g $RG --settings $settings
+az webapp restart -n $APP -g $RG
+
+# 起動確認　HTTP ステータスコード 200 の確認
+curl.exe -s -w "`nHTTP:%{http_code}`n" "https://$APP.azurewebsites.net/api/health"
 
 # (2) 道具（MCP）を登録申請（Tools › Requests に出るようになる）
 #Enter description for tool `echo` → Echoes back the input text.
