@@ -26,20 +26,17 @@
 |:-:|
 
 
-### 1-2. Teams App を公開して管理者承認を得る
+### 1-2. Teams App の公開申請を管理者が承認する
 
-[第1部 B §6-4／§7](./part1b-custom-agent.md#6-4-bot-app--bot-service-を作り-teams-チャネルを有効化する) で作った Teams App Package を、管理者の承認を得て組織で使える状態にする。
+[第1部 B §7](./part1b-custom-agent.md#7-teams-app-packagemanifestjson--m365agentsyml-を作る) で公開（`publish` コマンドの実行）まで済ませた Teams App Package を、管理者が承認して組織で使える状態にする。
 
-> ⚠️ このフローは Agent 365 ネイティブの "Request Instance"（インスタンス要求）フローとは別物。Blueprint App は Agentic Application 型で Bot Framework の Teams チャネル登録を通らないため、classic Bot App + 通常の Teams App 公開経路（下記）を使う（[第1部 B §6-4](./part1b-custom-agent.md#6-4-bot-app--bot-service-を作り-teams-チャネルを有効化する) 参照）。承認自体は同じ **Microsoft 365 管理センター** 上で行われるが、タブ名・導線が Agent 365 ネイティブの「Requests」と同一かどうかは**要確認・本教材執筆時点で未確定**（Microsoft Learn で最新の手順を確認すること）。
+> ⚠️ このフローは Agent 365 ネイティブの "Request Instance"（インスタンス要求）フローとは別物。Blueprint App は Agentic Application 型で Bot Framework の Teams チャネル登録を通らないため、classic Bot App + 通常の Teams App 公開経路（[第1部 B §6-4](./part1b-custom-agent.md#6-4-bot-app--bot-service-を作り-teams-チャネルを有効化する) 参照）を使っている。承認自体は同じ **Microsoft 365 管理センター** 上で行われるが、タブ名・導線が Agent 365 ネイティブの「Requests」と同一かどうかは**要確認・本教材執筆時点で未確定**（Microsoft Learn で最新の手順を確認すること）。
 
-1. プロジェクトルート（`m365agents.yml` のある場所）で公開コマンドを実行:
-   ```powershell
-   npx --yes @microsoft/m365agentstoolkit-cli@latest publish --env dev --interactive false
-   ```
-2. **再公開する場合は必ず `appPackage/manifest.json` の `version` を上げる**（インクリメントしないと管理センター側が更新に失敗し「技術的なエラー」と表示されることがある）。
-3. 管理者側の操作：[Microsoft 365 管理センター](https://admin.microsoft.com/) を開く › **Teams アプリ › アプリの管理**（環境によっては **Agents › Requests** に出る可能性もある。上記の通りどちらに出るかは要確認）で該当アプリを開く → 状態を `Submitted` → `Published` に変更して承認する。
-4. 承認後、組織のユーザーが Teams の「アプリ」からこのエージェントを追加できるようになる（反映まで時間がかかる場合あり）。
-5. 反映されない／古い版が見える場合は Teams クライアントのキャッシュが原因のことがある。Teams を終了し、`%APPDATA%\Microsoft\Teams` 配下の `Cache` / `GPUCache` / `Code Cache` を削除して再起動する。
+1. [Microsoft 365 管理センター](https://admin.microsoft.com/) を開く › **Teams アプリ › アプリの管理**（環境によっては **Agents › Requests** に出る可能性もある。上記の通りどちらに出るかは要確認）で該当アプリを開く → 状態を `Submitted` → `Published` に変更して承認する。
+2. 承認後、組織のユーザーが Teams の「アプリ」からこのエージェントを追加できるようになる（反映まで時間がかかる場合あり）。
+3. 反映されない／古い版が見える場合は Teams クライアントのキャッシュが原因のことがある。Teams を終了し、`%APPDATA%\Microsoft\Teams` 配下の `Cache` / `GPUCache` / `Code Cache` を削除して再起動する。
+
+> **再公開する場合の注意**: [第1部 B §7](./part1b-custom-agent.md#7-teams-app-packagemanifestjson--m365agentsyml-を作る) の手順に戻り、`appPackage/manifest.json` の `version` を上げてから `publish` コマンドを再実行すること（インクリメントしないと管理センター側が更新に失敗し「技術的なエラー」と表示されることがある）。
 
 > **ポリシーテンプレート／条件付きアクセスは「事前準備」が要ることがある**
 > - ⚠️ 以下は Agent 365 ネイティブの "Request Instance" フロー向けの記述であり、今回の Teams App 公開フローに同様に適用されるかは**未検証**。適用有無を確認してから活用すること。

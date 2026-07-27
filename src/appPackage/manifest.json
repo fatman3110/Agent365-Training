@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.20/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.20",
+  "version": "1.0.0",
+  "id": "${{TEAMS_APP_ID}}",
+  "developer": {
+    "name": "Agent365-Training",
+    "websiteUrl": "https://${{APP_DOMAIN}}",
+    "privacyUrl": "https://${{APP_DOMAIN}}/privacy",
+    "termsOfUseUrl": "https://${{APP_DOMAIN}}/terms"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "${{AGENT_NAME}}",
+    "full": "${{AGENT_NAME}}"
+  },
+  "description": {
+    "short": "Agent 365 hands-on custom agent",
+    "full": "Agent 365 ハンズオン用の独自エージェント（独自 MCP 付き）"
+  },
+  "accentColor": "#FFFFFF",
+  "bots": [
+    {
+      "botId": "${{BOT_ID}}",
+      "scopes": [
+        "personal"
+      ],
+      "supportsFiles": false,
+      "isNotificationOnly": false
+    }
+  ],
+  "validDomains": [
+    "${{APP_DOMAIN}}"
+  ]
+}
