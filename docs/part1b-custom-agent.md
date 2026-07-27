@@ -22,6 +22,8 @@
     - [6-1. コンテナレジストリと App Service を作る](#6-1-コンテナレジストリと-app-service-を作る)
     - [6-2. Ollama（LLM）を sidecar で追加](#6-2-ollamallmを-sidecar-で追加)
     - [6-3. エージェントの endpoint を Agent 365 に登録する](#6-3-エージェントの-endpoint-を-agent-365-に登録する)
+    - [6-4. Bot App / Bot Service を作り Teams チャッネルを有効化する](#6-4-bot-app--bot-service-を作り-teams-チャッネルを有効化する)
+  - [7. Teams App Package（manifest.json / m365agents.yml）を作る](#7-teams-app-packagemanifestjson--m365agentsyml-を作る)
 
 完了後は **[第2部 B：承認と観測データ作成](./part2-1b-custom.md)** で承認・Teams 接続・観測データ作成を行い、その後 Observe / Govern / Secure に進む。
 
@@ -46,7 +48,8 @@ Agent365-Training/
 │       ├── host.json                #     Functions 設定（MCP 拡張）
 │       ├── local.settings.json      #     Functions のローカル設定（言語=python の判定に必須）
 │       └── requirements.txt         #     必要な Python ライブラリ
-├── appPackage/manifest.json         # (2) `a365 setup all --m365` が自動生成：エージェントを登録するための情報（名前など）
+├── appPackage/manifest.json         # (1) 自作：Teams App Package の定義（§7 で作成。テンプレートを編集）
+├── m365agents.yml                   # (1) 自作：Teams App の provision/publish ライフサイクル定義（§7 で作成）
 ├── a365.config.json                 # (2) `a365 setup all` に渡す設定ファイル
 ├── .env                             # (3) 秘密情報：接続キー等。`a365 setup all` が自動で書き込む（共有・コミット禁止）
 └── a365.generated.config.json       # (3) 秘密情報：`a365 setup all` が作る ID・同意状況（共有・コミット禁止）
@@ -86,6 +89,7 @@ node --version   # 無ければ: winget install OpenJS.NodeJS.LTS
 az   version     # 無ければ: winget install Microsoft.AzureCLI
 func --version   # 無ければ: npm i -g azure-functions-core-tools@4
 a365 --version   # 無ければ: dotnet tool install -g Microsoft.Agents.A365.DevTools.Cli
+m365agentstoolkit-cli --version   # 無ければ: npm i -g @microsoft/m365agentstoolkit-cli（§7 の Teams App Package 作成で使う）
 
 # Azure にサインイン
 az login
@@ -306,7 +310,7 @@ a365 develop-mcp register-external-mcp-server `
 
 - **エージェント**は登録すると承認不要でそのまま 使用可能になる（[Register 段階の仕様](https://learn.microsoft.com/microsoft-agent-365/developer/get-started#adding-agent-365-capabilities-incrementally)。
 - 一方、**道具（MCP）は Tools › Requests** に `Pending` として現れ、[管理者の承認と Entra 委任アクセス許可への同意が必須](https://learn.microsoft.com/microsoft-365/admin/manage/manage-tools-for-agent?view=o365-worldwide#review-and-approve-tool-requests)（。
-- エージェントを **Teams で使えるようにするフローは [第2部 B](./part2-1b-custom.md)** で別途発生。
+- エージェントを **Teams で使えるようにする事前準備（Bot App / Bot Service 作成）は §6-4・§7** で行い、**公開と承認は [第2部 B](./part2-1b-custom.md)** で別途発生。
 
 > **補足: `a365 setup all` が `wids` クレーム不足で失敗する場合**
 > `a365` CLI は、ユーザーの Entra ロールを、アクセストークンに含まれる **`wids` クレーム**から読み取って判定しているため、このクレームが不足していると、必要な権限をもったユーザによる手動作業が必要だと判断されてしまう。
@@ -342,6 +346,153 @@ a365 develop-mcp register-external-mcp-server `
 > 4. 左ナビ **Access** 配下の **Granted permissions (Preview)** を選択
 > 5. **管理者の同意** タブで、要求している全リソース（Microsoft Graph / Agent Tools / Messaging Bot API / Observability API / Power Platform API）の各行が付与済み になっていれば許可済み。付与されていない場合は、手動で付与を行う。
 
+## 6-4. Bot App / Bot Service を作り Teams チャネルを有効化する
+
+> **なぜこの節が必要か**：`a365 setup all --m365` が作る Blueprint App は **Agentic Application 型**で、Bot Framework の Teams チャネル登録では拒否される。そのため、Teams と会話するためだけの**普通の（classic）Bot 用アプリ登録**を別途 1 つ作る。Observability 用の Blueprint（§3・§6-3）とは完全に別物として扱う。
+
+```powershell
+# 変数（§0 で決めた名前を利用）
+$BOTAPP = "$AGENT-bot"          # Bot 用 AAD アプリの表示名
+$BOTSVC = "bot-$AGENT"          # Azure Bot Service リソース名
+
+# 1. classic Bot App（普通の AAD アプリ登録）を作成
+$botAppId = az ad app create --display-name $BOTAPP `
+  --sign-in-audience "AzureADMyOrg" --query appId -o tsv
+az ad sp create --id $botAppId
+$botSecret = az ad app credential reset --id $botAppId --append `
+  --display-name "bot-secret" --query password -o tsv
+
+# 2. Azure Bot Service リソースを作成（Bot Framework がこの ID で Teams と繋ぐ）
+az bot create -n $BOTSVC -g $RG `
+  --appid $botAppId `
+  --app-type "SingleTenant" `
+  --tenant-id (az account show --query tenantId -o tsv) `
+  --endpoint "https://$APP.azurewebsites.net/api/messages"
+
+# 3. MsTeams チャネルを有効化
+az bot msteams create -n $BOTSVC -g $RG
+
+# 4. Bot Framework 認証用の接続情報を .env に追記（Observability 用の AGENT365OBSERVABILITY__* とは別キー）
+Add-Content .env @"
+CONNECTIONS__SERVICE_CONNECTION__SETTINGS__CLIENTID=$botAppId
+CONNECTIONS__SERVICE_CONNECTION__SETTINGS__CLIENTSECRET=$botSecret
+CONNECTIONS__SERVICE_CONNECTION__SETTINGS__TENANTID=$(az account show --query tenantId -o tsv)
+CONNECTIONS__SERVICE_CONNECTION__SETTINGS__SCOPES=https://api.botframework.com/.default
+CONNECTIONSMAP__0__CONNECTION=SERVICE_CONNECTION
+CONNECTIONSMAP__0__SERVICEURL=*
+AGENT_ALLOW_ANONYMOUS=false
+"@
+
+# 5. App Service に反映して再起動
+$settings = Get-Content ".env" | Where-Object { $_ -match '^[^#\s][^=]*=' }
+az webapp config appsettings set -n $APP -g $RG --settings $settings
+az webapp restart -n $APP -g $RG
+```
+
+> ⚠️ **`AGENT_ALLOW_ANONYMOUS=false` にして必ず実機で疎通確認する**。`true`（JWT 検証バイパス）のままだと、Bot Framework からの正当なメッセージかどうかを検証せずに応答してしまう（認証コントロールの欠落）。`false` にした状態で `curl.exe -s -w "\nHTTP:%{http_code}\n" "https://$APP.azurewebsites.net/api/health"` が 200 を返し、後述 §7 でパッケージ化した Teams App からメッセージを送って応答が返ることを確認する。
+
+> 💡 `$botAppId` / `$botSecret` は Bot Framework 認証専用。§3・§6-3 で作った Blueprint（Observability 専用の `AGENT365OBSERVABILITY__*`）とは混在させない。
+
+## 7. Teams App Package（manifest.json / m365agents.yml）を作る
+
+Teams にエージェントを公開するには **Teams App Package**（`manifest.json` を含む zip）が必要。**Microsoft 365 Agents Toolkit CLI**（`m365agentstoolkit-cli`）で作成・検証する。
+
+```powershell
+# 1. Microsoft 365 Agents Toolkit CLI（未導入なら。§1 のツール一覧にも追加済み）
+npm i -g @microsoft/m365agentstoolkit-cli
+
+# 2. ディレクトリ構成を作る（プロジェクトルート、src/ と同じ階層）
+mkdir appPackage, appPackage/color, appPackage/outline, env
+```
+
+`appPackage/manifest.json`（schema v1.20。`${{...}}` は `env/.env.dev` の値でテンプレート展開される）：
+
+```jsonc
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.20/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.20",
+  "version": "1.0.0",
+  "id": "${{TEAMS_APP_ID}}",
+  "developer": {
+    "name": "$DEVELOPER",
+    "websiteUrl": "https://$APP.azurewebsites.net",
+    "privacyUrl": "https://$APP.azurewebsites.net/privacy",
+    "termsOfUseUrl": "https://$APP.azurewebsites.net/terms"
+  },
+  "icons": { "color": "color.png", "outline": "outline.png" },
+  "name": { "short": "$AGENT", "full": "$AGENT" },
+  "description": {
+    "short": "Agent 365 hands-on custom agent",
+    "full": "自作エージェント（独自MCP付き）"
+  },
+  "accentColor": "#FFFFFF",
+  "bots": [
+    {
+      "botId": "${{BOT_ID}}",
+      "scopes": ["personal"],
+      "supportsFiles": false,
+      "isNotificationOnly": false
+    }
+  ],
+  "validDomains": ["$APP.azurewebsites.net"]
+}
+```
+
+> 💡 `botId` には **§6-4 で作った classic Bot App の ID**（`$botAppId`）を使う。§3・§6-3 の Blueprint ID ではない。
+> `icons/color.png`（192×192）・`icons/outline.png`（32×32、透過）はダミーでよければ任意の PNG を配置する。
+
+`env/.env.dev`（バージョン管理しない。`.gitignore` に追加）：
+
+```dotenv
+TEAMS_APP_ID=<新規 GUID。[System.Guid]::NewGuid() などで生成>
+BOT_ID=<§6-4 の $botAppId>
+```
+
+`m365agents.yml`（schema v1.7。既存の Bot / Azure リソースを再利用し、新規作成はしない）：
+
+```yaml
+version: v1.7
+environmentFolderPath: ./env
+
+provision:
+  - uses: teamsApp/create
+    with:
+      name: $AGENT-${{TEAMSFX_ENV}}
+  - uses: teamsApp/zipAppPackage
+    with:
+      manifestPath: ./appPackage/manifest.json
+      outputZipPath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
+      outputJsonPath: ./appPackage/build/manifest.${{TEAMSFX_ENV}}.json
+  - uses: teamsApp/validateAppPackage
+    with:
+      appPackagePath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
+  - uses: teamsApp/update
+    with:
+      appPackagePath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
+
+publish:
+  - uses: teamsApp/zipAppPackage
+    with:
+      manifestPath: ./appPackage/manifest.json
+      outputZipPath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
+      outputJsonPath: ./appPackage/build/manifest.${{TEAMSFX_ENV}}.json
+  - uses: teamsApp/validateAppPackage
+    with:
+      appPackagePath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
+  - uses: teamsApp/update
+    with:
+      appPackagePath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
+  - uses: teamsApp/publishAppPackage
+    with:
+      appPackagePath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
+```
+
+```powershell
+# 3. ローカルでパッケージ化・検証（既存 Bot / App Service を再利用する設定のため provision は軽量）
+m365agentstoolkit-cli provision --env dev --interactive false
+```
+
+`provision` が成功すると `appPackage/build/appPackage.dev.zip` が生成される。ここまでで Teams App Package の準備は完了。**実際の公開・承認は [第2部 B §1-2](./part2-1b-custom.md)** で行う。
 
 ---
 

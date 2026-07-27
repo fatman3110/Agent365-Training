@@ -26,20 +26,23 @@
 |:-:|
 
 
-### 1-2. Teams でインスタンスを要求し、管理者に承認してもらう
+### 1-2. Teams App を公開して管理者承認を得る
 
-ここまでで承認不要のまま Agents › Registry に見えているエージェントでも、まだ誰も使える状態にはなっていない。Teams で**インスタンスを要求**し、それを**管理者が承認**して初めて、実際にチャットできるエージェントインスタンスが作られる（→ これが本教材における唯一の「エージェント本体の承認ステップ」）。
+[第1部 B §6-4／§7](./part1b-custom-agent.md#6-4-bot-app--bot-service-を作り-teams-チャネルを有効化する) で作った Teams App Package を、管理者の承認を得て組織で使える状態にする。
 
+> ⚠️ このフローは Agent 365 ネイティブの "Request Instance"（インスタンス要求）フローとは別物。Blueprint App は Agentic Application 型で Bot Framework の Teams チャネル登録を通らないため、classic Bot App + 通常の Teams App 公開経路（下記）を使う（[第1部 B §6-4](./part1b-custom-agent.md#6-4-bot-app--bot-service-を作り-teams-チャネルを有効化する) 参照）。承認自体は同じ **Microsoft 365 管理センター** 上で行われるが、タブ名・導線が Agent 365 ネイティブの「Requests」と同一かどうかは**要確認・本教材執筆時点で未確定**（Microsoft Learn で最新の手順を確認すること）。
 
-1. [Teams](https://teams.microsoft.com) を開く › 左側の **アプリ** メニューからエージェントを検索 → **Request Instance**
-2. 要求はテナント管理者に送られる（[Learn](https://learn.microsoft.com/microsoft-agent-365/developer/create-instance#2-create-agent-instance): "Teams sends the request to your tenant admin for approval"）
-3. 管理者側の操作：[Microsoft 365 管理センター](https://admin.microsoft.com/) › **Agents › All agents › Requests** タブを開く → 該当インスタンス要求（`Pending review`）を開く → 承認
-4. 承認後、Teams がエージェントインスタンスを作成し、利用可能になる（反映まで数分〜数時間かかることがある）
-
-| ![Requests から対象のインスタンス要求を開き、承認する画面](../assets/part2-1b-01-approve.png) |
-|:-:|
+1. プロジェクトルート（`m365agents.yml` のある場所）で公開コマンドを実行:
+   ```powershell
+   npx --yes @microsoft/m365agentstoolkit-cli@latest publish --env dev --interactive false
+   ```
+2. **再公開する場合は必ず `appPackage/manifest.json` の `version` を上げる**（インクリメントしないと管理センター側が更新に失敗し「技術的なエラー」と表示されることがある）。
+3. 管理者側の操作：[Microsoft 365 管理センター](https://admin.microsoft.com/) を開く › **Teams アプリ › アプリの管理**（環境によっては **Agents › Requests** に出る可能性もある。上記の通りどちらに出るかは要確認）で該当アプリを開く → 状態を `Submitted` → `Published` に変更して承認する。
+4. 承認後、組織のユーザーが Teams の「アプリ」からこのエージェントを追加できるようになる（反映まで時間がかかる場合あり）。
+5. 反映されない／古い版が見える場合は Teams クライアントのキャッシュが原因のことがある。Teams を終了し、`%APPDATA%\Microsoft\Teams` 配下の `Cache` / `GPUCache` / `Code Cache` を削除して再起動する。
 
 > **ポリシーテンプレート／条件付きアクセスは「事前準備」が要ることがある**
+> - ⚠️ 以下は Agent 365 ネイティブの "Request Instance" フロー向けの記述であり、今回の Teams App 公開フローに同様に適用されるかは**未検証**。適用有無を確認してから活用すること。
 > - **カスタムテンプレート**を使うなら、**先に Entra でポリシーを作成**しておく必要がある（未作成だとテンプレート作成時に選べない）。CA・アクセスパッケージ・カスタムセキュリティ属性の**フル手順**は [Govern：カスタムポリシーテンプレートを作る](./part2-3-govern.md#5-カスタムポリシーテンプレートを作る) を参照。
 > - すぐ進めたいなら、まず **既定テンプレート（全エージェント用）** を選べばよい（カスタムは後回しでも可）。
 > - ⚠️ **テンプレートは「新規アクティブ化時のみ」適用**。**承認済みのエージェントには後付けできない**（[Learn FAQ](https://learn.microsoft.com/microsoft-agent-365/admin/policy-template#select-a-template)）。後から統制を足す／変える場合は、テンプレートではなく **Entra の 条件付きアクセス を直接更新**する（対象エージェント ID に動的に効く）。
@@ -55,14 +58,11 @@
 | ![Teams でエージェントに echo / now を送り、応答が返っている画面](../assets/part2-1b-04-chat.png) |
 |:-:|
 
-1-2 節 で Teams に接続したエージェントに、**Teams のチャットで話しかける**（これが現実の利用チャネル）。
+1-2 節 で公開・承認した Teams App を通じてエージェントに、**Teams のチャットで話しかける**（これが現実の利用チャネル）。
 
 1. Teams › **Apps** で追加した自分のエージェントを開く
 2. `echo こんにちは` や `今何時？`（`now`）などと送る
 3. 応答が返れば、**受信（Teams→エージェント）と送信（エージェント→Teams）の両方**が通っている
-
-> OBO（委任）なので、エージェントは**話しかけたユーザーの代理**として動く。監査ログにも「誰の代理か」が残る。
-> 開発中のローカル確認だけなら、App Service の `/chat` に直接 REST してもよい：`curl -X POST "https://$APP.azurewebsites.net/chat" -H "Content-Type: application/json" -d '{"message":"echo hi"}'`（ただし Teams 経由と違い、観測のユーザー属性は付かない場合がある）。
 
 ### 2-2. 観測データを厚くするコツ
 
@@ -70,7 +70,7 @@
 
 - **複数回**会話する → Activity / Map に件数が積み上がる
 - **複数ユーザー**で使う → User ノードが増える
-- ツールを使う質問を混ぜる → Tool ノードが出る
+- ツールを使う指示を混ぜる → Tool ノードが出る
 
 ---
 
