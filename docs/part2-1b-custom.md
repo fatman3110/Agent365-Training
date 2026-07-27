@@ -28,23 +28,15 @@
 
 ### 1-2. Teams App の公開申請を管理者が承認する
 
-[第1部 B §7](./part1b-custom-agent.md#7-teams-app-packagemanifestjson--m365agentsyml-を作る) で公開（`publish` コマンドの実行）まで済ませた Teams App Package を、管理者が承認して組織で使える状態にする。
+[第1部 B 7 節](./part1b-custom-agent.md#7-teams-app-packagemanifestjson--m365agentsymlを作る) で公開（`publish` コマンドの実行）まで済ませた Teams App Package を、管理者が承認して組織で使える状態にする。
 
-> ⚠️ このフローは Agent 365 ネイティブの "Request Instance"（インスタンス要求）フローとは別物。Blueprint App は Agentic Application 型で Bot Framework の Teams チャネル登録を通らないため、classic Bot App + 通常の Teams App 公開経路（[第1部 B §6-4](./part1b-custom-agent.md#6-4-bot-app--bot-service-を作り-teams-チャネルを有効化する) 参照）を使っている。
+> ⚠️ このフローは Agent 365 ネイティブの "Request Instance"（インスタンス要求）フローとは別物。Blueprint App は Agentic Application 型で Bot Framework の Teams チャネル登録を通らないため、classic Bot App + 通常の Teams App 公開経路（[第1部 B 6-4 節](./part1b-custom-agent.md#6-4-bot-app--bot-service-を作り-teams-チャネルを有効化する) 参照）を使っている。
 
 1. [Microsoft 365 管理センター](https://admin.microsoft.com/) を開く › 左ナビ **設定 › 統合アプリ** を選択。
 2. **要求されたアプリ** タブを開くと、対象アプリ（例: `agent365-xxxx` / ホスト製品 `Teams`）が **状態: 公開保留中** で一覧に出ている。
 3. アプリ名をクリックして開き、内容を確認のうえ承認（公開）する。
 4. 承認後、組織のユーザーが Teams の「アプリ」からこのエージェントを追加できるようになる（反映まで時間がかかる場合あり）。
 
-
-> **ポリシーテンプレート／条件付きアクセスは「事前準備」が要ることがある**
-> - **カスタムテンプレート**を使うなら、**先に Entra でポリシーを作成**しておく必要がある（未作成だとテンプレート作成時に選べない）。CA・アクセスパッケージ・カスタムセキュリティ属性の**フル手順**は [Govern：カスタムポリシーテンプレートを作る](./part2-3-govern.md#5-カスタムポリシーテンプレートを作る) を参照。
-> - すぐ進めたいなら、まず **既定テンプレート（全エージェント用）** を選べばよい（カスタムは後回しでも可）。
-> - ⚠️ **テンプレートは「新規アクティブ化時のみ」適用**。**承認済みのエージェントには後付けできない**（[Learn FAQ](https://learn.microsoft.com/microsoft-agent-365/admin/policy-template#select-a-template)）。後から統制を足す／変える場合は、テンプレートではなく **Entra の 条件付きアクセス を直接更新**する（対象エージェント ID に動的に効く）。
-> - 出典: [Learn: ポリシーテンプレート](https://learn.microsoft.com/microsoft-agent-365/admin/policy-template)
-
->
 ## 2. エージェントを実際に動かす（観測データを作る）
 
 **この節が [Observe](./part2-2-observe.md) 以降の前提**。Observe 以降の画面は、エージェントを一度も動かしていないと**何も表示されない**。まずクラウド上のエージェントを実際に呼び出し、観測データ（Run）を作る。
@@ -54,7 +46,7 @@
 | ![Teams でエージェントに echo / now を送り、応答が返っている画面](../assets/part2-1b-04-chat.png) |
 |:-:|
 
-1-2 節 で公開・承認した Teams App を通じてエージェントに、**Teams のチャットで話しかける**。
+[1-2 節](#1-2-teams-app-の公開申請を管理者が承認する) で公開・承認した Teams App を通じてエージェントに、**Teams のチャットで話しかける**。
 
 1. Teams › **Apps** で追加した自分のエージェントを開く
 2. `echo こんにちは` や `今何時？`（`now`）などと送る

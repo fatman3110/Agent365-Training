@@ -1,6 +1,6 @@
 # 第2部：Secure（保護）｜AI 管理者
 
-Agent 365 の 3 本柱の 3 つ目。**Purview（情報保護 / DLP）・Defender（脅威防御）** でエージェントの機密データと脅威をエンドツーエンドに守る（）。
+Agent 365 の 3 本柱の 3 つ目。**Purview（情報保護 / DLP）・Defender（脅威防御）** でエージェントの機密データと脅威をエンドツーエンドに守る。
 
 > ⚠️ Microsoft Agent 365 / Copilot Studio は Preview を多く含む。UI 名やメニュー位置は変わり得るので、詰まったら Microsoft Learn で最新を確認すること。
 
