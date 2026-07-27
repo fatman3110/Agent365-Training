@@ -3,8 +3,8 @@
 [第1部 B](./part1b-custom-agent.md) で作った**独自エージェント＋独自 MCP** を、管理者が承認して Teams に接続し、実際に動かして観測データを作るまで。ここまで済ませると、この後の **[Observe](./part2-2-observe.md) → [Govern](./part2-3-govern.md) → [Secure](./part2-4-secure.md)** の画面にデータが出るようになる。
 
 > ℹ️ Copilot Studio で作った場合は **[第2部 A](./part2-1a-copilotstudio.md)** を参照。Observe / Govern / Secure は A・B 共通。
->
-> ⚠️ Microsoft Agent 365 は Preview を多く含む。コマンド・API・UI は変わり得るので、詰まったら [Microsoft Learn](https://learn.microsoft.com/ja-jp/microsoft-agent-365/overview) で最新を確認すること。
+
+> ⚠️ Microsoft Agent 365 は Preview を多く含む。コマンド・API は変わり得るので、Microsoft Learn で最新情報を確認すること。
 
 **目次**
 
@@ -30,16 +30,15 @@
 
 [第1部 B §7](./part1b-custom-agent.md#7-teams-app-packagemanifestjson--m365agentsyml-を作る) で公開（`publish` コマンドの実行）まで済ませた Teams App Package を、管理者が承認して組織で使える状態にする。
 
-> ⚠️ このフローは Agent 365 ネイティブの "Request Instance"（インスタンス要求）フローとは別物。Blueprint App は Agentic Application 型で Bot Framework の Teams チャネル登録を通らないため、classic Bot App + 通常の Teams App 公開経路（[第1部 B §6-4](./part1b-custom-agent.md#6-4-bot-app--bot-service-を作り-teams-チャネルを有効化する) 参照）を使っている。承認自体は同じ **Microsoft 365 管理センター** 上で行われるが、タブ名・導線が Agent 365 ネイティブの「Requests」と同一かどうかは**要確認・本教材執筆時点で未確定**（Microsoft Learn で最新の手順を確認すること）。
+> ⚠️ このフローは Agent 365 ネイティブの "Request Instance"（インスタンス要求）フローとは別物。Blueprint App は Agentic Application 型で Bot Framework の Teams チャネル登録を通らないため、classic Bot App + 通常の Teams App 公開経路（[第1部 B §6-4](./part1b-custom-agent.md#6-4-bot-app--bot-service-を作り-teams-チャネルを有効化する) 参照）を使っている。
 
-1. [Microsoft 365 管理センター](https://admin.microsoft.com/) を開く › **Teams アプリ › アプリの管理**（環境によっては **Agents › Requests** に出る可能性もある。上記の通りどちらに出るかは要確認）で該当アプリを開く → 状態を `Submitted` → `Published` に変更して承認する。
-2. 承認後、組織のユーザーが Teams の「アプリ」からこのエージェントを追加できるようになる（反映まで時間がかかる場合あり）。
-3. 反映されない／古い版が見える場合は Teams クライアントのキャッシュが原因のことがある。Teams を終了し、`%APPDATA%\Microsoft\Teams` 配下の `Cache` / `GPUCache` / `Code Cache` を削除して再起動する。
+1. [Microsoft 365 管理センター](https://admin.microsoft.com/) を開く › 左ナビ **設定 › 統合アプリ** を選択。
+2. **要求されたアプリ** タブを開くと、対象アプリ（例: `agent365-xxxx` / ホスト製品 `Teams`）が **状態: 公開保留中** で一覧に出ている。
+3. アプリ名をクリックして開き、内容を確認のうえ承認（公開）する。
+4. 承認後、組織のユーザーが Teams の「アプリ」からこのエージェントを追加できるようになる（反映まで時間がかかる場合あり）。
 
-> **再公開する場合の注意**: [第1部 B §7](./part1b-custom-agent.md#7-teams-app-packagemanifestjson--m365agentsyml-を作る) の手順に戻り、`appPackage/manifest.json` の `version` を上げてから `publish` コマンドを再実行すること（インクリメントしないと管理センター側が更新に失敗し「技術的なエラー」と表示されることがある）。
 
 > **ポリシーテンプレート／条件付きアクセスは「事前準備」が要ることがある**
-> - ⚠️ 以下は Agent 365 ネイティブの "Request Instance" フロー向けの記述であり、今回の Teams App 公開フローに同様に適用されるかは**未検証**。適用有無を確認してから活用すること。
 > - **カスタムテンプレート**を使うなら、**先に Entra でポリシーを作成**しておく必要がある（未作成だとテンプレート作成時に選べない）。CA・アクセスパッケージ・カスタムセキュリティ属性の**フル手順**は [Govern：カスタムポリシーテンプレートを作る](./part2-3-govern.md#5-カスタムポリシーテンプレートを作る) を参照。
 > - すぐ進めたいなら、まず **既定テンプレート（全エージェント用）** を選べばよい（カスタムは後回しでも可）。
 > - ⚠️ **テンプレートは「新規アクティブ化時のみ」適用**。**承認済みのエージェントには後付けできない**（[Learn FAQ](https://learn.microsoft.com/microsoft-agent-365/admin/policy-template#select-a-template)）。後から統制を足す／変える場合は、テンプレートではなく **Entra の 条件付きアクセス を直接更新**する（対象エージェント ID に動的に効く）。
@@ -55,7 +54,7 @@
 | ![Teams でエージェントに echo / now を送り、応答が返っている画面](../assets/part2-1b-04-chat.png) |
 |:-:|
 
-1-2 節 で公開・承認した Teams App を通じてエージェントに、**Teams のチャットで話しかける**（これが現実の利用チャネル）。
+1-2 節 で公開・承認した Teams App を通じてエージェントに、**Teams のチャットで話しかける**。
 
 1. Teams › **Apps** で追加した自分のエージェントを開く
 2. `echo こんにちは` や `今何時？`（`now`）などと送る

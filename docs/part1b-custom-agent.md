@@ -3,7 +3,7 @@
 自前ホストの LLM（Qwen）で動く**独自エージェント**と、自作の道具（**独自 MCP**）をコードから作って Azure にデプロイし、Agent 365 に登録申請するまで。完了すると、エージェントが Agent 365 に登録され、Azure（クラウド）で動く状態になる。
 
 > 💡 ノーコードで手早く作りたいなら **[第1部 A：Copilot Studio で作る](./part1a-copilot-studio.md)** もある。本ファイル（B）は「フルコードで自前ホスト＋独自 MCP」を学ぶ上級ルート。
->
+
 > ⚠️ Microsoft Agent 365 は Preview を多く含む。コマンド・API は変わり得るので、Microsoft Learn で最新情報を確認すること。
 
 **目次**
