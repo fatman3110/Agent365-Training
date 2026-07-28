@@ -109,4 +109,4 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 > Registry Sync が取り込むのは**エージェントの在庫（メタデータ）と、各プラットフォーム API が許す管理アクション**まで。**Observe のテレメトリ（Activity の件数・Single Agent Map・Purview の対話本文・Defender の実行トレース）は取得できない**。テレメトリを得るには、そのエージェントを **Agent 365 SDK（Microsoft OpenTelemetry Distro）で計装**するか、Copilot Studio / Foundry のように**自動でテレメトリを送る**構成にする必要がある。
 ---
 
-← 戻る：**[第2部 A：Copilot Studio](./part2-1a-copilotstudio.md)** ／ **[第2部 B：Azure AI Foundry](./part2-1b-foundry.md)** ／ **[第2部 C：独自エージェント](./part2-1c-custom.md)** ｜ 次：**[第2部：Govern（管理）](./part2-3-govern.md)** ｜ [README（概要）](../README.MD)
+← 戻る：**[第2部 A：Copilot Studio](./part2-1a-copilotstudio.md)** ／ **[第2部 B：Microsoft Foundry](./part2-1b-foundry.md)** ／ **[第2部 C：独自エージェント](./part2-1c-custom.md)** ｜ 次：**[第2部：Govern（管理）](./part2-3-govern.md)** ｜ [README（概要）](../README.MD)

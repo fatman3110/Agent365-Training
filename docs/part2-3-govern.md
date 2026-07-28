@@ -71,7 +71,7 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 **パターン A（Copilot Studio）**：完全に消すには [Copilot Studio](https://copilotstudio.microsoft.com/) で対象エージェントを開き **削除（Delete）** する。
 
-**パターン B（Azure AI Foundry）**：[Foundry ポータル](https://ai.azure.com/) で対象の Prompt agent を開き **削除（Delete）** する。
+**パターン B（Microsoft Foundry）**：[Foundry ポータル](https://ai.azure.com/) で対象の Prompt agent を開き **削除（Delete）** する。
 
 **パターン C（自前ホスト）**：
 

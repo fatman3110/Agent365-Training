@@ -5,7 +5,7 @@
 この教材は、エージェントの**作り方を 3 ルート**用意している。どれを選んでも、第2部で承認 → 観察（Observe）→ 管理（Govern）→ 保護（Secure）へ進む。
 
 - **第1部 A：Copilot Studio で作る** — ノーコードで最短。コードも Azure も不要。M365 業務寄りの汎用アシスタントに向く。
-- **第1部 B：Azure AI Foundry で作る** — ノーコード。Foundry ポータルを用いて組織ニーズに応じたエージェントをカスタマイズ。
+- **第1部 B：Microsoft Foundry で作る** — ノーコード。Foundry ポータルを用いて組織ニーズに応じたエージェントをカスタマイズ。
 - **第1部 C：独自エージェント（S2S）を作る** — 自前ホストの LLM（Qwen）を S2S（サービスプリンシパル）認可でフルコード実装し Azure にデプロイ。
 
 **第2部（AI 管理者・A/B/C 共通）** — 申請されたエージェントを承認して Teams に接続し、実際に動かして観測データを作り、Learn の 3 本柱 **Observe / Govern / Secure** で確認・統制・保護する。
@@ -26,7 +26,7 @@ flowchart LR
         direction TB
         A0{"作り方を選ぶ"}
         A0 -->|"A：ノーコード"| AA["Copilot Studio "]
-        A0 -->|"B：ノーコード"| AB["Azure AI Foundry<br/>"]
+        A0 -->|"B：ノーコード"| AB["Microsoft Foundry<br/>"]
         A0 -->|"C：フルコード"| AC["Blueprint（S2S）+Azure デプロイ"]
     end
     subgraph P2["第2部：Agent 365 ハンズオン ｜ AI 管理者（M365 / Entra 管理センター）"]
@@ -44,7 +44,7 @@ flowchart LR
 
 | 部 | ゴール | 主な担当・画面 |
 |----|--------|---------------|
-| 第1部 作成と申請（A/B/C の 3 ルート） | エージェントを作って Agent 365 に登録申請（A: Copilot Studio ／B: Azure AI Foundry ／C: 独自エージェント（S2S）） | 開発者：Copilot Studio ／ Foundry ／ VS Code・Azure |
+| 第1部 作成と申請（A/B/C の 3 ルート） | エージェントを作って Agent 365 に登録申請（A: Copilot Studio ／B: Microsoft Foundry ／C: 独自エージェント（S2S）） | 開発者：Copilot Studio ／ Foundry ／ VS Code・Azure |
 | 第2部 Agent 365 ハンズオン | エージェントを承認し、機能 3 本柱（**Observe / Govern / Secure**）で登録内容・アクティビティ・ガバナンスの概要を実機確認 | AI 管理者：M365 管理センター・Entra・Purview・Defender |
 
 ---
@@ -56,7 +56,7 @@ flowchart LR
 作り方を 3 つから選ぶ：
 
 - **A：Copilot Studio で作る（ノーコード）** → [docs/part1a-copilot-studio.md](./docs/part1a-copilot-studio.md)
-- **B：Azure AI Foundry で作る（ノーコード）** → [docs/part1b-foundry.md](./docs/part1b-foundry.md)
+- **B：Microsoft Foundry で作る（ノーコード）** → [docs/part1b-foundry.md](./docs/part1b-foundry.md)
 - **C：独自エージェント（S2S・フルコード）** → [docs/part1c-custom-agent.md](./docs/part1c-custom-agent.md)
 
 ## 第2部：承認・観察・管理・保護（AI 管理者）
@@ -64,7 +64,7 @@ flowchart LR
 承認と観測データ作成：
 
 - **A：Copilot Studio 版** → [docs/part2-1a-copilotstudio.md](./docs/part2-1a-copilotstudio.md)
-- **B：Azure AI Foundry 版** → [docs/part2-1b-foundry.md](./docs/part2-1b-foundry.md)
+- **B：Microsoft Foundry 版** → [docs/part2-1b-foundry.md](./docs/part2-1b-foundry.md)
 - **C：独自エージェント版** → [docs/part2-1c-custom.md](./docs/part2-1c-custom.md)
 
 3 本柱（A/B/C 共通）：
@@ -83,7 +83,7 @@ flowchart LR
 | Microsoft Agent 365 テナント | エージェント登録・観測・ガバナンスの基盤| **A・B・C** | **Microsoft Agent 365** または **Microsoft 365 E7** |
 | Copilot Studio ライセンス | Copilot Studio でエージェントを作成・公開する | **A** | Microsoft 365 Copilot または 単体の Copilot Studio ライセンス |
 | Microsoft Teams ライセンス | 公開したエージェントを Teams で使う（作成者・利用者の双方） | **A・B・C** | Teams ライセンス・Microsoft 365 Copilot |
-| Azure サブスクリプション（Foundry プロジェクト用） | Azure AI Foundry のプロジェクトを作成する。ポータル操作のみで完結し、Docker・コードは不要 | **B** | 従量課金（モデル呼び出し・ツール利用分のみ） |
+| Azure サブスクリプション（Foundry プロジェクト用） | Microsoft Foundry のプロジェクトを作成する。ポータル操作のみで完結し、Docker・コードは不要 | **B** | 従量課金（モデル呼び出し・ツール利用分のみ） |
 | Azure サブスクリプション（App Service 等） | App Service（+ ACR / Functions）でホスト | **C** | 従量課金（本トレーニング期間のみの利用であれば数ドル程度） |
 | 開発ツール | Node.js 18+ / Python 3.11+ / a365 CLI / Azure CLI / Azure Functions Core Tools | **C** | 無料 |
 | AI コーディングアシスタント | **GitHub Copilot** または **Claude Code** のいずれ。Agent 365 Skills を実行する“土台” | **C** | GitHub Copilot（無料枠あり）/ Claude Code |
