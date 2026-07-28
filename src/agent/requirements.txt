@@ -1,12 +1,16 @@
 # エージェント本体の依存パッケージ（現行 A365 SDK に準拠）
-openai                              # LLM（Ollama 互換）呼び出し。distro が自動計装する
-python-dotenv                       # .env 読み込み
-mcp                                 # MCP クライアント（§4 の Function App の echo/now ツールを呼び出す）
+openai
+python-dotenv
 
 # Microsoft 365 Agents SDK（ホスティング）
-microsoft-agents-hosting-core
-microsoft-agents-hosting-aiohttp
-microsoft-agents-authentication-msal        # MsalConnectionManager はここ（hosting-core には無い）
+# ⚠️ 1.2.0 は microsoft-opentelemetry のミドルウェアと非互換のため 1.1.0 に固定
+microsoft-agents-hosting-core==1.1.0
+microsoft-agents-hosting-aiohttp==1.1.0
+microsoft-agents-authentication-msal==1.1.0
 
-# Agent 365 Observability（統一ディストロ。旧 microsoft-agents-a365-observability-* は非推奨）
+# Agent 365 Observability
 microsoft-opentelemetry
+
+# S2S 観測トークン取得（observability/token_service.py の 3-hop FMI チェーン）
+msal
+httpx

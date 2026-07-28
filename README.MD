@@ -5,11 +5,11 @@
 この教材は、エージェントの**作り方を 2 ルート**用意している。どちらを選んでも、第2部で承認 → 観察（Observe）→ 管理（Govern）→ 保護（Secure）へ進む。
 
 - **第1部 A：Copilot Studio で作る** — ノーコード／ローコードで最短。コードも Azure も不要。
-- **第1部 B：独自エージェント＋独自 MCP を作る** — 自前ホストの LLM（Qwen）＋自作 MCP をフルコードで実装し Azure にデプロイ。
+- **第1部 B：独自エージェント（S2S）を作る** — 自前ホストの LLM（Qwen）を S2S（サービスプリンシパル）認可でフルコード実装し Azure にデプロイ。
 
 **第2部（AI 管理者・A/B 共通）** — 申請されたエージェントを承認して Teams に接続し、実際に動かして観測データを作り、Learn の 3 本柱 **Observe / Govern / Secure** で確認・統制・保護する。
 
-> ⚠️ **教育目的の教材である。** 自前ホスト LLM・BYO MCP（クラウド公開）を含むため、本番環境では使用しないこと。使い終わったら後片づけ（`a365 cleanup` / リソース削除）を行うこと。
+> ⚠️ **教育目的の教材である。** 本番環境では使用しないこと。使い終わったら後片づけ（`a365 cleanup` / リソース削除）を行うこと。
 
 > ⚠️ **2026年7月現在、Microsoft Agent 365 は Preview を多く含む。** UI・コマンド・仕様・提供条件は変わり得る。実際のサービス活用にあたっては Microsoft Learn で最新情報を確認すること。
 
@@ -25,7 +25,7 @@ flowchart LR
         direction TB
         A0{"作り方を選ぶ"}
         A0 -->|"A：ノーコード"| AA["Copilot Studio で作成 → 組織に申請"]
-        A0 -->|"B：フルコード"| AB["作業環境準備 → Blueprint → 独自MCP → 本体実装 → Azure デプロイ → 登録申請"]
+        A0 -->|"B：フルコード"| AB["作業環境準備 → Blueprint（S2S） → 本体実装 → Azure デプロイ → 登録申請"]
     end
     subgraph P2["第2部：Agent 365 ハンズオン ｜ AI 管理者（M365 / Entra 管理センター）"]
         direction TB
@@ -41,7 +41,7 @@ flowchart LR
 
 | 部 | ゴール | 主な担当・画面 |
 |----|--------|---------------|
-| 第1部 作成と申請（A/B の 2 ルート） | エージェントを作って Agent 365 に登録申請（A: Copilot Studio ／ B: 独自＋独自MCP） | 開発者：Copilot Studio ／ VS Code・Azure |
+| 第1部 作成と申請（A/B の 2 ルート） | エージェントを作って Agent 365 に登録申請（A: Copilot Studio ／B: 独自エージェント（S2S）） | 開発者：Copilot Studio ／ VS Code・Azure |
 | 第2部 Agent 365 ハンズオン | エージェントを承認し、機能 3 本柱（**Observe / Govern / Secure**）で登録内容・アクティビティ・ガバナンスを実機確認 | AI 管理者：M365 管理センター・Entra・Purview・Defender |
 
 ---
@@ -53,7 +53,7 @@ flowchart LR
 作り方を 2 つから選ぶ：
 
 - **A：Copilot Studio で作る（ノーコード）** → [docs/part1a-copilot-studio.md](./docs/part1a-copilot-studio.md)
-- **B：独自エージェント＋独自 MCP（フルコード）** → [docs/part1b-custom-agent.md](./docs/part1b-custom-agent.md)
+- **B：独自エージェント（S2S・フルコード）** → [docs/part1b-custom-agent.md](./docs/part1b-custom-agent.md)
 
 ## 第2部：承認・観察・管理・保護（AI 管理者）
 
@@ -94,15 +94,13 @@ flowchart LR
 |------|---------|------------|------|
 | Copilot Studio でエージェントを作成・組織に申請 | **A** | N/A | ライセンスを持つユーザであれば特別な権限は不要 |
 | Blueprint / Agent ID 作成（`a365 setup all`） | **B** | **Application Administrator**（推奨・最小）/ Cloud Application Administrator / Global Administrator | テナント初回のみ管理者が `a365 setup requirements` を実行すれば、以降の開発者は引き継げる |
-| 自作 MCP 登録（`register-external-mcp-server`） | **B** | **Application Administrator** 相当 |  |
-| Azure へのデプロイ（App Service / ACR / Functions） | **B** | Azure RBAC: **Contributor**（リソース作成）/ **User Access Administrator**（RBAC 付与） |  |
+| Azure へのデプロイ（App Service / ACR） | **B** | Azure RBAC: **Contributor**（リソース作成）/ **User Access Administrator**（RBAC 付与） |  |
 
 **AI 管理者（第2部）**
 
 | 作業 | 対象ルート | 必要なロール | 補足 |
 |------|---------|------------|------|
 | エージェント登録の承認（Agents › Requests） | A・B | **AI Administrator** または **Global Administrator** |  |
-| 自作 MCP の承認（Tools › Requests） | B | **AI Administrator** または **Global Administrator** | 同意は組織全体に付与 |
 | Agent Registry / Single Agent Map の閲覧 | A・B | **AI Reader** 以上 |  |
 | M365 管理センターで件数（Activity）を閲覧 | A・B | **AI Reader** 以上 | Activity タブ詳細の表示に **E7 または Agent 365** ライセンスが必要 |
 | Entra サインインログ（Agent）を閲覧 | A・B |  **Reports Reader** 以上 |  |

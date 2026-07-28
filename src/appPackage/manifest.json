@@ -19,7 +19,7 @@
   },
   "description": {
     "short": "Agent 365 hands-on custom agent",
-    "full": "Agent 365 ハンズオン用の独自エージェント（独自 MCP 付き）"
+    "full": "Agent 365 ハンズオン用の独自エージェント"
   },
   "accentColor": "#FFFFFF",
   "bots": [

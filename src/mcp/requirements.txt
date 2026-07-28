@@ -1,2 +1,0 @@
-# MCP サーバー（Azure Functions）の依存パッケージ
-azure-functions

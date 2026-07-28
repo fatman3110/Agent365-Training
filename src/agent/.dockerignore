@@ -11,3 +11,5 @@ a365.generated.config.json
 __pycache__/
 *.pyc
 .git
+agent365-skills/
+sitecontainer-main.json

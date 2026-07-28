@@ -1,16 +1,4 @@
-# start_server.py — ホスティング層（受付・起動）
-#
-# 非 AI Teammate エージェント用の最小 aiohttp ホスティング。
-# app.py（頭脳）が `from start_server import build_adapter, load_agent_configuration` で使う。
-#
-# 実装済みパッケージ（microsoft-agents-hosting-core/aiohttp/authentication-msal 1.2.0）の
-# ソースで実際に検証済み：
-#   - CloudAdapter は `microsoft_agents.hosting.aiohttp`（トップレベル `microsoft_agents_hosting_aiohttp` ではない）
-#   - MsalConnectionManager は `microsoft_agents.authentication.msal`（別 pip パッケージ
-#     `microsoft-agents-authentication-msal`。requirements.txt に追記済み）
-#   - MsalConnectionManager に `from_environment()` は無い。
-#     `microsoft_agents.activity.config.load_configuration_from_env(os.environ)` で
-#     CONNECTIONS__* 等をパースし、`MsalConnectionManager(**config)` に渡す
+# start_server.py — ホスティング層（受付・起動、S2S 観測トークンのバックグラウンド取得）
 from __future__ import annotations
 
 import asyncio
@@ -31,39 +19,33 @@ from microsoft.opentelemetry.a365.hosting import (
     ObservabilityHostingOptions,
 )
 
+from observability.token_service import acquire_initial_token, run_token_service
+
 logger = logging.getLogger(__name__)
+
+_A365_TENANT_ID = os.environ.get("AGENT365OBSERVABILITY__TENANTID", "")
+_A365_AGENT_ID = os.environ.get("AGENT365OBSERVABILITY__AGENTID", "")
+_A365_CLIENT_ID = os.environ.get("AGENT365OBSERVABILITY__CLIENTID", "")
+_A365_CLIENT_SECRET = os.environ.get("AGENT365OBSERVABILITY__CLIENTSECRET", "")
+_A365_ENABLED = bool(_A365_TENANT_ID and _A365_AGENT_ID and _A365_CLIENT_ID and _A365_CLIENT_SECRET)
 
 
 def load_agent_configuration() -> dict:
-    """.env の CONNECTIONS__* / AGENTAPPLICATION__* / CONNECTIONSMAP__* を
-    dict にパースする（`microsoft_agents.activity.config.load_configuration_from_env`）。
-    戻り値は {"AGENTAPPLICATION": ..., "CONNECTIONS": ..., "CONNECTIONSMAP": ...}。
-    """
+    """.env の CONNECTIONS__* / AGENTAPPLICATION__* / CONNECTIONSMAP__* をパースする。"""
     return load_configuration_from_env(dict(os.environ))
 
 
 def build_adapter(config: dict) -> tuple[CloudAdapter, MsalConnectionManager]:
-    """CloudAdapter と ConnectionManager を構築する。
-
-    `config` は `load_agent_configuration()` の戻り値をそのまま渡す
-    （`MsalConnectionManager(**config)` が config["CONNECTIONS"] / config["CONNECTIONSMAP"]
-    を読み込む。client_id / client_secret / tenant_id を直接渡さない）。
-    呼び出し側（app.py）は返る connection_manager を
-    `AgentApplication(connection_manager=..., **config)` にも渡し、
-    AGENTAPPLICATION.USERAUTHORIZATION（AGENTIC ハンドラ設定）を Authorization に伝播させること。
-    """
+    """CloudAdapter と ConnectionManager を構築する（Teams チャネル認証用。Observability の
+    S2S トークン取得とは独立している）。"""
     connection_manager = MsalConnectionManager(**config)
     adapter = CloudAdapter(connection_manager=connection_manager)
 
-    # A365 Observability — best-effort instrumentation (verify against official sample)
-    # TurnContext から baggage（tenant/agent 識別子）を自動的に配線する。
-    # enable_baggage / enable_output_logging は既定 False のため明示的に True にする。
     ObservabilityHostingManager.configure(
         adapter.middleware_set,
         ObservabilityHostingOptions(enable_baggage=True, enable_output_logging=True),
     )
     return adapter, connection_manager
-
 
 
 async def _handle_messages(request: web.Request, agent_app) -> web.Response:
@@ -92,11 +74,61 @@ async def _handle_health(_request: web.Request) -> web.Response:
     return web.Response(text=body, content_type="application/json")
 
 
+async def _handle_privacy(_request: web.Request) -> web.Response:
+    return web.Response(
+        text="<html><body><h1>Privacy Statement</h1><p>This is a training/demo agent. "
+        "No personal data is retained beyond the current conversation turn.</p></body></html>",
+        content_type="text/html",
+    )
+
+
+async def _handle_terms(_request: web.Request) -> web.Response:
+    return web.Response(
+        text="<html><body><h1>Terms of Use</h1><p>This is a training/demo agent provided "
+        "as-is for Agent 365 hands-on purposes only.</p></body></html>",
+        content_type="text/html",
+    )
+
+
+async def _start_observability_token_service(app: web.Application) -> None:
+    if not _A365_ENABLED:
+        logger.warning("Agent365 observability credentials not configured — skipping token service.")
+        return
+    try:
+        await acquire_initial_token(
+            tenant_id=_A365_TENANT_ID,
+            agent_id=_A365_AGENT_ID,
+            blueprint_client_id=_A365_CLIENT_ID,
+            blueprint_client_secret=_A365_CLIENT_SECRET,
+        )
+    except Exception:
+        logger.warning("Initial observability token acquisition failed; will retry in background.", exc_info=True)
+
+    app["observability_token_task"] = asyncio.create_task(
+        run_token_service(
+            tenant_id=_A365_TENANT_ID,
+            agent_id=_A365_AGENT_ID,
+            blueprint_client_id=_A365_CLIENT_ID,
+            blueprint_client_secret=_A365_CLIENT_SECRET,
+        )
+    )
+
+
+async def _stop_observability_token_service(app: web.Application) -> None:
+    task = app.get("observability_token_task")
+    if task:
+        task.cancel()
+
+
 async def run_server(agent_app) -> None:
-    """aiohttp サーバーを起動する（/api/messages, /api/health）。"""
+    """aiohttp サーバーを起動する（/api/messages, /api/health, /privacy, /terms）。"""
     app = web.Application()
     app.router.add_post("/api/messages", lambda req: _handle_messages(req, agent_app))
     app.router.add_get("/api/health", _handle_health)
+    app.router.add_get("/privacy", _handle_privacy)
+    app.router.add_get("/terms", _handle_terms)
+    app.on_startup.append(_start_observability_token_service)
+    app.on_cleanup.append(_stop_observability_token_service)
 
     port = int(os.getenv("PORT", "3978"))
     runner = web.AppRunner(app)
@@ -109,8 +141,6 @@ async def run_server(agent_app) -> None:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    # app.py が `from start_server import build_adapter` するため、
-    # 循環 import を避けて実行時にのみ import する。
     from app import AGENT_APP
 
     asyncio.run(run_server(AGENT_APP))
