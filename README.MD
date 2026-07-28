@@ -5,7 +5,7 @@
 この教材は、エージェントの**作り方を 3 ルート**用意している。どれを選んでも、第2部で承認 → 観察（Observe）→ 管理（Govern）→ 保護（Secure）へ進む。
 
 - **第1部 A：Copilot Studio で作る** — ノーコードで最短。コードも Azure も不要。M365 業務寄りの汎用アシスタントに向く。
-- **第1部 B：Azure AI Foundry で作る** — ノーコード。Foundry ポータルの Agent Builder で Prompt agent を作り、Bing Grounding や Microsoft Sentinel MCP などのツールを画面から追加して、Agent 365 に Autopilot として公開申請する。コード・Azure CLI・Docker は不要。
+- **第1部 B：Azure AI Foundry で作る** — ノーコード。Foundry ポータルを用いて組織ニーズに応じたエージェントをカスタマイズ。
 - **第1部 C：独自エージェント（S2S）を作る** — 自前ホストの LLM（Qwen）を S2S（サービスプリンシパル）認可でフルコード実装し Azure にデプロイ。
 
 **第2部（AI 管理者・A/B/C 共通）** — 申請されたエージェントを承認して Teams に接続し、実際に動かして観測データを作り、Learn の 3 本柱 **Observe / Govern / Secure** で確認・統制・保護する。
@@ -26,7 +26,7 @@ flowchart LR
         direction TB
         A0{"作り方を選ぶ"}
         A0 -->|"A：ノーコード"| AA["Copilot Studio "]
-        A0 -->|"B：ノーコード"| AB["Azure AI Foundry<br/>（Prompt agent + Autopilot）"]
+        A0 -->|"B：ノーコード"| AB["Azure AI Foundry<br/>"]
         A0 -->|"C：フルコード"| AC["Blueprint（S2S）+Azure デプロイ"]
     end
     subgraph P2["第2部：Agent 365 ハンズオン ｜ AI 管理者（M365 / Entra 管理センター）"]
@@ -80,7 +80,7 @@ flowchart LR
 
 | 項目 | 内容 | 対象ルート | ライセンス / 要件 |
 |------|------|---------|------------------|
-| Microsoft Agent 365 テナント | エージェント登録・観測・ガバナンスの基盤 | **A・B・C** | **Microsoft Agent 365** または **Microsoft 365 E7** |
+| Microsoft Agent 365 テナント | エージェント登録・観測・ガバナンスの基盤| **A・B・C** | **Microsoft Agent 365** または **Microsoft 365 E7** |
 | Copilot Studio ライセンス | Copilot Studio でエージェントを作成・公開する | **A** | Microsoft 365 Copilot または 単体の Copilot Studio ライセンス |
 | Microsoft Teams ライセンス | 公開したエージェントを Teams で使う（作成者・利用者の双方） | **A・B・C** | Teams ライセンス・Microsoft 365 Copilot |
 | Azure サブスクリプション（Foundry プロジェクト用） | Azure AI Foundry のプロジェクトを作成する。ポータル操作のみで完結し、Docker・コードは不要 | **B** | 従量課金（モデル呼び出し・ツール利用分のみ） |
@@ -88,7 +88,6 @@ flowchart LR
 | 開発ツール | Node.js 18+ / Python 3.11+ / a365 CLI / Azure CLI / Azure Functions Core Tools | **C** | 無料 |
 | AI コーディングアシスタント | **GitHub Copilot** または **Claude Code** のいずれ。Agent 365 Skills を実行する“土台” | **C** | GitHub Copilot（無料枠あり）/ Claude Code |
 | Agent 365 Skills | 上記アシスタントに読み込ませて雛形生成を自動化するスキル集 | **C** | 無料（`microsoft/agent365-skills`） |
-| Frontier Preview Program | **B（Foundry）は必須**。公式 Learn（[Foundry と Agent 365 の統合](https://learn.microsoft.com/azure/foundry/agents/concepts/agent-365-integration)）に「テナントが Frontier Preview Program に登録されていること」が Foundry→Agent 365 のデータ連携の前提条件と明記されている。**A・C（非 AI Teammate）でも、テナントで Agent 365 Frontier が無効だとエージェントインスタンスを作成できないとの記載があるため、事前に有効化状況を確認しておくと安全** | **A・B・C** | テナント管理者が [Microsoft 365 admin center](https://admin.microsoft.com/) で有効化 |
 
 ### 操作に必要な権限とロール
 
@@ -99,7 +98,7 @@ flowchart LR
 | 作業 | 対象ルート | 必要なロール | 補足 |
 |------|---------|------------|------|
 | Copilot Studio でエージェントを作成・組織に申請 | **A** | N/A | ライセンスを持つユーザであれば特別な権限は不要 |
-| Foundry ポータルで Prompt agent を作成し Autopilot として公開申請 | **B** | Foundry プロジェクトスコープの **Foundry User** または **Foundry Project Manager**（プロジェクト自体の初回作成には Azure RBAC の **Contributor** 等が別途必要） | コード・Azure CLI・Docker は不要。ポータル操作のみで完結 |
+| Foundry ポータルで Agent を作成・公開 | **B** | Foundry プロジェクトスコープの **Foundry User** または **Foundry Project Manager**（プロジェクト自体の初回作成には Azure RBAC の **Contributor** 等が別途必要） | コード・Azure CLI・Docker は不要。ポータル操作のみで完結 |
 | Blueprint / Agent ID 作成（`a365 setup all`） | **C** | **Application Administrator**（推奨・最小）/ Cloud Application Administrator / Global Administrator | テナント初回のみ管理者が `a365 setup requirements` を実行すれば、以降の開発者は引き継げる |
 | Azure へのデプロイ（App Service / ACR） | **C** | Azure RBAC: **Contributor**（リソース作成）/ **User Access Administrator**（RBAC 付与） |  |
 
