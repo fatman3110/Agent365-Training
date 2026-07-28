@@ -24,8 +24,8 @@ flowchart LR
     subgraph P1["第1部：作成と申請 ｜ 開発者"]
         direction TB
         A0{"作り方を選ぶ"}
-        A0 -->|"A：ノーコード"| AA["Copilot Studio で作成 → 組織に申請"]
-        A0 -->|"B：フルコード"| AB["作業環境準備 → Blueprint（S2S） → 本体実装 → Azure デプロイ → 登録申請"]
+        A0 -->|"A：ノーコード"| AA["Copilot Studio "]
+        A0 -->|"B：フルコード"| AB["Blueprint（S2S）+Azure デプロイ"]
     end
     subgraph P2["第2部：Agent 365 ハンズオン ｜ AI 管理者（M365 / Entra 管理センター）"]
         direction TB
@@ -42,7 +42,7 @@ flowchart LR
 | 部 | ゴール | 主な担当・画面 |
 |----|--------|---------------|
 | 第1部 作成と申請（A/B の 2 ルート） | エージェントを作って Agent 365 に登録申請（A: Copilot Studio ／B: 独自エージェント（S2S）） | 開発者：Copilot Studio ／ VS Code・Azure |
-| 第2部 Agent 365 ハンズオン | エージェントを承認し、機能 3 本柱（**Observe / Govern / Secure**）で登録内容・アクティビティ・ガバナンスを実機確認 | AI 管理者：M365 管理センター・Entra・Purview・Defender |
+| 第2部 Agent 365 ハンズオン | エージェントを承認し、機能 3 本柱（**Observe / Govern / Secure**）で登録内容・アクティビティ・ガバナンスの概要を実機確認 | AI 管理者：M365 管理センター・Entra・Purview・Defender |
 
 ---
 
