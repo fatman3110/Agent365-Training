@@ -1,14 +1,14 @@
-# 第1部 B：独自エージェント（S2S）を作る（開発者）
+# 第1部 C：独自エージェント（S2S）を作る（開発者）
 
 自前ホストの LLM（Qwen）で動く**独自エージェント**をコードから作って Azure にデプロイし、Agent 365 に登録申請するまで。認証は **S2S（サービスプリンシパル）** を使う。完了すると、エージェントが Agent 365 に登録され、Azure（クラウド）で動く状態になる。
 
-> 💡 ノーコードで手早く作りたいなら **[第1部 A：Copilot Studio で作る](./part1a-copilot-studio.md)** もある。本ファイル（B）は「フルコードで自前ホスト」を学ぶ上級ルート。
+> 💡 ノーコード／ローコードで手早く作りたいなら **[第1部 A：Copilot Studio で作る](./part1a-copilot-studio.md)** や **第1部 B：Azure AI Foundry で作る** もある。本ファイル（C）は「フルコードで自前ホスト」を学ぶ上級ルート。
 
 > ⚠️ Microsoft Agent 365 は Preview を多く含む。コマンド・API は変わり得るので、Microsoft Learn で最新情報を確認すること。
 
 **目次**
 
-- [第1部 B：独自エージェント（S2S）を作る（開発者）](#第1部-b独自エージェントs2sを作る開発者)
+- [第1部 C：独自エージェント（S2S）を作る（開発者）](#第1部-c独自エージェントs2sを作る開発者)
   - [構成ファイル（参考）](#構成ファイル参考)
   - [0. 最初に「名前」を決める（1 回だけ）](#0-最初に名前を決める1-回だけ)
   - [1. ツールを用意して Azure にログインする](#1-ツールを用意して-azure-にログインする)
@@ -22,7 +22,7 @@
     - [5-4. Bot App / Bot Service を作り Teams チャネルを有効化する](#5-4-bot-app--bot-service-を作り-teams-チャネルを有効化する)
   - [6. Teams App Package（manifest.json / m365agents.yml）を作る](#6-teams-app-packagemanifestjson--m365agentsymlを作る)
 
-完了後は **[第2部 B：承認と観測データ作成](./part2-1b-custom.md)** で承認・Teams 接続・観測データ作成を行い、その後 Observe / Govern / Secure に進む。
+完了後は **[第2部 C：承認と観測データ作成](./part2-1c-custom.md)** で承認・Teams 接続・観測データ作成を行い、その後 Observe / Govern / Secure に進む。
 
 ## 構成ファイル（参考）
 
@@ -385,8 +385,8 @@ m365agentstoolkit-cli provision --env dev --interactive false
 npx --yes @microsoft/m365agentstoolkit-cli@latest publish --env dev --interactive false
 ```
 
-ここまでで Teams App の公開（提出）は完了。**実際の承認は [第2部 B 1-1](./part2-1b-custom.md#1-1-teams-app-の公開申請を管理者が承認する)** で行う。
+ここまでで Teams App の公開（提出）は完了。**実際の承認は [第2部 C 1-1](./part2-1c-custom.md#1-1-teams-app-の公開申請を管理者が承認する)** で行う。
 
 ---
 
-→ 次：**[第2部 B：承認と観測データ作成](./part2-1b-custom.md)** ｜ [README（概要）](../README.MD)
+→ 次：**[第2部 C：承認と観測データ作成](./part2-1c-custom.md)** ｜ [README（概要）](../README.MD)

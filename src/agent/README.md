@@ -25,4 +25,4 @@ Agent 365 に登録する**独自エージェント本体**のスターターコ
 
 ## 関連
 
-- 作成・デプロイ手順：[docs/part1b-custom-agent.md](../../docs/part1b-custom-agent.md)
+- 作成・デプロイ手順：[docs/part1c-custom-agent.md](../../docs/part1c-custom-agent.md)

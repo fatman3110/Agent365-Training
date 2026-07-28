@@ -1,14 +1,14 @@
-# 第2部 B：承認と観測データ作成（独自エージェント）｜AI 管理者
+# 第2部 C：承認と観測データ作成（独自エージェント）｜AI 管理者
 
-[第1部 B](./part1b-custom-agent.md) で作った**独自エージェント（S2S）** を、管理者が承認して Teams に接続し、実際に動かして観測データを作るまで。ここまで済ませると、この後の **[Observe](./part2-2-observe.md) → [Govern](./part2-3-govern.md) → [Secure](./part2-4-secure.md)** の画面にデータが出るようになる。
+[第1部 C](./part1c-custom-agent.md) で作った**独自エージェント（S2S）** を、管理者が承認して Teams に接続し、実際に動かして観測データを作るまで。ここまで済ませると、この後の **[Observe](./part2-2-observe.md) → [Govern](./part2-3-govern.md) → [Secure](./part2-4-secure.md)** の画面にデータが出るようになる。
 
-> ℹ️ Copilot Studio で作った場合は **[第2部 A](./part2-1a-copilotstudio.md)** を参照。Observe / Govern / Secure は A・B 共通。
+> ℹ️ Copilot Studio で作った場合は **[第2部 A](./part2-1a-copilotstudio.md)** を参照。Observe / Govern / Secure は A・B・C 共通。
 
 > ⚠️ Microsoft Agent 365 は Preview を多く含む。コマンド・API は変わり得るので、Microsoft Learn で最新情報を確認すること。
 
 **目次**
 
-- [第2部 B：承認と観測データ作成（独自エージェント）｜AI 管理者](#第2部-b承認と観測データ作成独自エージェントai-管理者)
+- [第2部 C：承認と観測データ作成（独自エージェント）｜AI 管理者](#第2部-c承認と観測データ作成独自エージェントai-管理者)
   - [1. Teams に接続し、承認を得て「管理下」に置く](#1-teams-に接続し承認を得て管理下に置く)
     - [1-1. Teams App の公開申請を管理者が承認する](#1-1-teams-app-の公開申請を管理者が承認する)
   - [2. エージェントを実際に動かす（観測データを作る）](#2-エージェントを実際に動かす観測データを作る)
@@ -19,7 +19,7 @@
 
 ### 1-1. Teams App の公開申請を管理者が承認する
 
-[第1部 B 6 節](./part1b-custom-agent.md#6-teams-app-packagemanifestjson--m365agentsymlを作る) で公開（`publish` コマンドの実行）まで済ませた Teams App Package を、管理者が承認して組織で使える状態にする。
+[第1部 C 6 節](./part1c-custom-agent.md#6-teams-app-packagemanifestjson--m365agentsymlを作る) で公開（`publish` コマンドの実行）まで済ませた Teams App Package を、管理者が承認して組織で使える状態にする。
 
 
 1. [Microsoft 365 管理センター](https://admin.microsoft.com/) を開く › 左ナビ **設定 › 統合アプリ** を選択。
@@ -33,7 +33,7 @@
 
 ### 2-1. エージェントに話しかける（Teams）
 
-| ![Teams でエージェントから応答が返っている画面](../assets/part2-1b-04-chat.png) |
+| ![Teams でエージェントから応答が返っている画面](../assets/part2-1c-04-chat.png) |
 |:-:|
 
 [1-1 節](#1-1-teams-app-の公開申請を管理者が承認する) で公開・承認した Teams App を通じてエージェントに、**Teams のチャットで話しかける**。
@@ -51,4 +51,4 @@
 
 ---
 
-← 戻る：**[第1部 B：独自エージェント（S2S）](./part1b-custom-agent.md)** ｜ 次：**[第2部：Observe（観察する）](./part2-2-observe.md)** ｜ [README（概要）](../README.MD)
+← 戻る：**[第1部 C：独自エージェント（S2S）](./part1c-custom-agent.md)** ｜ 次：**[第2部：Observe（観察する）](./part2-2-observe.md)** ｜ [README（概要）](../README.MD)

@@ -71,7 +71,9 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 
 **パターン A（Copilot Studio）**：完全に消すには [Copilot Studio](https://copilotstudio.microsoft.com/) で対象エージェントを開き **削除（Delete）** する。
 
-**パターン B（自前ホスト）**：
+**パターン B（Azure AI Foundry）**：[Foundry ポータル](https://ai.azure.com/) で対象の Prompt agent を開き **削除（Delete）** する。
+
+**パターン C（自前ホスト）**：
 
 1. 作業ディレクトリで `a365 cleanup`（**破壊的**。config の Blueprint 配下＝Blueprint と Agent ID、関連する Entra アプリ登録を一括削除）
 2. 取り残し確認：`az ad app list --display-name "<blueprint名>" -o table` → 残っていれば `az ad app delete --id <appId>`
@@ -144,7 +146,7 @@ Block は「一時停止」。完全に削除したい場合は、ルートに�
 |:-:|
 
 > **用語解説**
-> - **カスタムセキュリティ属性**：Entra のオブジェクト（ユーザーやエージェント ID）に、組織独自の「タグ（キー＝値）」を付ける仕組み。例 `Environment = Training`。
+> - **カスタムセキュリティ属性**：Entra のオブジェクト（ユーザーやエージェント ID）に、組織独自の「タグ（キー＝値）」を付ける仕組み。本番・開発環境の使い分けや認証方式のタグ付けなど、様座な用途で利用可能。
 
 1. **属性セットを作る**：[Microsoft Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › カスタム セキュリティ属性 › 属性セットを追加する**（例 名前 `AgentGovernance`）
 2. **属性（キー）を定義する**：作った属性セットを開き **属性の追加**（例 名前 `Environment`／データ型 `文字列`）。
