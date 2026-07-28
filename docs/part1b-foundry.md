@@ -9,7 +9,7 @@
 - [第1部 B：Azure AI Foundry で AI エージェントを作る（開発者）](#第1部-bazure-ai-foundry-で-ai-エージェントを作る開発者)
   - [1. 前提の確認](#1-前提の確認)
   - [2. Foundry プロジェクトを準備する](#2-foundry-プロジェクトを準備する)
-  - [3. Agent Builder で Prompt agent を作る](#3-agent-builder-で-prompt-agent-を作る)
+  - [3. ノーコードでエージェントを作る](#3-ノーコードでエージェントを作る)
   - [4. ツールを追加する（Bing Grounding / Microsoft Sentinel MCP）](#4-ツールを追加するbing-grounding--microsoft-sentinel-mcp)
     - [4-1. Bing Grounding（Web 検索）](#4-1-bing-groundingweb-検索)
     - [4-2. Microsoft Sentinel MCP（インシデント参照）](#4-2-microsoft-sentinel-mcpインシデント参照)
@@ -61,9 +61,14 @@ Prompt agent は Foundry ポータルだけで作れるが、**Agent 365 への 
 
 ### 4-2. Microsoft Sentinel MCP（インシデント参照）
 
-> ⚠️ **実機未確認**：ここから先（ツールセクションを下にスクロールした際の「+ ツールを追加」に相当するボタンの位置、Sentinel MCP の検索・接続手順）はスクリーンショットが無いため、想像で書かず一旦保留する。実際の画面（ツール セクションを一番下までスクロールした様子）を見せてほしい。
->
-> 前提として確認しておきたい点：対象テナントで Microsoft Sentinel／Defender XDR が有効化されており、自分が対象ワークスペースに **Security Reader** 以上のロールを持っていること。
+> 前提：対象テナントで Microsoft Sentinel／Defender XDR が有効化されており、自分が対象ワークスペースに **Security Reader** 以上のロールを持っていること。
+
+1. **ツール** セクションの **追加** ▾ ボタンを開く（「大人気」「最近使用したもの」のクイックリストが出る）
+2. 一覧に無ければ、メニュー下部の **ツールの追加** を選ぶと **ツールの選択** ダイアログが開く
+3. **構成済み** タブのまま、検索欄に `Sentinel` と入力する
+4. 候補として **MicrosoftSentinelData**（データ探索コレクション。Sentinel のデータ／インシデントに問い合わせる用途）、**MicrosoftSentinelGraph** / **MicrosoftSentinelGraph2**（グラフベースでエンティティ関係を自然言語分析する用途）が表示されるので、目的に合うもの（インシデント関連の質問に答えたいので今回は **MicrosoftSentinelData**）を選ぶ
+5. **ツールを追加** を押す
+6. 今回の環境ではすでに **構成済み** タブに表示されており追加の認可なく選べたが、初めて接続するテナントではサインイン・同意などの認可（Connection 作成）を求められる場合がある
 
 ## 5. Agent 365 へ Autopilot として公開する
 
