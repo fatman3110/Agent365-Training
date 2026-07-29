@@ -12,7 +12,7 @@
   - [3. ツールを追加する（Bing Grounding / Microsoft Sentinel MCP）](#3-ツールを追加するbing-grounding--microsoft-sentinel-mcp)
     - [3-1. Bing Grounding（Web 検索）](#3-1-bing-groundingweb-検索)
     - [3-2. Microsoft Sentinel MCP（インシデント参照）](#3-2-microsoft-sentinel-mcpインシデント参照)
-  - [4. Agent 365 へ Autopilot として公開する](#4-agent-365-へ-autopilot-として公開する)
+  - [4. Agent 365 へ公開する](#4-agent-365-へ公開する)
 
 ## 1. Foundry プロジェクトを準備する
 
@@ -53,12 +53,19 @@
 
 1. **ツール** セクションの **追加** ボタンを開く
 2. メニュー下部の **ツールの追加** を選ぶと **ツールの選択** ダイアログが開く
-3. **構成済み** タブのまま、検索欄に `Sentinel` と入力する
-4. **MicrosoftSentinelData**　を選択
-5. **ツールを追加** を押す
+3. **カタログ** タブで、検索欄に `Sentinel` と入力する
+4. **Microsoft Sentinel Data Ezploration**　を選択し、デフォルト設定のまま、**接続**
 
-## 4. Agent 365 へ Autopilot として公開する
+## 4. Agent 365 へ公開する
 
+> ⚠️ 公開ダイアログの **Azure ボットサービス** の欄で
+> `MissingSubscriptionRegistration`（namespace `'Microsoft.BotService'`）エラーが出る場合は、
+> サブスクリプションでリソースプロバイダー `Microsoft.BotService` が未登録である。次の手順で登録してから再度公開する。
+>
+> 1. [Azure ポータル](https://portal.azure.com/) で **サブスクリプション** を開き、公開先のサブスクリプションを選択する
+> 2. 左メニュー **設定 › リソース プロバイダー** を開く
+> 3. 検索欄に `Microsoft.BotService` と入力して選択し、上部の **登録** を押す
+> 4. 状態が **登録済み（Registered）** になったら、発行を続行する
 
 1. **プレイグラウンド（Playground）** で一度チャットし、Bing Grounding / Sentinel MCP それぞれを使う質問で応答を確認する
    - Bing Grounding を狙う質問例：「Agent 365 ってどのような仕組みですか？」

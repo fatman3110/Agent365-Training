@@ -26,7 +26,7 @@
 4. プロビジョニング（数十秒）の後、エージェントの **Overview（概要）** ページが開く
 5. **詳細（Details）** セクションの **Edit（編集）** を開き、説明に下記を入力して保存
    ```text
-   Microsoft / Azure の質問に Microsoft Learn の公式情報で答えるアシスタント。
+   Microsoft / Azure の質問に Microsoft Learn の公式情報で答えるアシスタント
    ```
 6. **Model（モデル）** セクションで言語モデルを選ぶ（テスト用途なので GPT-4.1）
 
@@ -38,7 +38,7 @@ Microsoft 提供の **Microsoft Learn Docs MCP Server**（無償・認定コネ�
 2. フィルタリング対象を ”モデルコンテキストプロトコル” にしたうえで、 検索欄に `Microsoft Learn Docs MCP` と入力して検索
 3. **Microsoft Learn Docs MCP Server** を選ぶ
 4. 接続（Connection）の作成を求められた場合、**新しい接続を追加**（Create new connection）を選び、接続を作成する
-5. **追加と構成** を押下してエージェントに追加する
+5. **追加** を押下してエージェントに追加する
 6. 上部タブ **概要** に戻り、**指示** に MCP の利用タイミングを指定したうえで保存
    ```text
    Microsoft の製品・サービスに関する質問には、Microsoft Learn Docs MCP Server を使って回答を検索すること。
