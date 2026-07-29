@@ -24,7 +24,10 @@
 2. 左ペインの **Agents** → 上部の **+ Create blank agent（空のエージェントを作成）**
 3. 名前の入力を求められたら **`Learn Helper`** と入力して **Create**
 4. プロビジョニング（数十秒）の後、エージェントの **Overview（概要）** ページが開く
-5. **詳細（Details）** セクションの **Edit（編集）** を開き、説明に「Microsoft / Azure の質問に Microsoft Learn の公式情報で答えるアシスタント」と入力して保存
+5. **詳細（Details）** セクションの **Edit（編集）** を開き、説明に下記を入力して保存
+   ```text
+   Microsoft / Azure の質問に Microsoft Learn の公式情報で答えるアシスタント。
+   ```
 6. **Model（モデル）** セクションで言語モデルを選ぶ（テスト用途なので GPT-4.1）
 
 ## 2. 無償の Microsoft MCP を道具として足す
