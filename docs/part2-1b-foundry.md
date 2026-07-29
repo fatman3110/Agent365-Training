@@ -27,7 +27,7 @@ Foundry から Autopilot として公開申請されたエージェントは、A
 | ![Microsoft 365 Copilot でエージェントを検索する画面](../assets/part2-1b-01-copilot-agent.png) |
 |:-:|
 
-1. [Microsoft 365 Copilot](https://m365.cloud.microsoft/chat) を開く
+1. [Microsoft 365 Copilot](https://m365.cloud.microsoft/chat) を開part2-1b-01-copilot-agent.png)く
 2. サイドバーの **エージェント** から作成したエージェント名を探す
 3. 見つからない場合は、承認・反映が非同期のため数分〜数時間待ってから再確認する
 

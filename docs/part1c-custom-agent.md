@@ -90,6 +90,12 @@ m365agentstoolkit-cli --version   # 無ければ: npm i -g @microsoft/m365agents
 
 # Azure にサインイン
 az login
+
+# Teams Toolkit（m365agentstoolkit-cli）の M365 サインインも「ここで」揃える
+# ※ Teams Toolkit は az login とは別系統の M365 サインインを使う。az と同じ作業テナントのアカウントでログインしておく
+#   （揃えないと 6 節の publish が別テナントに提出され、自組織の管理センターに出ない）
+m365agentstoolkit-cli account login m365
+m365agentstoolkit-cli account show   # az account show と同じテナント/アカウントか確認
 ```
 
 ## 2. Agent 365 Skills を導入する
@@ -362,6 +368,15 @@ APP_DOMAIN=$APP.azurewebsites.net
 "@
 ```
 
+
+> ⚠️ **publish 前チェック：Teams Toolkit のサインインが `az` と同じテナントか再確認**
+> サインイン自体は [1 節](#1-ツールを用意して-azure-にログインする) で `az login` と一緒に済ませておく。ここでは念のため確認する（別アカウントのまま publish すると別テナントに提出され、自組織の管理センターに出ない）。
+
+```powershell
+# 2-0. Teams Toolkit のサインインが az と同じテナントか確認（違えば login し直す）
+m365agentstoolkit-cli account show           # `az account show` と同じテナント/アカウントか確認
+# 違う場合: m365agentstoolkit-cli account logout m365 ; m365agentstoolkit-cli account login m365
+```
 
 ```powershell
 # 2. ローカルでパッケージ化・検証
