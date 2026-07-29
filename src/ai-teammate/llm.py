@@ -1,26 +1,26 @@
-# llm.py — Microsoft Foundry（Azure OpenAI 互換）クライアント
+# llm.py — Microsoft Foundry（Azure OpenAI v1 API・OpenAI 互換）クライアント
 #
 # 第1部C の Ollama 版（src/agent/llm.py）を Foundry モデルに差し替えたもの。
-# observability_setup.configure_observability() を先に呼べば、この openai 呼び出しは
-# distro により自動計装され、gen_ai span が出る（手動計装は不要）。
+# Foundry の v1 エンドポイント（.../openai/v1/）を OpenAI クライアントの base_url に渡すだけ
+# （api-version 不要・Azure 専用クライアント不要）。
+# observability_setup.configure_observability() を先に呼べば自動計装され gen_ai span が出る。
 from os import environ
 
-from openai import AzureOpenAI
+from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
 
-_client: AzureOpenAI | None = None
+_client: OpenAI | None = None
 
 
-def get_llm() -> AzureOpenAI:
-    """Foundry（Azure OpenAI）クライアントを返す（初回のみ生成）。"""
+def get_llm() -> OpenAI:
+    """Foundry（Azure OpenAI v1）クライアントを返す（初回のみ生成）。"""
     global _client
     if _client is None:
-        _client = AzureOpenAI(
-            azure_endpoint=environ["AZURE_OPENAI_ENDPOINT"],
+        _client = OpenAI(
+            base_url=environ["AZURE_OPENAI_BASE_URL"],  # 例: https://<resource>.openai.azure.com/openai/v1/
             api_key=environ["AZURE_OPENAI_API_KEY"],
-            api_version=environ.get("AZURE_OPENAI_API_VERSION", "2024-10-21"),
         )
     return _client
 

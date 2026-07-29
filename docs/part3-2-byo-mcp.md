@@ -31,13 +31,13 @@ $MCPKEY  = "<推測されにくい長いランダム文字列>"     # APIKey 認
 
 ## 1. 簡易 MCP サーバーを実装する
 
-このリポジトリに完成済みの `src/mcp-server/`（`server.py` / `requirements.txt` / `Dockerfile` / `.env.example`）を同梱している。**ツール `search_faq`（社内 FAQ を返す）を公開するだけ**の最小リモート MCP で、`x-api-key` ヘッダで `MCP_API_KEY` を照合する。
+このリポジトリに完成済みの `src/mcp-server/`（`server.py` / `requirements.txt` / `Dockerfile`）を同梱している。**ツール `search_faq`（社内 FAQ を返す）を公開するだけ**の最小リモート MCP で、`x-api-key` ヘッダーで `MCP_API_KEY` を照合する。
 
 ローカル疎通確認（任意）：
 
 ```powershell
 cd src/mcp-server
-Copy-Item .env.example .env      # MCP_API_KEY を実値に置換
+$env:MCP_API_KEY = "<推測されにくい長いランダム文字列>"
 python -m venv .venv; .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python server.py                 # http://localhost:8000/mcp で待受

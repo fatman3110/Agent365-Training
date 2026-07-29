@@ -40,38 +40,34 @@ m365agentstoolkit-cli account show   # az account show と同じテナントか�
 
 ## 2. Foundry でモデルをデプロイする（頭脳）
 
-AI Teammate の思考エンジンに使うモデルを Foundry にデプロイし、**エンドポイント・キー・デプロイ名**を控える。
+AI Teammate の思考エンジンに使うモデルを Foundry にデプロイし、**エンドポイント・API キー・デプロイ名**を控える。
 
-1. [Foundry ポータル](https://ai.azure.com/) にサインイン（第1部B で作成済みのプロジェクトを再利用してよい）
-2. 左ペインの **マイアセット（My assets）› モデル + エンドポイント（Models + endpoints）** を開く
-3. **＋ モデルのデプロイ（Deploy model）› 基本モデルをデプロイ（Deploy base model）** を選ぶ
-4. モデル一覧から `gpt-4o-mini`（テスト用途なら十分）を選び **確認（Confirm）**
-5. デプロイ構成で次を設定：
-   | 項目 | 値 |
-   |------|----|
-   | **デプロイ名（Deployment name）** | 例 `gpt-4o-mini`（**コードで使う名前**。任意に決めてよい） |
-   | **デプロイの種類（Deployment type）** | `Global Standard` 等（テスト用途はそのままで可） |
-   | （任意）レート制限（TPM）／コンテンツフィルター | 既定のままで可 |
-6. **デプロイ（Deploy）** を押し、**プロビジョニング状態（Provisioning state）が「Succeeded（成功）」** になるまで待つ
-7. デプロイ詳細画面で以下を控える（次節の `.env` に使う）：
-   - **ターゲット URI（Target URI）＝エンドポイント**（`https://<リソース名>.openai.azure.com/` 形式。末尾の `/openai/deployments/...` は含めずベース URL を使う）
-   - **キー（Key）**
-   - **デプロイ名（Deployment name）**（手順5で決めた名前）
-   - **API バージョン**（OpenAI SDK 互換で呼ぶ場合に必要。例 `2024-10-21`）
+1. [Foundry ポータル](https://ai.azure.com/) にサインイン（右上の **新しい Foundry** トグル ON。第1部B で作成したプロジェクトを再利用してよい）。ホーム画面の下段に **API キー** と **Azure OpenAI エンドポイント**（`https://<リソース名>.openai.azure.com/openai/v1` 形式）が表示される。
+2. モデルをデプロイする：ホームの **「モデルの選択」› モデルを探す** から使うモデル（例 `gpt-4o-mini`）を開き **デプロイ**（デプロイ名・種類は既定のままで可）。
+   - デプロイ済みモデルは **「モデルを使用する」› デプロイの表示** で一覧・デプロイ名を確認できる。
+3. 次の3つを控える（次節の `.env` に使う）：
+   | 控える値 | 取得場所 |
+   |---------|---------|
+   | **Azure OpenAI エンドポイント**（`.../openai/v1`） | ホーム画面「Azure OpenAI エンドポイント」右のコピーアイコン |
+   | **API キー** | ホーム画面「API キー」右のコピーアイコン |
+   | **デプロイ名** | 「モデルを使用する › デプロイの表示」で確認 |
 
-> 出典（Foundry でのモデルデプロイ手順）: [Deploy a model（Azure OpenAI in Foundry）](https://learn.microsoft.com/azure/ai-foundry/openai/how-to/create-resource#deploy-a-model)
-> ⚠️ UI 名称・既定値は Preview で変わり得るため、画面表示と上記 Learn を都度確認する。
+> Foundry の **v1 API** は `api-version` 不要で、**OpenAI クライアントの `base_url` に `.../openai/v1/` を渡すだけ**で呼べる（Azure 専用クライアント不要）。同梱の `llm.py` はこの方式。
+> 出典: [Azure OpenAI in Foundry Models v1 API](https://learn.microsoft.com/azure/foundry/openai/api-version-lifecycle#code-changes)
 
 ## 3. エージェント本体（src/ai-teammate）を用意する
 
-このリポジトリに完成済みの `src/ai-teammate/`（`llm.py` / `requirements.txt` / `.env.example`）を同梱している。**接続情報（`.env`）を用意して疎通確認するだけ**でよい。
+このリポジトリに完成済みの `src/ai-teammate/`（`llm.py` / `requirements.txt`）を同梱している。**接続情報（`.env`）を用意して疎通確認するだけ**でよい。
 
-**1. `.env` を作る**（`.env.example` をコピーし `<...>` を 2 節で控えた値に置換。`.env` はコミットしない）
+**1. `.env` を作る**（`<...>` を 2 節で控えた値に置換。`.env` はコミットしない）
 
 ```powershell
 cd src/ai-teammate
-Copy-Item .env.example .env
-notepad .env   # <リソース名>/<キー>/<デプロイ名> を実値に置換して保存
+Set-Content .env @"
+AZURE_OPENAI_BASE_URL=https://<リソース名>.openai.azure.com/openai/v1/
+AZURE_OPENAI_API_KEY=<キー>
+AZURE_OPENAI_DEPLOYMENT=<デプロイ名>
+"@
 ```
 
 **2. ローカルで疎通確認**
@@ -82,7 +78,7 @@ pip install -r requirements.txt
 python -c "import llm; print(llm.chat_complete('こんにちは、自己紹介して'))"
 ```
 
-> `llm.py` は第1部C の `chat_complete()` 構造のまま、接続先だけ Foundry（`AzureOpenAI`）に差し替えている。identity（独自 M365 ID）・ホスティング層・観測性は次の 4 節でスキルが生成・配線する。
+> `llm.py` は第1部C の `chat_complete()` 構造のまま、**OpenAI クライアントの `base_url` を Foundry の v1 エンドポイント（`.../openai/v1/`）に向けるだけ**（`api-version` 不要）。identity（独自 M365 ID）・ホスティング層・観測性は次の 4 節でスキルが生成・配線する。
 
 ## 4. AI Teammate 化する（Blueprint＋独自 M365 ID）
 
