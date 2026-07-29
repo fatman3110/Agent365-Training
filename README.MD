@@ -153,3 +153,18 @@ flowchart LR
 
 - [microsoft/agent365-skills](https://github.com/microsoft/agent365-skills)
 - [ninjyanaka/a365handson](https://github.com/ninjyanaka/a365handson)
+
+---
+
+## 注意事項
+
+- **本教材は公式 Microsoft 製品ではなく**、Microsoft Agent 365 を学習するための非公式なサンプルである。
+- **教育目的の教材である。本番環境では使用しないこと。** 使い終わったら後片づけ（`a365 cleanup` / リソース削除）を行い、意図しない課金やエージェントの残存を避けること。
+- **2026年7月現在、Microsoft Agent 365 は Preview を多く含む。** UI・コマンド・仕様・提供条件・ライセンス要件は将来変更される可能性がある。最新情報は Microsoft Learn で確認すること。
+- 手順内で参照するツール・CLI・拡張機能のバージョンは将来変更される可能性がある。
+
+---
+
+## ライセンス
+
+[MIT License](LICENSE)
