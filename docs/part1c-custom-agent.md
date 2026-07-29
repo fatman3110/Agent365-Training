@@ -108,7 +108,7 @@ cd src\agent                                # 作業ディレクトリを src/ag
 
 > **作業ディレクトリ（重要）**：`a365-setup` / `a365 setup all` は「実行したフォルダ」を**エージェントのプロジェクト**とみなし、そこにリソースを生成する。本教材ではエージェント本体のコードがある **`src/agent`** をプロジェクトとして扱う。
 
-**ターミナルのコマンドではなく、AI チャットに次の指示を送る**と、先ほど導入した Skill が起動し、必要なコマンドを AI が代わりに実行してくれる。
+**ターミナルのコマンドではなく、AI チャットに次の指示を送る**と、先ほど導入した Skill が起動し、必要なコマンドを AI が代わりに実行してくれる。**エージェント名の置き換え**を忘れないこと
 
 ```text
 a365-setup を実行して。作業ディレクトリは src/agent。エージェント名は a365-agent-xxxx。UPN を持たない Agent を S2S（サービスプリンシパル）認可で作りたい。
@@ -120,25 +120,15 @@ a365-setup を実行して。作業ディレクトリは src/agent。エージ�
 > - **UPN を持たない Agent** … 人間のようなメールアドレス／ログイン名（UPN）を**持たない**エージェント = **非 AI Teammate**
 > - **S2S（サービスプリンシパル）認可** … ユーザーの代理（OBO）ではなく、エージェント自身のサービスプリンシパル資格情報で動く方式。
 
-Skill は対話形式で進む（**この指示は最初の一言にすぎず、以降 Skill 側からいくつか質問が来る**）。聞かれたら次のように答える：
-
-| Skill からの質問 | 回答の目安 |
-|---|---|
-| 検出結果の確認（stack / language / agent type など） | 合っていれば `yes` |
-| 対応する機能（1 Register / 2 Observability / 3 WorkIQ / 4 AI Teammate） | まずは **`1`（Register）のみ**でよい（Observability は 4 節で別途配線するため後回し） |
-| 認証方式（1 OBO / 2 S2S） | 指示文で先に伝えているため自動選択されることが多いが、聞かれたら **`2`（S2S）** |
-| エージェントが動く場所（1 Cloud / 2 Local・Dev Tunnel / 3 Skip） | まだデプロイ前なので **`3`（Skip）** |
-| dry-run 結果の確認 | 内容を確認して `yes` |
+Skill は対話形式で進む。指示に従って、承認やブラウザ認証を行う：
+1. `[yes/no]:` の選択  → 内容を確認したうえで、AI チャットに `yes` を送付
+2. ブラウザが開く → サインインと権限の承認
 
 Skill が内部で `a365 setup all --agent-name a365-agent-xxxx --authmode s2s` を実行し、以下を行う。
 
 ```text
 要件チェック ─▶ Blueprint 作成 ─▶ 資格情報 ─▶ 権限の継承 ─▶ Agent Identity 作成(UPN無し) ─▶ 登録 ─▶ ローカルの .env へ接続情報を書き込み
 ```
-
-途中で 、複数回、画面の指示に従って指示や認証を行う：
-1. `[y/N]:` の選択  → `y`
-2. ブラウザが開く → サインインと権限の承認
 
 - **成功の判定**：ローカルに作成された `a365.generated.config.json` の **`agentBlueprintId` に ID が入っていること** 
 
@@ -153,7 +143,7 @@ Skill が内部で `a365 setup all --agent-name a365-agent-xxxx --authmode s2s` 
    ENABLE_A365_OBSERVABILITY_EXPORTER=true
    "@
    ```
-2. 観測の詳細配線は **Skill に任せる**。下の指示を AI チャットに送ると、Skill（`instrument-observability`）が現行ディストロ `use_microsoft_opentelemetry(...)` とスコープ（InvokeAgentScope 等）の配線コードを生成する：
+2. 観測の詳細配線は **Skill に任せる**。下の指示を AI チャットに送ると、Skill（`instrument-observability`）が現行ディストロ `use_microsoft_opentelemetry(...)` とスコープ（InvokeAgentScope 等）の配線コードを生成する。戦術の AI チャットへの指示ですでに作成済みの場合もあるが２重命令となっても LLM が判断してくれるので問題ない：
    ```text
    このエージェントに Agent 365 の観測を S2S（サービスプリンシパル）で追加して。
    ```
@@ -249,6 +239,7 @@ az acr build -r $ACR -t ollama-sidecar:latest ../ollama-sidecar
 
 - [Azure ポータル](https://portal.azure.com/) > App Services > 作成したアプリの管理画面 > 左ナビの「デプロイ」配下 **デプロイ センター** を選択
   - 上部タブで **コンテナー** を選択（メインコンテナ1つだけが表示されている）
+  - 上部リボンで再構成を求められている場合は実行する
   - **追加 → カスタム コンテナー** を選択すると、右側に「コンテナーの追加」ペインが開く。**種類** は自動的に「**サイドカー**」に設定される（選択不要）
   - ペインの入力項目：
     - **名前**：任意（例: `ollama`）
@@ -271,7 +262,7 @@ az acr build -r $ACR -t ollama-sidecar:latest ../ollama-sidecar
 # 複数回、画面の指示に従って指示や認証を行う
 a365 setup blueprint --agent-name $A365NAME --update-endpoint "https://$APP.azurewebsites.net/api/messages" --m365
 
-# CEA（Teams 連携）登録では、上のコマンドの後に Bot 用の Messaging Bot API 権限付与が必要
+# Teams 連携では、上のコマンドの後に Bot 用の Messaging Bot API 権限付与が必要
 a365 setup permissions bot
 
 # ENABLE_A365_OBSERVABILITY_EXPORTER が false のままだと観測データが Agent 365 に送信されないので、trueへ変更

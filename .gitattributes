@@ -1,0 +1,7 @@
+# 改行コードを正規化（Windows の autocrlf に依存しない）
+* text=auto
+
+# シェルスクリプト等は Linux コンテナで exec するため必ず LF
+*.sh        text eol=lf
+Dockerfile  text eol=lf
+*.py        text eol=lf
