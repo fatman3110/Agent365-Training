@@ -114,16 +114,7 @@ flowchart LR
 | Defender 高度なハンティング（CloudAppEvents）を実行 | A・B・C | **Security Reader**（閲覧）/ Security Operator |  |
 | Block / 削除 | A・B・C | **AI Administrator** | 一時停止（Block）と完全削除の違いに留意 |
 | 条件付きアクセス（Agent ID 対象） | A・B・C | **Conditional Access Administrator** / Security Administrator | |
-| カスタムポリシーテンプレートの前提ポリシー作成（Entra） | A・B・C | 条件付きアクセス→**Conditional Access Administrator**<br>アクセスパッケージ→**Identity Governance Administrator**<br>カスタムセキュリティ属性→**属性定義管理者**・**属性割り当て管理者** | 特に、**Global 管理者でもカスタムセキュリティ属性の権限は既定で持たない**ため別途付与が必要 |
-
-### 用語ミニ辞典
-
-| 用語 | 意味 |
-|------|------|
-| **Blueprint** | エージェントの「テンプレート」。ここから Agent ID を発行する。これ自体は実体ではない |
-| **Entra Agent ID** | エージェントに付与される Entra 上の ID（blueprint の `agentBlueprintId`）。Observability の突き合わせキーになる |
-| **instance 化** | Blueprint（テンプレート）から実際に使えるエージェントの実体を払い出すこと。|
-| **BYO MCP** | 自作の外部 MCP サーバーを Agent 365 に登録して使う仕組み |
+| カスタムポリシーテンプレートの前提ポリシー作成（Entra） | A・B・C | 条件付きアクセス：**Conditional Access Administrator**<br>アクセスパッケージ：**Identity Governance Administrator**<br>カスタムセキュリティ属性：**属性定義管理者**・**属性割り当て管理者** | 特に、**Global 管理者でもカスタムセキュリティ属性の権限は既定で持たない**ため別途付与が必要 |
 
 ---
 
