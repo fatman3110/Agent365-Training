@@ -23,21 +23,22 @@
 
 エージェントの認証は、独立した **2 つの軸**で決まる。ここを分けて考えると、AI Teammate／S2S／OBO の関係がすっきりする。
 
-- **軸1：エージェントが通常社員かのように ID を持つか** — **AI Teammate（Agent 365 対応・agentic identity あり）** か、**通常アプリ（custom engine／標準アプリ登録）** か
+- **軸1：エージェント固有の ID（Entra Agent ID）を持つか** — blueprint から **Agent ID が発行された agentic** か、標準アプリ登録のみの **notAgentic（レガシー）** か。※Agent ID は **blueprint 経由で発行**され、標準アプリに自動付与はされない。ただし **Copilot Studio 製エージェントは Microsoft 所有 blueprint で自動的に agentic** になる。
 - **軸2：処理に必要なリソースをどの権限で呼ぶか** — **OBO**（ユーザーの代理・`scp`・帰属が残る）か、**S2S**（自分の資格・`roles`・app-only 自律）か
 
 この 2 軸で 4 象限になる（Learn の observability 認証 **4 シナリオ**と対応）。**今回の第1部 A/B/C と第3部 A がどこに入るか**も併記する。
 
 | | **OBO**（ユーザーの代理・`scp`） | **S2S**（自分の資格・`roles`・app-only） |
 |---|---|---|
-| **独自 ID を持つ**（agentic・**AI Teammate 含む**） | 自分の ID を持ちつつ、下流は**ユーザーの委任権限**で呼ぶ。帰属を残しつつ**範囲はその人の権限内**に収める。<br>**使いどころ**：過剰権限を避けたい・操作の帰属をユーザーに紐づけたい自律エージェント。<br>→ **第3部A（AI Teammate ×OBO・reactive 既定寄り）** | 自分の agentic ID で **app-only トークン**（agentic identity chain）。**ユーザー不在でも自律**。<br>**使いどころ**：夜間・常駐・イベント駆動で、権限とガバナンスを ID 単位で効かせたいとき。**"らしさ"が最も出る象限**。<br>→ **第1部B（Foundry autopilot）**／**第1部C（独自 S2S）**／**第3部A（AI Teammate ×S2S）** |
-| **通常アプリ**（custom engine／標準アプリ登録） | 標準アプリが Azure Bot OAuth 経由で**ユーザーの委任トークン**を取得。**従来型の delegated ボット**。<br>**使いどころ**：ユーザー操作に応答してその人の権限で動く Copilot 拡張／ボット。<br>→ **第1部A（Copilot Studio）**※ | 標準アプリが client credentials で **app-only トークン**。**従来型のデーモン／システム連携**（固有の agent ID 統制は無し）。<br>**使いどころ**：昔ながらの app-only バッチ。手軽だが ID 単位の統制はできない。<br>→ 今回の題材には無し（比較用） |
+| **agentic**（Entra Agent ID あり・**AI Teammate 含む**） | 自分の Agent ID を持ちつつ、リソースは**ユーザーの委任権限**で呼ぶ。<br>**使いどころ**：ユーザー操作に応答・過剰権限を避け操作の帰属をユーザーに紐づけたい。<br>**具体例**：**第1部A（Copilot Studio）**／**第3部A（AI Teammate ×OBO）** | 自分の Agent ID で **ユーザー不在でも自律的に権限を使う**（agentic identity chain）。<br>**使いどころ**：夜間・常駐・イベント駆動で、権限とガバナンスを ID 単位で効かせたいとき。**"AI Teammate らしさ"が最も出る象限**。<br>**具体例**：**第1部B（Foundry autopilot）**／**第1部C（独自 S2S）**／**第3部A（AI Teammate ×S2S）** |
+| **notAgentic**（標準アプリ登録のみ・レガシー） | 標準アプリが Azure Bot OAuth 経由で**ユーザーの委任トークン**を取得。**従来型の delegated ボット**。<br>**使いどころ**：Agent ID 移行前の delegated ボット。<br>**具体例**：本ハンズオンでは不使用（比較用） | 標準アプリが client credentials で app-only トークン。**従来型のデーモン／システム自動化**（固有の agent ID 統制は無し）。<br>**使いどころ**：昔ながらの app-only バッチ。<br>**具体例**：本ハンズオンでは不使用（比較用） |
 
-> ※ **第1部A（Copilot Studio）** は SaaS 管理のノーコード reactive エージェントで、ユーザー文脈に応答する点でこの象限が最も近い（独自コードや厳密な OBO/S2S の選択は持たない）。
+> **今回のハンズオンは 第1部A/B/C・第3部A すべて agentic（Entra Agent ID あり）＝上段**。下段の notAgentic は「Agent ID 以前の標準アプリ登録」で、[custom app registration の Agent ID 移行](https://learn.microsoft.com/entra/agent-id/migrate-custom-app-registrations-to-agent-id) が扱う対比用のレガシー像。
 >
-> **agentic の中の 2 段階（上段の読み分け）**：**第1部B・C は agentic な"アプリ"ID**（blueprint・メールボックス無し）。**第3部A の AI Teammate はさらに agentic な"ユーザー"ID**（M365 UPN・メールボックス・Teams 在席・組織図掲載）を持つ**最上位形**。同じ上段でも「アプリ ID 止まり」か「ユーザー ID まで」かが決定的に違う。
+> **ただし 第1部A/B/C は agentic でも "AI Teammate ではない"**：これらは `agenticAppInstance`（"アプリ"としての ID・メールボックス無し・組織図に載らない）。**第3部A の AI Teammate だけが `agentIDuser`**（**独自の M365 ユーザーアカウント・メールボックス・Teams 在席・組織図掲載**）を持ち、**@mention・メール・会議招待の対象になる"デジタル同僚"**として扱える。これが AI Teammate の主眼。
+> 出典（agentType 分類）: [Microsoft Entra Agent ID logs](https://learn.microsoft.com/entra/agent-id/sign-in-audit-logs-agents#audit-logs)
 
-> **同じエージェントが両方の flow に参加できる**。例：日中は OBO でユーザー依頼に応じ、夜間は S2S で自律サマリを回す AI Teammate。
+> **同じエージェントであっても、複数のパターンを両立可能である点に注意**。例：日中は OBO でユーザー依頼に応じ、夜間は S2S で自律サマリを回す
 
 ---
 
