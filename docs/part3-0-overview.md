@@ -21,14 +21,13 @@
 
 ## 認証モデルの整理：「自分の ID を持つか」×「どのトークンで下流を呼ぶか」
 
-エージェントの認証は、独立した **2 つの軸**で決まる。ここを分けて考えると、AI Teammate／S2S／OBO の関係がすっきりする。
+エージェントの認証は、独立した **2 つの軸**で決まる。
 
 - **軸1：エージェント固有の ID（Entra Agent ID）を持つか** — blueprint から **Agent ID が発行された agentic** か、標準アプリ登録のみの **notAgentic（レガシー）** か。※Agent ID は **blueprint 経由で発行**され、標準アプリに自動付与はされない。ただし **Copilot Studio 製エージェントは Microsoft 所有 blueprint で自動的に agentic** になる。
 - **軸2：処理に必要なリソースをどの権限で呼ぶか** — **OBO**（ユーザーの代理・`scp`・帰属が残る）か、**S2S**（自分の資格・`roles`・app-only 自律）か
 
-この 2 軸で 4 象限になる（Learn の observability 認証 **4 シナリオ**と対応）。**今回の第1部 A/B/C と第3部 A がどこに入るか**も併記する。
 
-| | **OBO**（ユーザーの代理・`scp`） | **S2S**（自分の資格・`roles`・app-only） |
+| | **On-Behalf-Of（OBO）**（ユーザーの代理） | **Service-to-Service（S2S）**（アプリ独自の権限） |
 |---|---|---|
 | **agentic**（Entra Agent ID あり・**AI Teammate 含む**） | 自分の Agent ID を持ちつつ、リソースは**ユーザーの委任権限**で呼ぶ。<br>**使いどころ**：ユーザー操作に応答・過剰権限を避け操作の帰属をユーザーに紐づけたい。<br>**具体例**：**第1部A（Copilot Studio）**／**第3部A（AI Teammate ×OBO）** | 自分の Agent ID で **ユーザー不在でも自律的に権限を使う**（agentic identity chain）。<br>**使いどころ**：夜間・常駐・イベント駆動で、権限とガバナンスを ID 単位で効かせたいとき。**"AI Teammate らしさ"が最も出る象限**。<br>**具体例**：**第1部B（Foundry autopilot）**／**第1部C（独自 S2S）**／**第3部A（AI Teammate ×S2S）** |
 | **notAgentic**（標準アプリ登録のみ・レガシー） | 標準アプリが Azure Bot OAuth 経由で**ユーザーの委任トークン**を取得。**従来型の delegated ボット**。<br>**使いどころ**：Agent ID 移行前の delegated ボット。<br>**具体例**：本ハンズオンでは不使用（比較用） | 標準アプリが client credentials で app-only トークン。**従来型のデーモン／システム自動化**（固有の agent ID 統制は無し）。<br>**使いどころ**：昔ながらの app-only バッチ。<br>**具体例**：本ハンズオンでは不使用（比較用） |
