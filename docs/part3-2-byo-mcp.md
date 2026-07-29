@@ -31,22 +31,20 @@ $MCPKEY  = "<推測されにくい長いランダム文字列>"     # APIKey 認
 
 ## 1. 簡易 MCP サーバーを実装する
 
-`src/mcp-server/` に、**ツールを1〜2個公開するだけ**のリモート MCP サーバーを作る（例：社内 FAQ を返す `search_faq`）。ポイントだけ:
+このリポジトリに完成済みの `src/mcp-server/`（`server.py` / `requirements.txt` / `Dockerfile` / `.env.example`）を同梱している。**ツール `search_faq`（社内 FAQ を返す）を公開するだけ**の最小リモート MCP で、`x-api-key` ヘッダで `MCP_API_KEY` を照合する。
 
-- **リモート MCP**（HTTP で待ち受ける）であること。BYO は remote MCP のみ対象。
-- **APIKey 認証**：リクエストヘッダ（例 `x-api-key`）で `$MCPKEY` を検証する。
-- ツール名（例 `search_faq`）は登録時の `--tools` と一致させる。
+ローカル疎通確認（任意）：
 
-構成例：
-
-```text
-src/mcp-server/
-├── server.py          # MCP サーバー本体（ツール search_faq を公開・APIKey 検証）
-├── requirements.txt   # mcp（Python MCP SDK）等
-└── Dockerfile         # App Service へデプロイ用（第1部C と同じ要領）
+```powershell
+cd src/mcp-server
+Copy-Item .env.example .env      # MCP_API_KEY を実値に置換
+python -m venv .venv; .\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python server.py                 # http://localhost:8000/mcp で待受
 ```
 
-> 実装は「動くリモート MCP エンドポイント」であれば方式は自由（Python MCP SDK / FastMCP 等）。学びの主眼は**実装そのものではなく、A365 への BYO 登録・承認・統制**にある。
+- **リモート MCP**（HTTP 待受）・**APIKey 認証**（`x-api-key`）・**ツール名 `search_faq`** の3点が BYO 登録時の指定と対応する。
+- 学びの主眼は**実装そのものではなく、A365 への BYO 登録・承認・統制**にある。実装を差し替えても以降の手順は同じ。
 
 ## 2. Azure にホストする（公開 HTTPS エンドポイント）
 

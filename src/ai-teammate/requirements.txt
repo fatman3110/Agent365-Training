@@ -1,0 +1,5 @@
+# AI Teammate の LLM コア依存（最小）。
+# ホスティング（microsoft-agents-hosting-*）と観測性（microsoft-opentelemetry）は
+# 4 節で make-ai-teammate / instrument-observability スキルが自動で追記する。
+openai
+python-dotenv

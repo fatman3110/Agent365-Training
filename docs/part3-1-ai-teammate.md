@@ -64,62 +64,25 @@ AI Teammate の思考エンジンに使うモデルを Foundry にデプロイ�
 
 ## 3. エージェント本体（src/ai-teammate）を用意する
 
-既存 `src/agent/`（第1部C）はコピー元として**読み取りのみ**。新規に `src/ai-teammate/` を作り、**LLM 呼び出しを Foundry モデルに向ける**（Ollama → Foundry の差し替えが本質）。
+このリポジトリに完成済みの `src/ai-teammate/`（`llm.py` / `requirements.txt` / `.env.example`）を同梱している。**接続情報（`.env`）を用意して疎通確認するだけ**でよい。
 
-1. `src/ai-teammate/` を作成（最小構成）。ホスティング層・`AgentApplication`・観測性は **4 節でスキルが生成**するので、ここでは LLM コアだけ置く：
-   ```text
-   src/ai-teammate/
-   ├── llm.py            # Foundry モデルを呼ぶ chat completion（Ollama→Foundry の差分はここだけ）
-   ├── requirements.txt
-   └── .env              # 接続情報（コミット禁止）
-   ```
+**1. `.env` を作る**（`.env.example` をコピーし `<...>` を 2 節で控えた値に置換。`.env` はコミットしない）
 
-2. `requirements.txt`（最小。ホスティング／観測性の依存は 4 節でスキルが追記）：
-   ```text
-   openai>=1.0
-   python-dotenv>=1.0
-   ```
+```powershell
+cd src/ai-teammate
+Copy-Item .env.example .env
+notepad .env   # <リソース名>/<キー>/<デプロイ名> を実値に置換して保存
+```
 
-3. `.env`（第1部C の `OLLAMA_*` を Foundry 用に置き換え。値は 2 節で控えたもの。キーはコミットしない）：
-   ```text
-   AZURE_OPENAI_ENDPOINT=https://<リソース名>.openai.azure.com/
-   AZURE_OPENAI_API_KEY=<2節で控えたキー>
-   AZURE_OPENAI_DEPLOYMENT=<2節で控えたデプロイ名>
-   AZURE_OPENAI_API_VERSION=2024-10-21
-   ```
+**2. ローカルで疎通確認**
 
-4. `llm.py`（第1部C の Ollama 版と**同じ「ツール無しのシンプル chat completion」構造**。接続先を Foundry に変えるだけ。関数名は第1部C の `llm.py` に合わせる）：
-   ```python
-   import os
-   from openai import AzureOpenAI
-   from dotenv import load_dotenv
+```powershell
+python -m venv .venv; .\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -c "import llm; print(llm.chat_complete('こんにちは、自己紹介して'))"
+```
 
-   load_dotenv()
-
-   _client = AzureOpenAI(
-       azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
-       api_key=os.environ["AZURE_OPENAI_API_KEY"],
-       api_version=os.environ["AZURE_OPENAI_API_VERSION"],
-   )
-   _DEPLOYMENT = os.environ["AZURE_OPENAI_DEPLOYMENT"]
-
-   def ask(prompt: str) -> str:
-       """ユーザーの発話を Foundry モデルに投げ、テキスト応答を返す（ツール呼び出しなし）。"""
-       resp = _client.chat.completions.create(
-           model=_DEPLOYMENT,          # Azure はモデル名ではなく「デプロイ名」を渡す
-           messages=[{"role": "user", "content": prompt}],
-       )
-       return resp.choices[0].message.content or ""
-   ```
-
-5. ローカルで疎通確認（任意）：
-   ```powershell
-   cd src/ai-teammate
-   pip install -r requirements.txt
-   python -c "import llm; print(llm.ask('こんにちは、自己紹介して'))"
-   ```
-
-> ここまでで「**Foundry モデルで応答する最小エージェント**」が完成。identity（独自 M365 ID）・ホスティング層・観測性は次の 4 節でスキルが生成・配線する。
+> `llm.py` は第1部C の `chat_complete()` 構造のまま、接続先だけ Foundry（`AzureOpenAI`）に差し替えている。identity（独自 M365 ID）・ホスティング層・観測性は次の 4 節でスキルが生成・配線する。
 
 ## 4. AI Teammate 化する（Blueprint＋独自 M365 ID）
 

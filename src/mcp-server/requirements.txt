@@ -1,0 +1,3 @@
+# 最小のリモート MCP サーバー依存（学習用）
+mcp
+uvicorn[standard]
