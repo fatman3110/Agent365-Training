@@ -29,15 +29,10 @@
 
 | | **On-Behalf-Of（OBO）**（ユーザーの代理） | **Service-to-Service（S2S）**（アプリ独自の権限） |
 |---|---|---|
-| **agentic**（Entra Agent ID あり・**AI Teammate 含む**） | 自分の Agent ID を持ちつつ、リソースは**ユーザーの委任権限**で呼ぶ。<br>**使いどころ**：ユーザー操作に応答・過剰権限を避け操作の帰属をユーザーに紐づけたい。<br>**具体例**：**第1部A（Copilot Studio）**／**第3部A（AI Teammate ×OBO）** | 自分の Agent ID で **ユーザー不在でも自律的に権限を使う**（agentic identity chain）。<br>**使いどころ**：夜間・常駐・イベント駆動で、権限とガバナンスを ID 単位で効かせたいとき。**"AI Teammate らしさ"が最も出る象限**。<br>**具体例**：**第1部B（Foundry autopilot）**／**第1部C（独自 S2S）**／**第3部A（AI Teammate ×S2S）** |
-| **notAgentic**（標準アプリ登録のみ・レガシー） | 標準アプリが Azure Bot OAuth 経由で**ユーザーの委任トークン**を取得。**従来型の delegated ボット**。<br>**使いどころ**：Agent ID 移行前の delegated ボット。<br>**具体例**：本ハンズオンでは不使用（比較用） | 標準アプリが client credentials で app-only トークン。**従来型のデーモン／システム自動化**（固有の agent ID 統制は無し）。<br>**使いどころ**：昔ながらの app-only バッチ。<br>**具体例**：本ハンズオンでは不使用（比較用） |
+| **agentic**（Entra Agent ID あり・**AI Teammate 含む**） | 自分の Agent ID を持ちつつ、リソースは**ユーザーの委任権限**で呼ぶ。<br>**使いどころ**：ユーザー操作に応答・過剰権限を避け操作の帰属をユーザーに紐づけたい。<br>**具体例**：第1部A（Copilot Studio）／第1部B（Foundry の Prompt agent）／第3部A（AI Teammate ×OBO） | 自分の Agent ID で **ユーザー不在でも自律的に権限を使う**。<br>**使いどころ**：夜間・常駐・イベント駆動で、権限とガバナンスを ID 単位で効かせたいとき。**自律性が最も出る象限**。<br>**具体例**：第1部C（独自 S2S）／第3部A（AI Teammate ×S2S） |
+| **notAgentic**（標準アプリ登録のみ・レガシー） | 標準アプリが OAuth 経由で**ユーザーの委任トークン**を取得。**従来型の委任ボット**。<br>**使いどころ**：従来型のボット。<br>**具体例**：本ハンズオンでは不使用（比較用） | 標準アプリが client credentials で 独自の権限を利用。**従来型のデーモン／システム自動化**。<br>**使いどころ**：昔ながらのアプリ・自動化。<br>**具体例**：本ハンズオンでは不使用（比較用） |
 
-> **今回のハンズオンは 第1部A/B/C・第3部A すべて agentic（Entra Agent ID あり）＝上段**。下段の notAgentic は「Agent ID 以前の標準アプリ登録」で、[custom app registration の Agent ID 移行](https://learn.microsoft.com/entra/agent-id/migrate-custom-app-registrations-to-agent-id) が扱う対比用のレガシー像。
->
-> **ただし 第1部A/B/C は agentic でも "AI Teammate ではない"**：これらは `agenticAppInstance`（"アプリ"としての ID・メールボックス無し・組織図に載らない）。**第3部A の AI Teammate だけが `agentIDuser`**（**独自の M365 ユーザーアカウント・メールボックス・Teams 在席・組織図掲載**）を持ち、**@mention・メール・会議招待の対象になる"デジタル同僚"**として扱える。これが AI Teammate の主眼。
-> 出典（agentType 分類）: [Microsoft Entra Agent ID logs](https://learn.microsoft.com/entra/agent-id/sign-in-audit-logs-agents#audit-logs)
-
-> **同じエージェントであっても、複数のパターンを両立可能である点に注意**。例：日中は OBO でユーザー依頼に応じ、夜間は S2S で自律サマリを回す
+> **第1部A/B/C は agentic でも "AI Teammate ではない"**：**第3部A の AI Teammate だけが `agentIDuser`**（**独自の M365 ユーザーアカウント・メールボックスや上司・部下などの組織**）を持ち、**@mention・メール・会議招待の対象になる"デジタル同僚"**として扱える。これが AI Teammate の主眼。
 
 ---
 
