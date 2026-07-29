@@ -2,7 +2,9 @@
 
 第1部B で「MCP は Agent 365 Tooling Gateway 経由でないと A365 に載らない」ことを見た。ここでは **自作のリモート MCP サーバー**を実装・ホストし、**`a365 develop-mcp` で BYO 登録 → 管理者承認**することで、実際に A365 の統制下に載せる。
 
-> ⚠️ **BYO MCP は Preview**・リージョン依存（管理センターの MCP 承認機能が未提供の地域あり）。承認には **AI Administrator / Global Administrator** が必要。
+> ⚠️ **BYO MCP は Preview**。承認には **AI Administrator / Global Administrator** が必要。
+>
+> **地域について**：自作 MCP を **App Service でホストする地域（JapanEast 等）は自分のインフラ**なので制約にならない（A365 から見れば公開 HTTPS エンドポイント）。一方、**管理センターの MCP 承認機能（Tooling Gateway）がテナントの geo で提供済みか**は Preview の展開次第で、Learn は個別地域表を出さず [Feature Geography レポート](https://aka.ms/FeatureGeographicAvailabilityReport) での確認を案内している。「JapanEast だから可否」と断定できる根拠は無いので、**テナントの Feature Geography で確認**すること。
 > 出典: [Manage tools for agents（BYO MCP server）](https://learn.microsoft.com/microsoft-365/admin/manage/manage-tools-for-agent#bring-your-own-byo-mcp-server)
 
 **目次**
