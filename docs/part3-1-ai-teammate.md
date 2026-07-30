@@ -103,26 +103,18 @@ capabilities は AI Teammate、認証は agentic-user（--authmode は付けな�
 | `agent.py` | メッセージを `llm.chat_complete` に渡す最小の AI Teammate 本体 |
 | `agent_interface.py` | 本体の抽象基底 |
 | `host_agent_server.py` | aiohttp サーバー＋A365 ルーティング（`/api/messages`・`/api/health`）|
+| `token_cache.py` | 観測トークンのキャッシュ（host が使用）|
 | `main.py` | 起動エントリ（`python main.py`）|
 | `Dockerfile` | App Service デプロイ用（単一コンテナ・Ollama sidecar 無し）|
 | `requirements.txt` | 頭脳＋ホスティング／A365 ランタイム依存 |
+
 
 
 ## 5. 公開してインスタンスを作成する
 
 AI Teammate は「**instance 作成**」まで行って初めて M365 で人として動く。**エンドポイント確定 → publish → 管理センターで instance 作成**の順で進める。
 
-**スキル駆動**：`src/ai-teammate` を開いた状態で、AI チャットに次を指示する：
-
-```text
-この AI Teammate（src/ai-teammate）を Teams で動かしたい。
-Azure App Service（単一コンテナ）にデプロイしてエンドポイントを作り、blueprint に登録して、
-a365 publish でパッケージを作り、M365 管理センターでの instance 作成手順まで案内して。
-```
-
-スキル（`make-ai-teammate` の publish フェーズ）が動く場合は案内に従ってよいが、**動かない前提で以下を手動で行う**：
-
-1. **App Service にデプロイしてエンドポイントを得る**（Part 1 未実施でも動くよう必要リソースを**新規作成**する。RG／プランなど**自分のサブスク内**のリソースは冪等に再利用される。**ただし ACR 名とアプリ名は世界で一意**——`xxxx` は必ず**自分だけのユニーク文字列**に置換すること（他テナントが使用済みの名前は `AlreadyInUse` で失敗する）：
+1. **App Service にデプロイしてエンドポイントを得る**（Part 1 未実施でも動くよう必要リソースを**新規作成**する。RG／プランなど**自分のサブスク内**のリソースは冪等に再利用される。**ただし ACR 名とアプリ名は世界で一意**——`xxxx` は必ず**自分だけのユニーク文字列**に置換すること
 
    ```powershell
    # --- 名前（xxxx は自分用のユニークな文字列に置換）---
@@ -152,28 +144,66 @@ a365 publish でパッケージを作り、M365 管理センターでの instanc
    $principalId = az webapp identity show -n $APP -g $RG --query principalId -o tsv
    $acrId = az acr show -n $ACR -g $RG --query id -o tsv
    az role assignment create --assignee $principalId --scope $acrId --role AcrPull 2>$null
+   $appId = az webapp show -n $APP -g $RG --query id -o tsv
+   az resource update --ids "$appId/config/web" --set properties.acrUseManagedIdentityCreds=true
    # → エンドポイント：https://$APP.azurewebsites.net/api/messages
    ```
 
-   得たエンドポイントを blueprint に登録（4 節で defer した分をここで設定）：
+   得たエンドポイントを blueprint に登録：
    ```powershell
    a365 setup blueprint --endpoint-only --messaging-endpoint "https://$APP.azurewebsites.net/api/messages" --m365
    ```
-2. **publish**：`a365 publish` で Teams/M365 パッケージ（`manifest.zip`）を生成（アップロードはしない）
-3. **管理センターへ手動アップロード**：[M365 管理センター](https://admin.microsoft.com/) › **エージェント › すべてのエージェント** でパッケージを登録
-4. **Teams Developer Portal で確認**：Agent Type＝API Based、Notification URL＝登録したエンドポイント
-5. **instance 作成／承認**：Teams Apps から **instance を要求** → 管理者が承認 → **UPN・メールボックスが有効化**される
+2. **manifest をカスタマイズして publish する**：
 
-> 一次情報: [Create an instance](https://learn.microsoft.com/microsoft-agent-365/developer/create-instance) ／ [Testing](https://learn.microsoft.com/microsoft-agent-365/developer/testing) ／ [Azure へデプロイ](https://learn.microsoft.com/microsoft-agent-365/developer/deploy-agent-azure)
-> ⚠️ **Frontier 未登録テナントでは instance 作成が通らない**ことがある。画面の指示と上記 Learn を都度確認する。
+   `a365 publish` を実行すると `src/ai-teammate/manifest/manifest.json` が生成される。必要に応じて、manifest の内容を変更する
+
+   | フィールド | 何を書くか | 例 |
+   |-----------|-----------|-----|
+   | `name.short` | 30 文字以内の表示名（"...Blueprint" のままにしない・他パートと重複しない名）| `A365 AI Teammate Demo` |
+   | `name.full` | M365 に出るフルネーム | `Agent 365 AI Teammate (Foundry)` |
+   | `description.short` | 80 文字以内の概要 | `Answers Microsoft/Azure questions using a Foundry cloud model.` |
+   | `description.full` | 詳細な能力説明 | `It has its own M365 identity and can be @mentioned, emailed, and invited to meetings in Teams.` |
+   | `developer.name` | 発行元組織名 | `Contoso` |
+   | `developer.websiteUrl` / `privacyUrl` / `termsOfUseUrl` | 自組織の URL（テストなら既定のままでも可）| `https://contoso.com/privacy` |
+
+   ```powershell
+   a365 publish
+   ```
+
+   > ⚠️ `a365 publish` は**対話式**。エディタで編集・保存 → ターミナルで **Enter** で `manifest.zip` が出来る。
+
+3. **管理センターへ手動アップロード**（`src/ai-teammate/manifest/manifest.zip` を登録）：
+   1. [M365 管理センター](https://admin.microsoft.com/) を開く
+   2. **エージェント › すべてのエージェント ›  3点リーダ › エージェントの追加** を選ぶ
+   3. **ファイルの選択** で `manifest.zip` を選択
+   5. **割り当てるユーザー**、**テンプレート**、 **アクセス許可**を設定・確認 
+   7. **公開** を選ぶ
+
+| ![Ai Teammate登録](../assets/part3-1-03-screen.png) |
+|:-:|
+
+4. **instance を作成する**（管理センターから直接作れる・こちらが簡単）：
+   1. [M365 管理センター](https://admin.cloud.microsoft/#/agents/all) › **エージェント › すべてのエージェント** で自分のエージェント（例：`a365-teammate-demo Blueprint`）を選ぶ
+   2. 右に開く詳細パネル上部の **＋ インスタンスの追加** を選ぶ
+   3. 表示された「**インスタンスの追加**」フォームに入力する：
+
+      | フィールド | 何を入れるか | 例 |
+      |-----------|-------------|-----|
+      | **インスタンスの表示名** | Teams でユーザーに見える名前（`Assistant`/`Agent` を含めると分かりやすい）| `A365 Learn Assistant` |
+      | **エージェント インスタンスのエイリアス** | エージェントのメール／UPN の **@ 前**（英数字・ハイフン）| `a365-teammate-demo` |
+      | **ドメイン** | ドロップダウンから**自テナントのドメイン**を選ぶ |  |
+      | **所有者/レポート先** | このエージェントの**責任者＝組織図の上司**。自分を指定 |  |
+      | **所有者に通知メールを送信** | チェックのままで可 | ✓ |
+
+   4. **エージェント ユーザー（UPN・メールボックス）が有効化**される
+
+
+| ![インスタンス化](../assets/part3-1-04-instance.png) |
+|:-:|
 
 ## 6. "人として" 動作確認する
 
-インスタンス有効化後、**第1部C の S2S エージェントとの違い**を体験する：
-
-- **Teams で @mention** して会話する（S2S エージェントは Bot 的、AI Teammate は"人"として在席）
-- **メールを送る**（AI Teammate は自分のメールボックスで受信・返信できる）
-- **ディレクトリ／組織図**に載っていることを確認（マネージャー配下）
+インスタンス有効化後、Teams でチャット等によるやり取りを体験する：
 
 その後、[第2部](./part2-2-observe.md) の Observe / Govern / Secure で、**独自 ID エージェント**としての見え方（アクティビティ・ガバナンス・保護）を確認する。
 
