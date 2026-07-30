@@ -75,6 +75,15 @@ flowchart LR
 
 ---
 
+## 付録：第3部（ボーナストラック）AI Teammate
+
+**独自の M365 ユーザー ID（UPN・メールボックス・Teams 在席・組織図エントリ）を持つ AI Teammate** を作り、"人"としてふるまうエージェントの identity モデルと観測性（Activity）を体験する。
+
+- **第3部 概要（認証モデル 2×2・リソース分離）** → [docs/part3-0-overview.md](./docs/part3-0-overview.md)
+- **3-A：AI Teammate を作る（開発者）** → [docs/part3-1-ai-teammate.md](./docs/part3-1-ai-teammate.md)
+
+---
+
 
 ## 前提条件
 
