@@ -42,19 +42,6 @@
 
 ---
 
-## 本編とのリソース分離
-
-- **第１部 C パートで作成したをリソースを再利用**し、**別アプリ**として新規作成
-
-```powershell
-$RG        = "rg-agent365-training"                 # 既存 RG を再利用（変更しない）
-$LOC       = "japaneast"
-# --- 3-A：AI Teammate ---
-$TMNAME    = "a365-teammate-xxxx"                    # AI Teammate の a365 --agent-name（20 文字以内）
-```
-
----
-
 ## 前提・ライセンス
 
 | 項目 | 要件 |
