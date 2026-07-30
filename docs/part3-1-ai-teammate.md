@@ -9,24 +9,12 @@
 **目次**
 
 - [第3部 A：AI Teammate を作る（開発者）](#第3部-aai-teammate-を作る開発者)
-  - [0. 名前を決める](#0-名前を決める)
   - [1. サインインを揃える](#1-サインインを揃える)
   - [2. Foundry でモデルをデプロイする（頭脳）](#2-foundry-でモデルをデプロイする頭脳)
   - [3. エージェント本体（src/ai-teammate）を用意する](#3-エージェント本体srcai-teammateを用意する)
   - [4. AI Teammate 化する（Blueprint＋独自 M365 ID）](#4-ai-teammate-化するblueprint独自-m365-id)
   - [5. 公開してインスタンスを作成する](#5-公開してインスタンスを作成する)
   - [6. "人として" 動作確認する](#6-人として-動作確認する)
-
-## 0. 名前を決める
-
-第1部と同じく **`xxxx` を自分用のユニークな文字列**に置換する（既存の `SGT31` 等は使わない）。**既存 RG を再利用**し、既存リソースには触れない。
-
-```powershell
-$RG        = "rg-agent365-training"          # 既存 RG を再利用（変更しない）
-$LOC       = "japaneast"
-$TMNAME    = "a365-teammate-xxxx"            # AI Teammate の a365 --agent-name（20 文字以内）
-$FOUNDRYRG = $RG                             # Foundry も同 RG で可
-```
 
 ## 1. サインインを揃える
 
@@ -42,9 +30,8 @@ m365agentstoolkit-cli account show   # az account show と同じテナントか�
 
 AI Teammate の思考エンジンに使うモデルを Foundry にデプロイし、**エンドポイント・API キー・デプロイ名**を控える。
 
-1. [Foundry ポータル](https://ai.azure.com/) にサインイン（右上の **新しい Foundry** トグル ON。第1部B で作成したプロジェクトを再利用してよい）。ホーム画面の下段に **API キー** と **Azure OpenAI エンドポイント**（`https://<リソース名>.openai.azure.com/openai/v1` 形式）が表示される。
-2. モデルをデプロイする：ホームの **「モデルの選択」› モデルを探す** から使うモデル（例 `gpt-4o-mini`）を開き **デプロイ**（デプロイ名・種類は既定のままで可）。
-   - デプロイ済みモデルは **「モデルを使用する」› デプロイの表示** で一覧・デプロイ名を確認できる。
+1. [Foundry ポータル](https://ai.azure.com/) にサインイン。ホーム画面の下段に **API キー** と **Azure OpenAI エンドポイント**（`https://<リソース名>.openai.azure.com/openai/v1` 形式）が表示される。
+2. モデルをデプロイする：ホームの **「モデルの選択」› モデルを探す** から使うモデル（例 `gpt-4.1`）を開き **デプロイ**（既定の設定でよい）。
 3. 次の3つを控える（次節の `.env` に使う）：
    | 控える値 | 取得場所 |
    |---------|---------|
@@ -52,25 +39,32 @@ AI Teammate の思考エンジンに使うモデルを Foundry にデプロイ�
    | **API キー** | ホーム画面「API キー」右のコピーアイコン |
    | **デプロイ名** | 「モデルを使用する › デプロイの表示」で確認 |
 
-> Foundry の **v1 API** は `api-version` 不要で、**OpenAI クライアントの `base_url` に `.../openai/v1/` を渡すだけ**で呼べる（Azure 専用クライアント不要）。同梱の `llm.py` はこの方式。
-> 出典: [Azure OpenAI in Foundry Models v1 API](https://learn.microsoft.com/azure/foundry/openai/api-version-lifecycle#code-changes)
-
 ## 3. エージェント本体（src/ai-teammate）を用意する
 
-このリポジトリに完成済みの `src/ai-teammate/`（`llm.py` / `requirements.txt`）を同梱している。**接続情報（`.env`）を用意して疎通確認するだけ**でよい。
-
-**1. `.env` を作る**（`<...>` を 2 節で控えた値に置換。`.env` はコミットしない）
+**1. リポジトリを取得する**（Part 1 で clone 済みならスキップ）
 
 ```powershell
-cd src/ai-teammate
+git clone https://github.com/fatman3110/Agent365-Training.git
+cd Agent365-Training/src/ai-teammate
+```
+
+**2. `.env` を作る**（まず 2 節で控えた値を変数に入れ、それを `.env` に書き出す。`.env` はコミットしない）
+
+```powershell
+# 2 節で控えた値をそれぞれ貼り付ける
+$BASE_URL   = "<Azure OpenAI エンドポイント>"
+$API_KEY    = "<キー>"
+$DEPLOYMENT = "<デプロイ名>"
+
+# .env に書き出す
 Set-Content .env @"
-AZURE_OPENAI_BASE_URL=https://<リソース名>.openai.azure.com/openai/v1/
-AZURE_OPENAI_API_KEY=<キー>
-AZURE_OPENAI_DEPLOYMENT=<デプロイ名>
+AZURE_OPENAI_BASE_URL=$BASE_URL
+AZURE_OPENAI_API_KEY=$API_KEY
+AZURE_OPENAI_DEPLOYMENT=$DEPLOYMENT
 "@
 ```
 
-**2. ローカルで疎通確認**
+**3. ローカルで疎通確認**
 
 ```powershell
 python -m venv .venv; .\.venv\Scripts\Activate.ps1
@@ -78,14 +72,14 @@ pip install -r requirements.txt
 python -c "import llm; print(llm.chat_complete('こんにちは、自己紹介して'))"
 ```
 
-> `llm.py` は第1部C の `chat_complete()` 構造のまま、**OpenAI クライアントの `base_url` を Foundry の v1 エンドポイント（`.../openai/v1/`）に向けるだけ**（`api-version` 不要）。identity（独自 M365 ID）・ホスティング層・観測性は次の 4 節でスキルが生成・配線する。
-
 ## 4. AI Teammate 化する（Blueprint＋独自 M365 ID）
 
 第1部C と同じ **スキル駆動**で進める。`src/ai-teammate` を開いた状態で、**AI チャット（GitHub Copilot は Agent モード）** に次を指示する：
 
 ```text
-このエージェント（src/ai-teammate）を Agent 365 の AI Teammate にして。独自の M365 ID（UPN・メールボックス・Teams 在席）を持たせたい。
+src/ai-teammate のこのエージェントを Microsoft Agent 365 の AI Teammate にして。
+独自の M365 ユーザー ID（UPN・メールボックス・Teams 在席）を持たせ、頭脳は .env の AZURE_OPENAI_* で Foundry のクラウドモデルを使う。
+capabilities は AI Teammate、認証は agentic-user（--authmode は付けない）でセットアップして。
 ```
 
 スキル（`a365-setup` → `make-ai-teammate`）が起動し、対話に沿って次を行う：
@@ -97,9 +91,6 @@ python -c "import llm; print(llm.chat_complete('こんにちは、自己紹介�
 - 途中の `[y/N]` 承認・ブラウザ認証は画面の指示どおりに進める。
 - **成功の判定**：`a365.generated.config.json` に `agentBlueprintId` が入り、Entra に **Agent Identity と 1:1 の User Account** が作られる。
 
-> ⚠️ S2S との違い：ここでは **`--authmode` を付けない**。AI Teammate は自分の M365 ユーザー ID（agentic-user）で動くため。
-> 出典: [AI teammate（get-started）](https://learn.microsoft.com/microsoft-agent-365/developer/get-started#ai-teammate)
-
 ## 5. 公開してインスタンスを作成する
 
 AI Teammate は「**instance 作成**」まで行って初めて M365 で人として動く。スキルが以下を案内する：
@@ -108,9 +99,6 @@ AI Teammate は「**instance 作成**」まで行って初めて M365 で人と�
 2. **管理者承認**：管理センター **エージェント › すべてのエージェント › 要求** で承認
 3. **インスタンス要求／作成**：AI Teammate は blueprint から **instance を作成**して初めて UPN・メールボックスが有効化される（管理センター主導）
 4. **Teams への接続**：Notification URL 等の再確認（スキル／画面の指示に従う）
-
-> 手順の一次情報: [Create an instance](https://learn.microsoft.com/microsoft-agent-365/developer/create-instance) ／ [Testing](https://learn.microsoft.com/microsoft-agent-365/developer/testing)
-> ⚠️ 具体の画面・タブ名は Preview で変わり得るため、スキルの案内と上記 Learn を都度確認する。
 
 ## 6. "人として" 動作確認する
 
