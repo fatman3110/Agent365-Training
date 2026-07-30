@@ -10,7 +10,6 @@
 **目次**
 
 - [第3部 B：自作 MCP サーバー（BYO MCP）を作って A365 に登録する](#第3部-b自作-mcp-サーバーbyo-mcpを作って-a365-に登録する)
-  - [0. 名前を決める](#0-名前を決める)
   - [1. 簡易 MCP サーバーを実装する](#1-簡易-mcp-サーバーを実装する)
   - [2. Azure にホストする（公開 HTTPS エンドポイント）](#2-azure-にホストする公開-https-エンドポイント)
   - [3. A365 に BYO 登録する](#3-a365-に-byo-登録する)
@@ -18,47 +17,42 @@
   - [5. クライアントから呼んで確認する](#5-クライアントから呼んで確認する)
   - [6. 呼び出しを監視する](#6-呼び出しを監視する)
 
-## 0. 名前を決める
-
-```powershell
-$RG      = "rg-agent365-training"                 # 既存 RG を再利用（変更しない）
-$LOC     = "japaneast"
-$MCPAPP  = "app-agent365-training-mcp-xxxx"        # MCP をホストする Web アプリ（世界で一意）
-$MCPPLAN = "plan-agent365-training"               # 既存プランを再利用可
-$MCPNAME = "mcp-custom-xxxx"                       # BYO 登録時の server-name
-$MCPKEY  = "<推測されにくい長いランダム文字列>"     # APIKey 認証用（シークレット・コミット禁止）
-```
-
 ## 1. 簡易 MCP サーバーを実装する
 
 このリポジトリに完成済みの `src/mcp-server/`（`server.py` / `requirements.txt` / `Dockerfile`）を同梱している。**ツール `search_faq`（社内 FAQ を返す）を公開するだけ**の最小リモート MCP で、`x-api-key` ヘッダーで `MCP_API_KEY` を照合する。
-
-ローカル疎通確認（任意）：
-
-```powershell
-cd src/mcp-server
-$env:MCP_API_KEY = "<推測されにくい長いランダム文字列>"
-python -m venv .venv; .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python server.py                 # http://localhost:8000/mcp で待受
-```
 
 - **リモート MCP**（HTTP 待受）・**APIKey 認証**（`x-api-key`）・**ツール名 `search_faq`** の3点が BYO 登録時の指定と対応する。
 - 学びの主眼は**実装そのものではなく、A365 への BYO 登録・承認・統制**にある。実装を差し替えても以降の手順は同じ。
 
 ## 2. Azure にホストする（公開 HTTPS エンドポイント）
 
-第1部C と同じ要領で App Service（コンテナ）にデプロイし、**公開 HTTPS の MCP エンドポイント**を得る。
+第1部C と同じ要領で App Service（コンテナ）にデプロイし、**公開 HTTPS の MCP エンドポイント**を得る。変数は [3部概要](./part3-0-overview.md) で定義済み。
 
 ```powershell
-# イメージをビルドして App Service にデプロイ（第1部C 5-1 と同じ流れ・別名リソース）
-az acr build -r <既存ACR名> -t mcp-server:latest ./src/mcp-server
-az webapp create -n $MCPAPP -g $RG -p $MCPPLAN --deployment-container-image-name "<既存ACR名>.azurecr.io/mcp-server:latest"
-# APIKey を環境変数に反映
-az webapp config appsettings set -n $MCPAPP -g $RG --settings MCP_API_KEY=$MCPKEY
+# --- リソース作成（いずれも冪等：既存なら再利用。第1部・3-A 未実施でも動く）---
+az group create -n $RG -l $LOC
+az acr create -n $MCPACR -g $RG --sku Basic --admin-enabled false
+az appservice plan create -n $MCPPLAN -g $RG --is-linux --sku B1
+
+# 同梱 Dockerfile でイメージをビルド
+az acr build -r $MCPACR -t mcp-server:latest ./src/mcp-server
+
+# Web アプリ（コンテナ）
+az webapp create -n $MCPAPP -g $RG -p $MCPPLAN --deployment-container-image-name "$MCPACR.azurecr.io/mcp-server:latest"
+
+# マネージド ID を有効化し ACR からの pull 権限（AcrPull）を付与（admin 無効 ACR 対応）
+az webapp identity assign -n $MCPAPP -g $RG
+$mcpPrincipal = az webapp identity show -n $MCPAPP -g $RG --query principalId -o tsv
+$mcpAcrId = az acr show -n $MCPACR -g $RG --query id -o tsv
+az role assignment create --assignee $mcpPrincipal --scope $mcpAcrId --role AcrPull 2>$null
+$mcpAppId = az webapp show -n $MCPAPP -g $RG --query id -o tsv
+az resource update --ids "$mcpAppId/config/web" --set properties.acrUseManagedIdentityCreds=true
+
+# APIKey と待受ポートを反映
+az webapp config appsettings set -n $MCPAPP -g $RG --settings MCP_API_KEY=$MCPKEY WEBSITES_PORT=8000
 ```
 
-- 得られる MCP エンドポイント例：`https://<$MCPAPP>.azurewebsites.net/mcp`
+- 得られる MCP エンドポイント例：`https://$MCPAPP.azurewebsites.net/mcp`
 - 疎通確認（MCP クライアント or curl でツール一覧が返ること）。
 
 > ⚠️ `.sh`/`entrypoint` を含む場合は **LF 改行**にすること（第1部C で対処済みの CRLF 問題と同根。リポジトリの `.gitattributes` で `*.sh text eol=lf` 済み）。
@@ -114,4 +108,4 @@ Copilot Studio の例：
 
 ---
 
-← 戻る：[3-A：AI Teammate](./part3-1-ai-teammate.md) ｜ 次：**[3-C：統合](./part3-3-integrate.md)**
+← 戻る：[3-A：AI Teammate](./part3-1-ai-teammate.md)

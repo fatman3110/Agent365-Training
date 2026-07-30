@@ -1,9 +1,8 @@
 # 第3部（ボーナストラック）：AI Teammate と自作 MCP サーバー
 
-第1〜2部で作った **S2S エージェント**とは別軸として、**独自の M365 ID を持つ AI Teammate** と、**自作の MCP サーバー（BYO MCP）** を作り、最後に両者を統合する。**第1〜2部の環境・リソースには一切変更を加えず、すべて新規追加**で進める。
+第1～2部で作った **S2S エージェント**とは別軸として、**独自の M365 ID を持つ AI Teammate** と、**自作の MCP サーバー（BYO MCP）** を作る。**第1～2部の環境・リソースには一切変更を加えず、すべて新規追加**で進める。
 
 > ⚠️ **新しい前提：AI Teammate は Frontier preview 限定**
-> 第3部 は、 **[Microsoft Frontier preview プログラム](https://adoption.microsoft.com/copilot/frontier-program/) に登録済みのテナントでのみ**作成できる。
 
 > ⚠️ Microsoft Agent 365 / Frontier / BYO MCP は Preview を多く含む。コマンド・API・提供リージョンは変わり得るので、Microsoft Learn で最新を確認すること。
 
@@ -15,7 +14,6 @@
 |----|------|------|
 | **3-A：AI Teammate を作る** → [part3-1-ai-teammate.md](./part3-1-ai-teammate.md) | 独自 M365 ID（を持つエージェントを作る。頭脳は **Microsoft Foundry のクラウドモデル** | 「エージェントが"人"としてふるまう」identity モデルの体験 |
 | **3-B：自作 MCP サーバー（BYO MCP）** → [part3-2-byo-mcp.md](./part3-2-byo-mcp.md) | 簡易なリモート MCP サーバーを実装・ホストし、`a365 develop-mcp` で A365 に登録・承認 | 「MCP は Gateway 経由で初めて A365 に載る」を実体験 |
-| **3-C：統合** → [part3-3-integrate.md](./part3-3-integrate.md) | AI Teammate（A）から自作 MCP（B）をツールとして呼ぶ | 独自 ID エージェント × 自作ツールのエンドツーエンド |
 
 ---
 
@@ -56,7 +54,10 @@ $LOC       = "japaneast"
 $TMNAME    = "a365-teammate-xxxx"                    # AI Teammate の a365 --agent-name（20 文字以内）
 # --- 3-B：自作 MCP ---
 $MCPAPP    = "app-agent365-training-mcp-xxxx"        # 自作 MCP をホストする Web アプリ（世界で一意）
+$MCPACR    = "acrmcpxxxx"                            # MCP 用 ACR（世界で一意・英数字のみ）
+$MCPPLAN   = "plan-agent365-mcp-xxxx"                # App Service プラン（無ければ作成）
 $MCPNAME   = "mcp-custom-xxxx"                       # BYO 登録時の server-name
+$MCPKEY    = "<推測されにくい長いランダム文字列>"      # MCP APIKey（シークレット・コミット禁止）
 ```
 
 ---
@@ -67,7 +68,6 @@ $MCPNAME   = "mcp-custom-xxxx"                       # BYO 登録時の server-n
 |---|---|
 | AI Teammate（A） | E7/Agent 365、Teams |
 | 自作 MCP（B） | Agent 365、承認に **AI Administrator / Global Administrator** |
-| 統合（C） | A・B の完了 |
 
 ---
 

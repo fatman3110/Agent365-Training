@@ -2,7 +2,7 @@
 
 **独自の M365 ユーザー ID（UPN・メールボックス・Teams 在席・組織図エントリ）を持つ AI Teammate** を作る。頭脳は **Microsoft Foundry のクラウドモデル**を直接呼ぶ。
 
-第1部C の **S2S エージェント**は「アプリとして」動いたが、AI Teammate は **"人"としてふるまう**（@mention・メール・会議招待で対話できる）。
+**S2S エージェント**は「アプリとして」動いたが、AI Teammate は **"人"としてふるまう**（@mention・メール・会議招待で対話できる）。
 
 > ⚠️ Preview を多く含む。コマンド・UI・提供リージョンは変わり得るので Microsoft Learn で最新を確認すること。
 
@@ -65,14 +65,6 @@ AZURE_OPENAI_DEPLOYMENT=$DEPLOYMENT
 "@
 ```
 
-**3. ローカルで疎通確認**
-
-```powershell
-python -m venv .venv; .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python -c "import llm; print(llm.chat_complete('こんにちは、自己紹介して'))"
-```
-
 ## 4. AI Teammate 化する（Blueprint＋独自 M365 ID）
 
 第1部C と同じ **スキル駆動**で進める。`src/ai-teammate` を開いた状態で、**AI チャット** に次を指示する：
@@ -100,13 +92,15 @@ capabilities は AI Teammate、認証は agentic-user（--authmode は付けな�
 
 | ファイル | 役割 |
 |---------|------|
-| `agent.py` | メッセージを `llm.chat_complete` に渡す最小の AI Teammate 本体 |
+| `agent.py` | メッセージを `llm.chat_complete` に渡す AI Teammate 本体。`InvokeAgentScope`/`InferenceScope` で `invoke_agent`/`chat` のセマンティック span を生成 |
+| `observability_config.py` | A365 観測性の初期化（`configure()`）。token_resolver がキャッシュ済み観測性トークンを返す |
+| `turn_context_utils.py` | TurnContext から observability 用 details（agent/caller/request）を抽出 |
 | `agent_interface.py` | 本体の抽象基底 |
-| `host_agent_server.py` | aiohttp サーバー＋A365 ルーティング（`/api/messages`・`/api/health`）|
-| `token_cache.py` | 観測トークンのキャッシュ（host が使用）|
+| `host_agent_server.py` | aiohttp サーバー＋A365 ルーティング（`/api/messages`・`/api/health`）。観測性トークンを exchange・cache |
+| `token_cache.py` | 観測トークンのキャッシュ（host が保存・exporter が取得）|
 | `main.py` | 起動エントリ（`python main.py`）|
-| `Dockerfile` | App Service デプロイ用（単一コンテナ・Ollama sidecar 無し）|
-| `requirements.txt` | 頭脳＋ホスティング／A365 ランタイム依存 |
+| `Dockerfile` | App Service デプロイ用（単一コンテナ・ Ollama sidecar 無し）|
+| `requirements.txt` | 頭脳＋ホスティング／A365 ランタイム／観測性依存 |
 
 
 
@@ -120,7 +114,7 @@ AI Teammate は「**instance 作成**」まで行って初めて M365 で人と�
    # --- 名前（xxxx は自分用のユニークな文字列に置換）---
    $RG   = "rg-agent365-training"          # 無ければ作成／有れば再利用
    $LOC  = "japaneast"
-   $ACR  = "acragent365xxxx"                # ★世界で一意・英数字のみ。xxxx を自分の値に。空き確認: az acr check-name -n <名前>
+   $ACR  = "acragent365xxxx"                # 世界で一意・英数字のみ。xxxx を自分の値に。空き確認: az acr check-name -n <名前>
    $PLAN = "plan-agent365-teammate-xxxx"
    $APP  = "app-agent365-teammate-xxxx"     # 世界で一意
 
@@ -138,6 +132,9 @@ AI Teammate は「**instance 作成**」まで行って初めて M365 で人と�
    # .env をアプリ設定に反映（AZURE_OPENAI_* / a365 setup が stamp した設定）＋待受ポート
    $settings = Get-Content ".env" | Where-Object { $_ -match '^[^#\s][^=]*=' }
    az webapp config appsettings set -n $APP -g $RG --settings $settings WEBSITES_PORT=3978
+
+   # リリース前に観測性を強制有効化（
+   az webapp config appsettings set -n $APP -g $RG --settings ENABLE_A365_OBSERVABILITY=true ENABLE_A365_OBSERVABILITY_EXPORTER=true AUTH_HANDLER_NAME=AGENTIC
 
    # マネージド ID を有効化し ACR からの pull 権限（AcrPull）を付与
    az webapp identity assign -n $APP -g $RG
