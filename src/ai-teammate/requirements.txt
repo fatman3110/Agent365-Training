@@ -1,5 +1,16 @@
-# AI Teammate の LLM コア依存（最小）。
-# ホスティング（microsoft-agents-hosting-*）と観測性（microsoft-opentelemetry）は
-# 4 節で make-ai-teammate / instrument-observability スキルが自動で追記する。
+# AI Teammate 依存
+# --- 頭脳（Foundry モデル呼び出し）---
 openai
 python-dotenv
+
+# --- ホスティング／Agent 365 ランタイム（Teams で動く本体）---
+# ⚠️ プレビュー SDK。ビルドが通らない場合は Agent365-Samples に合わせる。
+microsoft-agents-hosting-aiohttp>=1.0.0
+microsoft-agents-hosting-core
+microsoft-agents-authentication-msal
+microsoft-agents-activity
+microsoft-agents-a365-runtime>=1.0.0
+microsoft-agents-a365-notifications>=1.0.0
+microsoft-agents-a365-observability-core>=1.0.0
+microsoft-agents-a365-observability-hosting>=1.0.0
+aiohttp
