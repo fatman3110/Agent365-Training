@@ -206,4 +206,4 @@ AI Teammate は「**instance 作成**」まで行って初めて M365 で人と�
 
 ---
 
-← 戻る：[第3部 概要](./part3-0-overview.md) ｜ 次：**[3-B：自作 MCP サーバー（BYO MCP）](./part3-2-byo-mcp.md)**
+← 戻る：[第3部 概要](./part3-0-overview.md)
