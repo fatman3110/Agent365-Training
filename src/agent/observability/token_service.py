@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import timedelta
 
 import httpx
 import msal
@@ -55,14 +56,22 @@ async def _acquire_and_cache_token(
         client_credential={"client_assertion": fmi_token},
         authority=f"https://login.microsoftonline.com/{tenant_id}",
     )
-    result = identity_app.acquire_token_for_client(scopes=OBSERVABILITY_SCOPES)
+    result = await asyncio.to_thread(
+        identity_app.acquire_token_for_client,
+        scopes=OBSERVABILITY_SCOPES,
+    )
     if "access_token" not in result:
         raise RuntimeError(
             f"Observability token acquisition failed (Hop 3): "
             f"{result.get('error')}: {result.get('error_description')}"
         )
 
-    token_cache.cache_token(agent_id, tenant_id, result["access_token"])
+    token_cache.cache_token(
+        agent_id,
+        tenant_id,
+        result["access_token"],
+        expires_in=timedelta(seconds=int(result.get("expires_in", 3600))),
+    )
     logger.info("Observability token refreshed for agent_id=%s.", agent_id)
 
 

@@ -1,6 +1,6 @@
-# 第1部 C：独自エージェント（S2S）を作る（開発者）
+# 第1部 C：Teams + A2A 対応の独自エージェント（S2S）を作る（開発者）
 
-自前ホストの LLM（Qwen）で動く**独自エージェント**をコードから作って Azure にデプロイし、Agent 365 に登録申請するまで。認証は **S2S（サービスプリンシパル）** を使う。完了すると、エージェントが Agent 365 に登録され、Azure（クラウド）で動く状態になる。
+自前ホストの LLM（Qwen）で動く**独自エージェント**をコードから作って Azure にデプロイし、Agent 365 に登録申請するまで。認証は **S2S（サービスプリンシパル）** を使う。同じエージェントを **Teams の Activity Protocol** と **Copilot Studio から呼び出せる Agent2Agent（A2A）v1** の両方で公開する。
 
 > 💡 ノーコード／ローコードで手早く作りたいなら **[第1部 A：Copilot Studio で作る](./part1a-copilot-studio.md)** や **第1部 B：Microsoft Foundry で作る** もある。本ファイル（C）は「フルコードで自前ホスト」を学ぶ上級ルート。
 
@@ -8,7 +8,7 @@
 
 **目次**
 
-- [第1部 C：独自エージェント（S2S）を作る（開発者）](#第1部-c独自エージェントs2sを作る開発者)
+- [第1部 C：Teams + A2A 対応の独自エージェント（S2S）を作る（開発者）](#第1部-cteams--a2a-対応の独自エージェントs2sを作る開発者)
   - [構成ファイル（参考）](#構成ファイル参考)
   - [0. 最初に「名前」を決める（1 回だけ）](#0-最初に名前を決める1-回だけ)
   - [1. ツールを用意して Azure にログインする](#1-ツールを用意して-azure-にログインする)
@@ -20,6 +20,7 @@
     - [5-2. Ollama（LLM）を sidecar で追加](#5-2-ollamallmを-sidecar-で追加)
     - [5-3. エージェントの endpoint を Agent 365 に登録する](#5-3-エージェントの-endpoint-を-agent-365-に登録する)
     - [5-4. Bot App / Bot Service を作り Teams チャネルを有効化する](#5-4-bot-app--bot-service-を作り-teams-チャネルを有効化する)
+    - [5-5. A2A endpoint と認証を検証する](#5-5-a2a-endpoint-と認証を検証する)
   - [6. Teams App Package（manifest.json / m365agents.yml）を作る](#6-teams-app-packagemanifestjson--m365agentsymlを作る)
 
 完了後は **[第2部 C：承認と観測データ作成](./part2-1c-custom.md)** で承認・Teams 接続・観測データ作成を行い、その後 Observe / Govern / Secure に進む。
@@ -32,11 +33,14 @@
 Agent365-Training/
 └── src/
     ├── agent/                       # (1) エージェント本体（App Service にデプロイ）= a365 setup all のプロジェクトルート
-    │   ├── app.py                   #     頭脳：発言を受け取り AI に渡して返答する（per-turn のトークン交換には一切関与しない）
+    │   ├── app.py                   #     Teams の受信処理（/api/messages）
+    │   ├── agent_service.py         #     Teams / A2A 共通の LLM 実行と Agent 365 計装
+    │   ├── a2a_server.py            #     A2A v1、Agent Card、API キー認証
     │   ├── llm.py                   #     AI（自前ホストの Qwen）に質問して答えをもらう（ツール呼び出しなしのシンプルな chat completion）
-    │   ├── start_server.py          #     受付と起動：aiohttp サーバーで外部からのメッセージを app.py へ橋渡し。S2S 観測トークンのバックグラウンド取得もここで起動
+    │   ├── start_server.py          #     FastAPI で Teams / A2A を同じポートに公開。モデル準備と S2S トークン更新も担当
     │   ├── observability_setup.py   #     観測の初期化の入口（現行 distro use_microsoft_opentelemetry、S2S エンドポイント）
     │   ├── observability/           #     S2S 観測トークン取得（token_service.py）とキャッシュ（token_cache.py）
+    │   ├── tests/                   #     A2A HTTP 契約と Ollama 準備処理のテスト
     │   ├── requirements.txt         #     必要な Python ライブラリ
     │   ├── Dockerfile               #     コンテナ化の定義
     │   ├── a365.config.json         # (2) `a365 setup all` に渡す設定ファイル
@@ -64,7 +68,7 @@ $APP   = "app-agent365-training-agent-xxxx"    # エージェント本体（頭�
 $A365NAME = "a365-agent-xxxx"                  # a365 CLI の --agent-name（**20 文字以内**。後で " Blueprint" が付いて Teams manifest の name.short 上限 30 文字に到達するため）
 $AGENT = "agent365-training-agent-xxxx"        # エージェント名（Bot/Teams 命名用）
 $BOTAPP = "agent365-training-bot"              # Bot 用 Entra App の表示名（表示名のため一意性は不要）
-$BOTSVC = "bot-agent365-training"              # Azure Bot Service リソース名（$PLAN と同様、RG 内で一意なら可）
+$BOTSVC = "bot-agent365-training-xxxx"         # Azure Bot Service の Bot handle。競合時は xxxx を変更
 ```
 
 ## 1. ツールを用意して Azure にログインする
@@ -82,18 +86,18 @@ cd src/agent
 
 ```powershell
 # バージョンが返れば OK（無ければ各コメントのコマンドで導入）
+pwsh --version   # PowerShell 7。無ければ: winget install Microsoft.PowerShell
 node --version   # 無ければ: winget install OpenJS.NodeJS.LTS
 az   version     # 無ければ: winget install Microsoft.AzureCLI
-func --version   # 無ければ: npm i -g azure-functions-core-tools@4
 a365 --version   # 無ければ: dotnet tool install -g Microsoft.Agents.A365.DevTools.Cli
-m365agentstoolkit-cli --version   # 無ければ: npm i -g @microsoft/m365agentstoolkit-cli
+atk --version      # 1.1.12 を使用。無ければ: npm i -g @microsoft/m365agentstoolkit-cli@1.1.12
 
 # Azure にサインイン
 az login
 
-# Teams Toolkit は az login とは別系統の M365 サインインを使う。az と同じ作業テナントのアカウントでログインしておく
-m365agentstoolkit-cli account login m365
-m365agentstoolkit-cli account show   # az account show と同じテナント/アカウントか確認
+# Agents Toolkit は az login とは別系統の M365 サインインを使う。az と同じ作業テナントのアカウントでログインしておく
+atk auth login m365
+atk auth list       # az account show と同じテナント/アカウントか確認
 ```
 
 ## 2. Agent 365 Skills を導入する
@@ -134,7 +138,7 @@ Skill が内部で `a365 setup all --agent-name a365-agent-xxxx --authmode s2s` 
 要件チェック ─▶ Blueprint 作成 ─▶ 資格情報 ─▶ 権限の継承 ─▶ Agent Identity 作成(UPN無し) ─▶ 登録 ─▶ ローカルの .env へ接続情報を書き込み
 ```
 
-- **成功の判定**：ローカルに作成された `a365.generated.config.json` の **`agentBlueprintId` に ID が入っていること** 
+- **成功の判定**：ローカルの`a365.generated.config.json`に`agentBlueprintId`が入り、`a365 query-entra inheritance --agent-name $A365NAME`の最後が`5 of 5 resource(s) have effective inheritance`になること。ローカルの`completed`だけでなく、Entra側の実効継承を確認する
 
 ## 4. エージェント本体を実装する
 
@@ -143,9 +147,23 @@ Skill が内部で `a365 setup all --agent-name a365-agent-xxxx --authmode s2s` 
    Add-Content ".env" @"
    OLLAMA_BASE_URL=http://localhost:11434/v1
    OLLAMA_MODEL=qwen2.5:3b-instruct-q4_K_M
+  OLLAMA_KEEP_ALIVE=24h
+  OLLAMA_MAX_TOKENS=64
+  OLLAMA_TIMEOUT_SECONDS=90
+  OLLAMA_WARMUP_TIMEOUT_SECONDS=300
    ENABLE_A365_OBSERVABILITY=true
    ENABLE_A365_OBSERVABILITY_EXPORTER=true
    "@
+
+  # A2A API キーを生成する（値は画面やログへ表示しない）
+  $bytes = New-Object byte[] 32
+  [System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+  $a2aKey = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+','-').Replace('/','_')
+  Add-Content ".env" @"
+  A2A_API_KEY=$a2aKey
+  A2A_PUBLIC_BASE_URL=https://$APP.azurewebsites.net
+  WEBSITES_CONTAINER_START_TIME_LIMIT=600
+  "@
    ```
 2. 観測の詳細配線は **Skill に任せる**。下の指示を AI チャットに送ると、Skill（`instrument-observability`）が現行ディストロ `use_microsoft_opentelemetry(...)` とスコープ（InvokeAgentScope 等）の配線コードを生成する。戦術の AI チャットへの指示ですでに作成済みの場合もあるが２重命令となっても LLM が判断してくれるので問題ない：
    ```text
@@ -158,11 +176,12 @@ Skill が内部で `a365 setup all --agent-name a365-agent-xxxx --authmode s2s` 
 
 ```mermaid
 flowchart LR
-    Teams["Microsoft Teams / Copilot"] -->|"messaging endpoint"| Agent
+  Teams["Microsoft Teams / Copilot"] -->|"Activity Protocol<br/>/api/messages"| Agent
+  CopilotStudio["Copilot Studio<br/>呼び出し元エージェント"] -->|"A2A v1 + API key<br/>/a2a"| Agent
 
     subgraph AppSvc["App Service（Linux, マルチコンテナ）"]
         direction LR
-        Agent["メインコンテナ<br/>agent（Python）<br/>app.py / llm.py"]
+    Agent["メインコンテナ<br/>FastAPI + Agent<br/>Teams / A2A"]
         Ollama["サイドカー コンテナ<br/>ollama/ollama<br/>qwen2.5:3b-instruct"]
         Agent -->|"http://localhost:11434\n（OpenAI 互換 API）"| Ollama
     end
@@ -196,7 +215,7 @@ az webapp create -n $APP -g $RG -p $PLAN --deployment-container-image-name "$ACR
 
 # App Service の環境変数を反映
 $settings = Get-Content ".env" | Where-Object { $_ -match '^[^#\s][^=]*=' }
-az webapp config appsettings set -n $APP -g $RG --settings $settings
+az webapp config appsettings set -n $APP -g $RG --settings $settings --output none
 
 # システム割り当てマネージドIDを有効化し、ACR からの Image pull 権限（AcrPull）を付与する
 az webapp identity assign -n $APP -g $RG
@@ -219,6 +238,18 @@ $body = @{
 $body | Out-File -FilePath sitecontainer-main.json -Encoding utf8 -NoNewline
 
 az rest --method PUT --url "https://management.azure.com/subscriptions/$subId/resourceGroups/$RG/providers/Microsoft.Web/sites/$APP/sitecontainers/main?api-version=2024-04-01" --headers "Content-Type=application/json" --body "@sitecontainer-main.json"
+
+# HTTPS のみ許可する
+az webapp update -n $APP -g $RG --https-only true
+
+# B2 プランの Always On と readiness health check を有効化する
+$webConfigUrl = "https://management.azure.com/subscriptions/$subId/resourceGroups/$RG/providers/Microsoft.Web/sites/$APP/config/web?api-version=2024-04-01"
+$webConfig = az rest --method GET --url $webConfigUrl -o json | ConvertFrom-Json
+$webConfig.properties.alwaysOn = $true
+$webConfig.properties.healthCheckPath = "/api/health"
+$webBody = @{ properties = $webConfig.properties } | ConvertTo-Json -Depth 50 -Compress
+$webBody | Out-File -FilePath web-config.json -Encoding utf8 -NoNewline
+az rest --method PUT --url $webConfigUrl --headers "Content-Type=application/json" --body "@web-config.json"
 ```
 
 > **補足: 作成時に「quota」エラーが出る場合**
@@ -254,8 +285,7 @@ az acr build -r $ACR -t ollama-sidecar:latest ../ollama-sidecar
     - **ポート**：`11434`
   - **適用** を選択（メイン／サイドカーの2コンテナ構成になる）
 
-- 初回起動後、モデルの pull には数分かかる。[Azure ポータル](https://portal.azure.com/) > App Services > 対象アプリ > **ログ ストリーム** で `ollama pull` の進捗を確認できる
-- pull が終わっていない状態で話しかけると、`llm.py` の LLM 呼び出しがモデル未検出エラーで失敗し、エージェントが応答しない。数分待ってから再試行する
+- 初回起動後、モデルの pull とロードには数分かかる。[Azure ポータル](https://portal.azure.com/) > App Services > 対象アプリ > **ログ ストリーム** で進捗を確認できる
 
 ### 5-3. エージェントの endpoint を Agent 365 に登録する
 
@@ -274,36 +304,17 @@ a365 setup permissions bot
 
 # a365 コマンドで作成された認証情報を App Service に反映
 $settings = Get-Content ".env" | Where-Object { $_ -match '^[^#\s][^=]*=' }
-az webapp config appsettings set -n $APP -g $RG --settings $settings
+az webapp config appsettings set -n $APP -g $RG --settings $settings --output none
 az webapp restart -n $APP -g $RG
 
-# 起動確認　HTTP ステータスコード 200 の確認
+# モデルの準備完了後、HTTP ステータスコード 200 を確認
 curl.exe -s -w "`nHTTP:%{http_code}`n" "https://$APP.azurewebsites.net/api/health"
 ```
-> **補足: `a365 setup all` が `wids` クレーム不足で失敗する場合**
-> `a365` CLI は、ユーザーの Entra ロールを、アクセストークンに含まれる **`wids` クレーム**から読み取って判定しているため、このクレームが不足していると、必要な権限をもったユーザによる手動作業が必要だと判断されてしまう。
-> - **マニフェスト エディターで追加する方法**：
->   1. [Microsoft Entra 管理センター](https://entra.microsoft.com/) を開く
->   2. **Entra ID** >  **アプリの登録** を選択
->   3. すべてのアプリケーションの一覧から対象アプリ（`Agent 365 CLI`）を選んで開く
->   4. そのアプリの詳細画面で左ナビ **マニフェスト** を選択
->   5. JSON 内の `"optionalClaims": null,` を次のブロックに置き換える：
->      ```json
->      "optionalClaims": {
->          "idToken": [],
->          "accessToken": [
->              { "name": "wids", "source": null, "essential": false, "additionalProperties": [] }
->          ],
->          "saml2Token": []
->      },
->      ```
->   6. 上部の **保存** を選択
->   7. `az logout` → `az login` でトークンを取り直したうえでコマンドを再実行。
 
 > **補足: `a365 setup all` のアクセス許可（Graph / Agent Tools / Messaging Bot API 等）の同意が失敗する場合**
 > **状況の確認：CLI 検証コマンド**
 > ```powershell
-> a365 query-entra inheritance
+> a365 query-entra inheritance --agent-name $A365NAME
 > ```
 > 最後の行が `Summary: 5 of 5 resource(s) have effective inheritance ...` になっていれば、実際には全リソースへの許可が揃っている。
 >
@@ -316,7 +327,7 @@ curl.exe -s -w "`nHTTP:%{http_code}`n" "https://$APP.azurewebsites.net/api/healt
 
 ### 5-4. Bot App / Bot Service を作り Teams チャネルを有効化する
 
-`a365 setup all --m365` が作るのは Agent 365 側の**登録情報（Blueprint）**。Teams でエージェントに会話させるための「Bot 登録」を行っていく。
+3節の`a365 setup all`で作ったのはAgent 365側のBlueprintとAgent Identityであり、5-3節でmessaging endpointをM365へ登録した。ここではTeamsのトランスポート認証に使う**別のBot App**とBot Serviceを作る。実行・観測上の主体はAgent 365のS2S Agent Identity、Teams入口の認証主体はBot Appであり、役割が異なる。
 
 ```powershell
 # 1. Bot Service 向けの Entra App を作成
@@ -343,8 +354,73 @@ AGENT_ALLOW_ANONYMOUS=false
 
 # 5. App Service に反映して再起動
 $settings = Get-Content ".env" | Where-Object { $_ -match '^[^#\s][^=]*=' }
-az webapp config appsettings set -n $APP -g $RG --settings $settings
+az webapp config appsettings set -n $APP -g $RG --settings $settings --output none
 az webapp restart -n $APP -g $RG
+```
+
+### 5-5. A2A endpoint と認証を検証する
+
+Teams の `/api/messages` とは別に、同じホストで 別の AI Agent から呼び出し可能なエンドポイント (A2A)を公開する。Copilot Studio の登録処理は endpoint 本体と複数の Agent Card パスを探索するため、次がすべて `200` になることを確認する。
+
+```powershell
+$baseUrl = "https://$APP.azurewebsites.net"
+
+# readiness と Agent Card
+@(
+  "/api/health",
+  "/a2a",
+  "/a2a/.well-known/agent-card.json",
+  "/a2a/.well-known/agent.json",
+  "/.well-known/agent.json"
+) | ForEach-Object {
+  $status = curl.exe -sS -o NUL -w "%{http_code}" "$baseUrl$_"
+  "$_ -> $status"
+}
+
+$request = @{
+  jsonrpc = "2.0"
+  id = "a2a-check"
+  method = "SendMessage"
+  params = @{
+    message = @{
+      messageId = "a2a-check"
+      role = "ROLE_USER"
+      parts = @(@{ text = "接続確認" })
+    }
+  }
+} | ConvertTo-Json -Depth 8 -Compress
+
+# API キー無しの実行は 401 になること
+$unauthorized = Invoke-WebRequest -Method Post -Uri "$baseUrl/a2a" `
+  -ContentType "application/json" -Body $request -SkipHttpErrorCheck
+$unauthorized.StatusCode
+
+# API キー付きの実行は ROLE_AGENT の本文を返すこと
+$authorized = Invoke-RestMethod -Method Post -Uri "$baseUrl/a2a" `
+  -Headers @{ "X-A2A-API-Key" = $a2aKey; "A2A-Version" = "1.0" } `
+  -ContentType "application/json" -Body $request -TimeoutSec 180
+$authorized.result.message.role
+$authorized.result.message.parts.text
+
+# Agent Cardで広告しているHTTP+JSON bindingも確認
+$restRequest = @{
+  message = @{
+    messageId = "a2a-rest-check"
+    role = "ROLE_USER"
+    parts = @(@{ text = "HTTP+JSON接続確認" })
+  }
+} | ConvertTo-Json -Depth 8 -Compress
+
+$restResponse = Invoke-RestMethod -Method Post -Uri "$baseUrl/a2a/message:send" `
+  -Headers @{ "X-A2A-API-Key" = $a2aKey; "A2A-Version" = "1.0" } `
+  -ContentType "application/json" -Body $restRequest -TimeoutSec 180
+$restResponse.message.role
+```
+
+`a2aKey` を失った場合は `.env` から読み直す。キー値はチャット、README、Git、スクリーンショットへ記録しない。
+
+```powershell
+$a2aKey = ((Get-Content .env | Where-Object { $_ -like "A2A_API_KEY=*" }) -split "=", 2)[1]
 ```
 
 ## 6. Teams App Package（manifest.json / m365agents.yml）を作る
@@ -353,7 +429,7 @@ Teams にエージェントを公開するには **Teams App Package**（`manife
 
 ```powershell
 # 1. src/agent から 1 階層上（src/。m365agents.yml がある場所）へ移動し、env/.env.dev を作る
-#    （m365agentstoolkit-cli は manifest.json 内の ${TEAMS_APP_ID} 等のテンプレート変数を
+#    （atk は manifest.json 内の ${TEAMS_APP_ID} 等のテンプレート変数を
 #     env/.env.<env名> から解決する仕組みなので、provision/publish 前に必須）
 cd ..
 
@@ -368,7 +444,7 @@ APP_DOMAIN=$APP.azurewebsites.net
 
 ```powershell
 # 2. ローカルでパッケージ化・検証
-m365agentstoolkit-cli provision --env dev --interactive false
+atk provision --env dev --interactive false
 ```
 
 `provision` が成功すると `appPackage/build/appPackage.dev.zip` が生成される。続けて Teams App を管理センターに公開（提出）する。
@@ -376,11 +452,10 @@ m365agentstoolkit-cli provision --env dev --interactive false
 ```powershell
 # 3. 公開（Teams App を管理センターに提出する）
 #    再公開する場合は必ず appPackage/manifest.json の version を上げること
-npx --yes @microsoft/m365agentstoolkit-cli@latest publish --env dev --interactive false
+atk publish --env dev --interactive false
 ```
-
 ここまでで Teams App の公開（提出）は完了。**実際の承認は [第2部 C 1-1](./part2-1c-custom.md#1-1-teams-app-の公開申請を管理者が承認する)** で行う。
 
 ---
 
-→ 次：**[第2部 C：承認と観測データ作成](./part2-1c-custom.md)** ｜ [README（概要）](../README.MD)
+→ 次：**[第2部 C：Teams と Copilot Studio A2A から実行する](./part2-1c-custom.md)** ｜ [README（概要）](../README.MD)

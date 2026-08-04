@@ -2,7 +2,7 @@
 
 Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどんなエージェントがいて、何をしているか」を可視化する。
 
->**前提**：先に エージェントを動かして観測データを作っておくこと。一度も動かしていないと、この節の画面は何も表示されない。
+>**前提**：先にエージェントを動かして観測データを作っておくこと。未実行でもRegistryの静的情報は表示されるが、ActivityやMapの実行関係は空になる。CルートではTeams直呼びとCopilot Studio経由のA2A呼び出しを両方実行しておく。
 
 > ⚠️ Microsoft Agent 365 / Copilot Studio は Preview を多く含む。UI 名やメニュー位置は変わり得るので、詰まったら Microsoft Learn で最新を確認すること。
 
@@ -12,6 +12,7 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
   - [1. Agent Registry からエージェントの詳細を確認する](#1-agent-registry-からエージェントの詳細を確認する)
   - [2. Single Agent Map で可視化する](#2-single-agent-map-で可視化する)
   - [3. アクティビティを複数のツールから確認](#3-アクティビティを複数のツールから確認)
+  - [4. GSA Traffic logs で A2A 通信を確認する](#4-gsa-traffic-logs-で-a2a-通信を確認する)
   - [付録. Registry Sync（外部プラットフォームの取り込み）](#付録-registry-sync外部プラットフォームの取り込み)
 
 ## 1. Agent Registry からエージェントの詳細を確認する
@@ -64,7 +65,7 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 
 - [Entra 管理センター](https://entra.microsoft.com/) › **Entra ID › Agents › Agent identities › 対象 › Activity › Sign-in logs**
 - 「何を話したか」ではなく「**いつ・どの ID として認証されたか**」のログ
-- エージェントが**ユーザーに代わって（委任）**動いた実行では、**どのユーザーのために動いたか**（対象ユーザー）も記録される。
+- エージェントが**ユーザーに代わって（委任/OBO）**動いた実行では、**どのユーザーのために動いたか**（対象ユーザー）も記録される。CルートのS2S実行はアプリケーション権限で動くため、同じユーザー情報を期待しない
 
 **(3) Purview Activity explorer で「対話の中身」を確認**
 
@@ -73,18 +74,28 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
 
 - [Microsoft Purview ポータル](https://purview.microsoft.com/) › **DSPM › 発見 › アクティビティエクスプローラー › AI アクティビティ**
 - 特定のレコードを選択し、**Prompt / Response** でユーザが送信した実際のプロンプトとレスポンスを確認
+- Prompt / Responseの表示には対象AIアプリの収集設定、ライセンス、権限が必要。独自S2SエージェントはSDK計装だけで必ず本文収集されるわけではない
 
 **(4) Defender Advanced Hunting で横断照合（実行トレース）**
 
 - [Microsoft Defender ポータル](https://security.microsoft.com/) › **調査と対応 › 追求 › 高度な追求** で、AI Agent 活動について横断的にログ分析する
 
-- 過去 1 日間の AI エージェント関連の操作ログを抽出して一覧表示
+- 直近レコード確認し、そのテナントのログを確認する
   ```kusto
   CloudAppEvents
   | where Timestamp > ago(1d)
   | where ActionType in ("InvokeAgent", "InferenceCall", "ExecuteToolBySDK", "ExecuteToolByGateway", "ExecuteToolByMCPServer")
-  | extend AgentId = tostring(RawEventData.AgentId), ConversationId = tostring(RawEventData.ConversationId)
-  | project Timestamp, ActionType, AgentId, ConversationId
+  | project Timestamp, ActionType, RawEventData
+  | take 20
+  ```
+
+- 過去1日間の操作ログを抽出して一覧表示
+  ```kusto
+  CloudAppEvents
+  | where Timestamp > ago(1d)
+  | where ActionType in ("InvokeAgent", "InferenceCall", "ExecuteToolBySDK", "ExecuteToolByGateway", "ExecuteToolByMCPServer")
+  | extend RuntimeAgentId = tostring(RawEventData.recipient.agenticAppId), ConversationId = tostring(RawEventData.ConversationId)
+  | project Timestamp, ActionType, RuntimeAgentId, ConversationId
   | order by Timestamp desc
   ```
 
@@ -96,6 +107,18 @@ Agent 365 の 3 本柱の 1 つ目。一元レジストリで「組織にどん�
   | project Timestamp, ActionType, RawEventData
   | order by Timestamp asc
   ```
+
+
+## 4. GSA Traffic logs で A2A 通信を確認する
+
+Copilot Studioから独自エージェントへ送られたA2A通信がGlobal Secure Accessを通過したか、ネットワーク観点で確認する。
+
+この確認は、対象Power Platform環境で **Global Secure Access for Agents** が有効な場合のみ実施する。
+
+1. [第2部C](./part2-1c-custom.md#3-3-a2a-委譲をテストする)のA2A委譲を実行する
+2. [Microsoft Entra管理センター](https://entra.microsoft.com/)で **Global Secure Access > Monitor > Traffic logs**を開く
+3. 宛先FQDN `<APP>.azurewebsites.net`と実行時刻で絞る（FQDNに`https://`は含めない）
+4. 該当ログが1件以上あり、Actionが`Allowed`、HTTP statusが成功系であることを確認する
 
 ## 付録. Registry Sync（外部プラットフォームの取り込み）
 

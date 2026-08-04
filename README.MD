@@ -6,7 +6,7 @@
 
 - **第1部 A：Copilot Studio で作る** — ノーコードで最短。コードも Azure も不要。M365 業務寄りの汎用アシスタントに向く。
 - **第1部 B：Microsoft Foundry で作る** — ノーコード。Foundry ポータルを用いて組織ニーズに応じたエージェントをカスタマイズ。
-- **第1部 C：独自エージェント（S2S）を作る** — 自前ホストの LLM（Qwen）を S2S（サービスプリンシパル）認可でフルコード実装し Azure にデプロイ。
+- **第1部 C：Teams + A2A 対応の独自エージェント（S2S）を作る** — 自前ホストの LLM（Qwen）をフルコード実装する。Teams入口はBot Appで認証し、Teams/A2Aの実行と観測は同じS2S Agent Identityへ結び付ける。
 
 **第2部（AI 管理者・A/B/C 共通）** — 申請されたエージェントを承認して Teams に接続し、実際に動かして観測データを作り、Learn の 3 本柱 **Observe / Govern / Secure** で確認・統制・保護する。
 
@@ -27,7 +27,7 @@ flowchart LR
         A0{"作り方を選ぶ"}
         A0 -->|"A：ノーコード"| AA["Copilot Studio "]
         A0 -->|"B：ノーコード"| AB["Microsoft Foundry<br/>"]
-        A0 -->|"C：フルコード"| AC["Blueprint（S2S）+Azure デプロイ"]
+        A0 -->|"C：フルコード"| AC["Blueprint（S2S）+Azure デプロイ<br/>Teams + A2A"]
     end
     subgraph P2["第2部：Agent 365 ハンズオン ｜ AI 管理者（M365 / Entra 管理センター）"]
         direction TB
@@ -57,7 +57,7 @@ flowchart LR
 
 - **A：Copilot Studio で作る（ノーコード）** → [docs/part1a-copilot-studio.md](./docs/part1a-copilot-studio.md)
 - **B：Microsoft Foundry で作る（ノーコード）** → [docs/part1b-foundry.md](./docs/part1b-foundry.md)
-- **C：独自エージェント（S2S・フルコード）** → [docs/part1c-custom-agent.md](./docs/part1c-custom-agent.md)
+- **C：Teams + A2A 対応の独自エージェント（S2S・フルコード）** → [docs/part1c-custom-agent.md](./docs/part1c-custom-agent.md)
 
 ## 第2部：承認・観察・管理・保護（AI 管理者）
 
@@ -65,7 +65,7 @@ flowchart LR
 
 - **A：Copilot Studio 版** → [docs/part2-1a-copilotstudio.md](./docs/part2-1a-copilotstudio.md)
 - **B：Microsoft Foundry 版** → [docs/part2-1b-foundry.md](./docs/part2-1b-foundry.md)
-- **C：独自エージェント版** → [docs/part2-1c-custom.md](./docs/part2-1c-custom.md)
+- **C：Teams + Copilot Studio A2A版** → [docs/part2-1c-custom.md](./docs/part2-1c-custom.md)
 
 3 本柱（A/B/C 共通）：
 
@@ -90,7 +90,7 @@ flowchart LR
 | 項目 | 内容 | 対象ルート | ライセンス / 要件 |
 |------|------|---------|------------------|
 | Microsoft Agent 365 テナント | エージェント登録・観測・ガバナンスの基盤| **A・B・C** | **Microsoft Agent 365** または **Microsoft 365 E7** |
-| Copilot Studio ライセンス | Copilot Studio でエージェントを作成・公開する | **A** | Microsoft 365 Copilot または 単体の Copilot Studio ライセンス |
+| Copilot Studio ライセンス | Copilot Studioでエージェントを作成し、CルートではA2A呼び出し元も作成する | **A・C** | Microsoft 365 Copilot または 単体の Copilot Studio ライセンス |
 | Microsoft Teams ライセンス | 公開したエージェントを Teams で使う（作成者・利用者の双方） | **A・B・C** | Teams ライセンス・Microsoft 365 Copilot |
 | Azure サブスクリプション（Foundry プロジェクト用） | Microsoft Foundry のプロジェクトを作成する。ポータル操作のみで完結し、Docker・コードは不要 | **B** | 従量課金（モデル呼び出し・ツール利用分のみ） |
 | Azure サブスクリプション（App Service 等） | App Service（+ ACR / Functions）でホスト | **C** | 従量課金（本トレーニング期間のみの利用であれば数ドル程度） |
@@ -106,7 +106,7 @@ flowchart LR
 
 | 作業 | 対象ルート | 必要なロール | 補足 |
 |------|---------|------------|------|
-| Copilot Studio でエージェントを作成・組織に申請 | **A** | N/A | ライセンスを持つユーザであれば特別な権限は不要 |
+| Copilot Studioでエージェントを作成・編集（CではA2A呼び出し元を作成） | **A・C** | N/A | 対象環境でエージェントを作成・接続できる権限が必要 |
 | Foundry ポータルで Agent を作成・公開 | **B** | Foundry プロジェクトスコープの **Foundry User** または **Foundry Project Manager**（プロジェクト自体の初回作成には Azure RBAC の **Contributor** 等が別途必要） | コード・Azure CLI・Docker は不要。ポータル操作のみで完結 |
 | Blueprint / Agent ID 作成（`a365 setup all`） | **C** | **Application Administrator**（推奨・最小）/ Cloud Application Administrator / Global Administrator | テナント初回のみ管理者が `a365 setup requirements` を実行すれば、以降の開発者は引き継げる |
 | Azure へのデプロイ（App Service / ACR） | **C** | Azure RBAC: **Contributor**（リソース作成）/ **User Access Administrator**（RBAC 付与） |  |
