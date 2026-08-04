@@ -91,6 +91,7 @@ flowchart LR
 |------|------|---------|------------------|
 | Microsoft Agent 365 テナント | エージェント登録・観測・ガバナンスの基盤| **A・B・C** | **Microsoft Agent 365** または **Microsoft 365 E7** |
 | Copilot Studio ライセンス | Copilot Studioでエージェントを作成し、CルートではA2A呼び出し元も作成する | **A・C** | Microsoft 365 Copilot または 単体の Copilot Studio ライセンス |
+| Microsoft Entra Internet Access | CルートのObserveで、Copilot Studioから独自エージェントへのA2A通信をGSA Traffic logsで確認する | **C**（GSA確認時のみ） | **Microsoft Entra Internet Access**（Microsoft Entra Suiteに含む、または単体ライセンス） |
 | Microsoft Teams ライセンス | 公開したエージェントを Teams で使う（作成者・利用者の双方） | **A・B・C** | Teams ライセンス・Microsoft 365 Copilot |
 | Azure サブスクリプション（Foundry プロジェクト用） | Microsoft Foundry のプロジェクトを作成する。ポータル操作のみで完結し、Docker・コードは不要 | **B** | 従量課金（モデル呼び出し・ツール利用分のみ） |
 | Azure サブスクリプション（App Service 等） | App Service（+ ACR / Functions）でホスト | **C** | 従量課金（本トレーニング期間のみの利用であれば数ドル程度） |
