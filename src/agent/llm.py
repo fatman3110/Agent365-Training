@@ -47,11 +47,17 @@ _configured_keep_alive = environ.get("OLLAMA_KEEP_ALIVE", "24h")
 KEEP_ALIVE = _configured_keep_alive if re.fullmatch(r"[1-9]\d*[smh]", _configured_keep_alive) else "24h"
 MAX_TOKENS = _bounded_int("OLLAMA_MAX_TOKENS", 64, 1, 256)
 WARMUP_TIMEOUT_SECONDS = _bounded_int("OLLAMA_WARMUP_TIMEOUT_SECONDS", 300, 30, 540)
+WARMUP_REQUEST_TIMEOUT_SECONDS = _bounded_int(
+    "OLLAMA_WARMUP_REQUEST_TIMEOUT_SECONDS", 180, 30, 240
+)
 
 
 def warm_up_llm() -> None:
     """Wait for the configured model to exist, then load it into memory."""
-    client = get_llm().with_options(timeout=10.0, max_retries=0)
+    client = get_llm().with_options(
+        timeout=float(WARMUP_REQUEST_TIMEOUT_SECONDS),
+        max_retries=0,
+    )
     deadline = time.monotonic() + WARMUP_TIMEOUT_SECONDS
     while time.monotonic() < deadline:
         try:

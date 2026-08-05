@@ -30,7 +30,7 @@ class LlmTests(unittest.TestCase):
 
         self.assertEqual(client.chat.completions.create.call_count, 2)
         get_llm.return_value.with_options.assert_called_once_with(
-            timeout=10.0,
+            timeout=float(llm.WARMUP_REQUEST_TIMEOUT_SECONDS),
             max_retries=0,
         )
         sleep.assert_called_once_with(1)
