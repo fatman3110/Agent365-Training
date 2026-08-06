@@ -46,8 +46,8 @@ App Serviceには次の環境変数が必要。
 |---|---|
 | `A2A_API_KEY` | A2A要求の`X-A2A-API-Key`ヘッダーと比較する秘密値 |
 | `A2A_PUBLIC_BASE_URL` | Agent Cardに掲載する公開HTTPS URL |
-| `A2A_AGENT_NAME` | Agent Cardに掲載する汎用的な表示名 |
-| `A2A_AGENT_DESCRIPTION` | Agent Cardに掲載する30字以上の説明 |
+| `A2A_AGENT_NAME` | Agent Cardに掲載し、Copilot Studioの接続画面へ自動反映する汎用的な表示名 |
+| `A2A_AGENT_DESCRIPTION` | Agent Cardに掲載し、Copilot Studioの接続画面へ自動反映する30字以上の説明 |
 | `OLLAMA_KEEP_ALIVE` | 推論後もモデルをメモリに保持する期間。既定値は`24h` |
 | `OLLAMA_MAX_TOKENS` | 1応答の最大生成トークン数。Copilotのタイムアウトを避ける既定値は`64` |
 | `OLLAMA_TIMEOUT_SECONDS` | Ollama API呼び出しのタイムアウト秒数。既定値は`90`、許容範囲は`10`～`180` |
@@ -59,7 +59,7 @@ App Serviceでは **Always On** と十分なコンテナー起動猶予時間も
 
 Copilot Studioでは **外部エージェントに接続 > Agent2Agent** を選択し、endpointに
 `https://<host>/a2a`、認証に **API key**、ヘッダー名に`X-A2A-API-Key`を指定する。
-キー値はApp Serviceの環境変数から安全な経路で取得し、ソースやドキュメントには保存しない。
+
 
 ## 関連
 

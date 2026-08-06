@@ -375,6 +375,19 @@ $body = @{
 } | ConvertTo-Json -Depth 8
 
 (Invoke-WebRequest -Uri "$baseUrl/a2a").StatusCode
+$card = Invoke-RestMethod -Uri "$baseUrl/a2a/.well-known/agent.json"
+$card.protocolVersion
+$card.name
+$card.description
+$card.description.Length
+
+if ($card.protocolVersion -ne "0.3.0") {
+  throw "Copilot Studio が要求する A2A v0.3 Agent Card ではありません"
+}
+if ([string]::IsNullOrWhiteSpace($card.name) -or $card.description.Length -lt 30) {
+  throw "Agent Card の名前または説明が Copilot Studio の要件を満たしていません"
+}
+
 $response = Invoke-RestMethod -Method Post -Uri "$baseUrl/a2a" `
   -Headers @{ "X-A2A-API-Key" = $a2aKey; "A2A-Version" = "0.3" } `
   -ContentType "application/json" -Body $body
@@ -443,14 +456,15 @@ Agent 365、S2S、独自エージェント、A2A に関する質問は、
 
 1. 呼び出し元エージェントの **エージェント**ページで **エージェントを追加**を選ぶ
 2. **外部エージェントに接続 > Agent2Agent**を選ぶ
+3. **エージェント エンドポイント URL**へ `https://<APP>.azurewebsites.net/a2a` を入力し、Agent Card の取得を待つ
 
-次の値を設定する。URLやAPI キー値は、Azure ポータル上 App Service の環境変数メニューより取得する。
 
-| 項目 | 設定値 |
+
+| 項目 | 設定値・確認内容 |
 |---|---|
 | エージェント エンドポイント URL | `https://<APP>.azurewebsites.net/a2a` |
-| 名前 | `Agent 365 Training Assistant` |
-| 説明 | `Agent 365 の学習と検証を支援し、Microsoft Teams と Agent2Agent (A2A) 経由の質問に日本語で回答する汎用アシスタントです。` |
+| 名前 | Cardから `Agent 365 Training Assistant` が自動反映される |
+| 説明 | Cardから `Agent 365 の学習と検証を支援し、Microsoft Teams と Agent2Agent (A2A) 経由の質問に日本語で回答する汎用アシスタントです。` が自動反映される |
 | 認証 | **API キー** |
 | タイプ | **ヘッダー** |
 | ヘッダー名 | `X-A2A-API-Key` |
