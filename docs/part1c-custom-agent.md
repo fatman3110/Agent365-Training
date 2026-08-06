@@ -289,6 +289,12 @@ az acr build -r $ACR -t ollama-sidecar:latest ../ollama-sidecar
     - **ポート**：`11434`
   - **適用** を選択（メイン／サイドカーの2コンテナ構成になる）
 
+- sidecar 追加時にメインコンテナの認証方式とポートが初期化される場合があるため、5-1 で作成した設定を再適用する
+
+```powershell
+az rest --method PUT --url "https://management.azure.com/subscriptions/$subId/resourceGroups/$RG/providers/Microsoft.Web/sites/$APP/sitecontainers/main?api-version=2024-04-01" --headers "Content-Type=application/json" --body "@sitecontainer-main.json"
+```
+
 - 初回起動後、モデルの pull とロードには数分かかる。[Azure ポータル](https://portal.azure.com/) > App Services > 対象アプリ > **ログ ストリーム** で進捗を確認できる
 
 ### 5-3. エージェントの endpoint を Agent 365 に登録する
@@ -347,67 +353,18 @@ az webapp restart -n $APP -g $RG
 
 ### 5-5. A2A endpoint と認証を検証する
 
-Teams の `/api/messages` とは別に、同じホストで 別の AI Agent から呼び出し可能なエンドポイント (A2A)を公開する。Copilot Studio の登録処理は endpoint 本体と複数の Agent Card パスを探索するため、次がすべて `200` になることを確認する。
 
 ```powershell
 $baseUrl = "https://$APP.azurewebsites.net"
-
-# readiness と Agent Card
-@(
-  "/api/health",
-  "/a2a",
-  "/a2a/.well-known/agent-card.json",
-  "/a2a/.well-known/agent.json",
-  "/.well-known/agent.json"
-) | ForEach-Object {
-  $status = curl.exe -sS -o NUL -w "%{http_code}" "$baseUrl$_"
-  "$_ -> $status"
-}
-
-$request = @{
-  jsonrpc = "2.0"
-  id = "a2a-check"
-  method = "SendMessage"
-  params = @{
-    message = @{
-      messageId = "a2a-check"
-      role = "ROLE_USER"
-      parts = @(@{ text = "接続確認" })
-    }
-  }
-} | ConvertTo-Json -Depth 8 -Compress
-
-# API キー無しの実行は 401 になること
-$unauthorized = Invoke-WebRequest -Method Post -Uri "$baseUrl/a2a" `
-  -ContentType "application/json" -Body $request -SkipHttpErrorCheck
-$unauthorized.StatusCode
-
-# API キー付きの実行は ROLE_AGENT の本文を返すこと
-$authorized = Invoke-RestMethod -Method Post -Uri "$baseUrl/a2a" `
-  -Headers @{ "X-A2A-API-Key" = $a2aKey; "A2A-Version" = "1.0" } `
-  -ContentType "application/json" -Body $request -TimeoutSec 180
-$authorized.result.message.role
-$authorized.result.message.parts.text
-
-# Agent Cardで広告しているHTTP+JSON bindingも確認
-$restRequest = @{
-  message = @{
-    messageId = "a2a-rest-check"
-    role = "ROLE_USER"
-    parts = @(@{ text = "HTTP+JSON接続確認" })
-  }
-} | ConvertTo-Json -Depth 8 -Compress
-
-$restResponse = Invoke-RestMethod -Method Post -Uri "$baseUrl/a2a/message:send" `
-  -Headers @{ "X-A2A-API-Key" = $a2aKey; "A2A-Version" = "1.0" } `
-  -ContentType "application/json" -Body $restRequest -TimeoutSec 180
-$restResponse.message.role
-```
-
-`a2aKey` を失った場合は `.env` から読み直す。キー値はチャット、README、Git、スクリーンショットへ記録しない。
-
-```powershell
 $a2aKey = ((Get-Content .env | Where-Object { $_ -like "A2A_API_KEY=*" }) -split "=", 2)[1]
+$body = '{"message":{"messageId":"check","role":"ROLE_USER","parts":[{"text":"接続確認"}]}}'
+
+(Invoke-WebRequest -Uri "$baseUrl/a2a").StatusCode
+$response = Invoke-RestMethod -Method Post -Uri "$baseUrl/a2a/message:send" `
+  -Headers @{ "X-A2A-API-Key" = $a2aKey; "A2A-Version" = "1.0" } `
+  -ContentType "application/json" -Body $body
+$response.message.role
+$response.message.parts[0].text
 ```
 
 ## 6. Teams App Package（manifest.json / m365agents.yml）を作る
@@ -464,7 +421,7 @@ Agent 365トレーニング用の独自S2Sエージェントへ、A2Aで処理�
 
 ```text
 Agent 365、S2S、独自エージェント、A2A に関する質問は、
-必ず A365 Training Agent に委譲すること。委譲先の回答をそのまま利用者へ返すこと。
+必ず A365 Training Child に委譲すること。委譲先の回答をそのまま利用者へ返すこと。
 ```
 
 ### 7-2. 独自エージェントを Agent2Agent で接続する
@@ -472,12 +429,12 @@ Agent 365、S2S、独自エージェント、A2A に関する質問は、
 1. 呼び出し元エージェントの **エージェント**ページで **エージェントを追加**を選ぶ
 2. **外部エージェントに接続 > Agent2Agent**を選ぶ
 
-次の値を設定する。
+次の値を設定する。URLやAPI キー値は、Azure ポータル上 App Service の環境変数メニューより取得する。
 
 | 項目 | 設定値 |
 |---|---|
 | エージェント エンドポイント URL | `https://<APP>.azurewebsites.net/a2a` |
-| 名前 | `A365 Training Agent` |
+| 名前 | `A365 Training Child` |
 | 説明 | `Agent 365のトレーニングに関する質問へ日本語で回答するS2Sエージェント` |
 | 認証 | **API キー** |
 | タイプ | **ヘッダー** |
@@ -488,14 +445,6 @@ Agent 365、S2S、独自エージェント、A2A に関する質問は、
 1. **作成**を選ぶ。この画面では API キーの値を入力しない
 2. 次の接続選択画面で **新しい接続を作成**を選び、API キー値を貼り付けて接続を作成する
 3. 作成した接続を選択し、**追加して構成**を選ぶ
-
-API キー値は、App Service から直接クリップボードへ取得する。画面、チャット、ファイルへ平文表示しない。
-
-```powershell
-$settings = az webapp config appsettings list -n $APP -g $RG -o json | ConvertFrom-Json
-$a2aKey = ($settings | Where-Object name -eq "A2A_API_KEY" | Select-Object -First 1).value
-Set-Clipboard -Value $a2aKey
-```
 
 ### 7-3. A2A 委譲をテストする
 

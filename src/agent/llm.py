@@ -19,27 +19,6 @@ def _bounded_int(name: str, default: int, minimum: int, maximum: int) -> int:
     return max(minimum, min(value, maximum))
 
 
-def get_llm() -> OpenAI:
-    """初回呼び出し時に Ollama sidecar への接続を確立する（最大 60 秒待つ）。"""
-    global _client
-    if _client is not None:
-        return _client
-    client = OpenAI(
-        base_url=environ.get("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
-        api_key="ollama",
-        timeout=float(_bounded_int("OLLAMA_TIMEOUT_SECONDS", 90, 10, 180)),
-        max_retries=0,
-    )
-    for _ in range(60):  # warmup を待つ（App Service warmup プローブ失敗を避ける）
-        try:
-            client.models.list()
-            _client = client
-            return client
-        except APIConnectionError:
-            time.sleep(1)
-    raise RuntimeError("Ollama sidecar not ready after 60 retries")
-
-
 DEFAULT_SYSTEM_PROMPT = "あなたは日本語で簡潔に答えるアシスタントです。"
 SYSTEM_PROMPT = environ.get("SYSTEM_PROMPT", DEFAULT_SYSTEM_PROMPT)
 MODEL = environ.get("OLLAMA_MODEL", "qwen2.5:3b-instruct-q4_K_M")
@@ -52,16 +31,46 @@ WARMUP_REQUEST_TIMEOUT_SECONDS = _bounded_int(
 )
 
 
-def warm_up_llm() -> None:
-    """Wait for the configured model to exist, then load it into memory."""
-    client = get_llm().with_options(
-        timeout=float(WARMUP_REQUEST_TIMEOUT_SECONDS),
+def _wait_for_llm(deadline: float) -> OpenAI:
+    """Wait for the Ollama sidecar API within the shared startup deadline."""
+    global _client
+    if _client is not None:
+        return _client
+    client = OpenAI(
+        base_url=environ.get("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
+        api_key="ollama",
+        timeout=float(_bounded_int("OLLAMA_TIMEOUT_SECONDS", 90, 10, 180)),
         max_retries=0,
     )
-    deadline = time.monotonic() + WARMUP_TIMEOUT_SECONDS
     while time.monotonic() < deadline:
         try:
-            client.chat.completions.create(
+            remaining = max(1.0, deadline - time.monotonic())
+            client.with_options(timeout=min(5.0, remaining)).models.list()
+            _client = client
+            return client
+        except APIConnectionError:
+            time.sleep(1)
+    raise RuntimeError(
+        f"Ollama sidecar was not ready within {WARMUP_TIMEOUT_SECONDS} seconds"
+    )
+
+
+def get_llm() -> OpenAI:
+    """Connect to the Ollama sidecar within the configured startup timeout."""
+    return _wait_for_llm(time.monotonic() + WARMUP_TIMEOUT_SECONDS)
+
+
+def warm_up_llm() -> None:
+    """Wait for the sidecar and model within one startup deadline."""
+    deadline = time.monotonic() + WARMUP_TIMEOUT_SECONDS
+    client = _wait_for_llm(deadline)
+    while time.monotonic() < deadline:
+        try:
+            remaining = max(1.0, deadline - time.monotonic())
+            client.with_options(
+                timeout=min(float(WARMUP_REQUEST_TIMEOUT_SECONDS), remaining),
+                max_retries=0,
+            ).chat.completions.create(
                 model=MODEL,
                 messages=[{"role": "user", "content": "ready"}],
                 max_tokens=1,
@@ -71,7 +80,7 @@ def warm_up_llm() -> None:
         except (APIConnectionError, NotFoundError):
             time.sleep(1)
     raise RuntimeError(
-        f"Ollama model {MODEL!r} was not ready after {WARMUP_TIMEOUT_SECONDS} seconds"
+        f"Ollama model {MODEL!r} was not ready within {WARMUP_TIMEOUT_SECONDS} seconds"
     )
 
 
