@@ -14,6 +14,7 @@ load_dotenv()
 
 import uvicorn
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from microsoft_agents.activity.config import load_configuration_from_env
 from microsoft_agents.authentication.msal import MsalConnectionManager
@@ -30,6 +31,11 @@ logger = logging.getLogger(__name__)
 
 _MAX_REQUEST_BYTES = 1_048_576
 _PUBLIC_A2A_DISCOVERY_PATHS = {
+    "/.well-known/agent-card.json",
+    "/.well-known/agent.json",
+    "/.well-known/agentcard.json",
+    "/.well-known/agentCard.json",
+    "/.well-known/agent_card.json",
     "/a2a",
     "/a2a/.well-known/agent-card.json",
     "/a2a/.well-known/agent.json",
@@ -150,11 +156,18 @@ def create_app(agent_app) -> FastAPI:
             await _stop_observability_token_service(token_task)
 
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["GET"],
+        allow_headers=["*"],
+    )
 
     @app.middleware("http")
     async def secure_a2a(request: Request, call_next):
         is_public_discovery = (
-            request.method == "GET" and request.url.path in _PUBLIC_A2A_DISCOVERY_PATHS
+            request.method in {"GET", "OPTIONS"}
+            and request.url.path in _PUBLIC_A2A_DISCOVERY_PATHS
         )
         if request.url.path.startswith("/a2a") and not is_public_discovery:
             expected_key = os.environ.get("A2A_API_KEY", "")

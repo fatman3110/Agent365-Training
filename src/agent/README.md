@@ -7,7 +7,7 @@ Agent 365 に登録する**独自エージェント本体**のスターターコ
 ## このエージェントができること
 
 - **会話応答**：Teams / API から届いたメッセージを OSS LLM（Qwen）に渡し、日本語で簡潔に返す。
-- **A2A 応答**：Teams と同じエージェントロジックを A2A v1（JSON-RPC / HTTP+JSON）でも公開する。
+- **A2A 応答**：Teams と同じエージェントロジックを Copilot Studio 対応の A2A v0.3（JSON-RPC）でも公開する。
 - **S2S（サービスプリンシパル）で動く**：トークンの取得は `start_server.py` がバックグラウンドで行う（`observability/token_service.py` の 3-hop FMI チェーン）。メッセージハンドラ（`app.py`）は per-turn のトークン交換に一切関与しない。
 - **可観測性**：`instrument-observability` Skill により配線済み（S2S）。`InvokeAgentScope` でターンを計装し、`observability/token_cache.py` へバックグラウンド更新されたトークンを exporter が読み出して Agent 365 Observability（S2S エンドポイント）へ送信、Observe / Single Agent Map に反映される。LLM 呼び出し（`openai` SDK）は distro が自動計装するため `InferenceScope` は手動配線していない。
 
@@ -16,7 +16,7 @@ Agent 365 に登録する**独自エージェント本体**のスターターコ
 | ファイル | 役割 |
 |---|---|
 | `start_server.py` | FastAPI ホスティング層。`MsalConnectionManager` + `CloudAdapter` による Teams `/api/messages` と A2A endpointを同じポートで公開する。S2S 観測トークンのバックグラウンド取得もここで起動する |
-| `a2a_server.py` | A2A v1 Agent Card、JSON-RPC、HTTP+JSONルートとExecutor。`X-A2A-API-Key`を要求する |
+| `a2a_server.py` | A2A v0.3 Agent Card、JSON-RPCルートとExecutor。`X-A2A-API-Key`を要求する |
 | `agent_service.py` | Teams / A2A 共通の1ターン実行。`InvokeAgentScope`でチャネル名を含めて計装し、`llm.chat_complete()`を呼ぶ |
 | `app.py` | Teams向け`AgentApplication`本体。共通ターン実行を呼び出す。`/help`コマンドも持つ |
 | `llm.py` | OSS LLM クライアント。Ollama サイドカー（OpenAI 互換）へ接続し、`SYSTEM_PROMPT` とモデル名（環境変数）で応答を生成する。起動時ブロックを避けるため遅延初期化＋ウォームアップ待ちを行う。distro 初期化後は自動計装される |
@@ -46,6 +46,8 @@ App Serviceには次の環境変数が必要。
 |---|---|
 | `A2A_API_KEY` | A2A要求の`X-A2A-API-Key`ヘッダーと比較する秘密値 |
 | `A2A_PUBLIC_BASE_URL` | Agent Cardに掲載する公開HTTPS URL |
+| `A2A_AGENT_NAME` | Agent Cardに掲載する汎用的な表示名 |
+| `A2A_AGENT_DESCRIPTION` | Agent Cardに掲載する30字以上の説明 |
 | `OLLAMA_KEEP_ALIVE` | 推論後もモデルをメモリに保持する期間。既定値は`24h` |
 | `OLLAMA_MAX_TOKENS` | 1応答の最大生成トークン数。Copilotのタイムアウトを避ける既定値は`64` |
 | `OLLAMA_TIMEOUT_SECONDS` | Ollama API呼び出しのタイムアウト秒数。既定値は`90`、許容範囲は`10`～`180` |

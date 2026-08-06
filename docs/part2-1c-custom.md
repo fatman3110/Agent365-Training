@@ -60,10 +60,10 @@
 2. 次のように、第1部 C 7-1 節で指定した委譲条件に一致する質問を送る
 
    ```text
-   A365 Training Agentを使って、Agent 365のS2Sとは何か一文で説明して。
+  Agent 365 Training Assistantを使って、Agent 365のS2Sとは何か一文で説明して。
    ```
 
-3. 応答が返ることを確認する。Copilot Studio のテストペインでは、アクティビティマップで `A365 Training Agent` への委譲も確認する
+3. 応答が返ることを確認する。Copilot Studio のテストペインでは、アクティビティマップで `Agent 365 Training Assistant` への委譲も確認する
 
 ## 4. 両経路の観測データを作る
 

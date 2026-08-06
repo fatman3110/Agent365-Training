@@ -8,7 +8,7 @@ microsoft-agents-hosting-core==1.1.0
 microsoft-agents-hosting-fastapi==1.1.0
 microsoft-agents-authentication-msal==1.1.0
 
-# Agent2Agent (A2A) v1 hosting on the same FastAPI surface as Teams
+# Agent2Agent (A2A) v0.3 compatibility on the same FastAPI surface as Teams
 a2a-sdk[fastapi]==1.1.2
 uvicorn==0.52.1
 

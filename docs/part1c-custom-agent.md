@@ -1,6 +1,6 @@
 # 第1部 C：Teams + A2A 対応の独自エージェント（S2S）を作る（開発者）
 
-自前ホストの LLM（Qwen）で動く**独自エージェント**をコードから作って Azure にデプロイし、Agent 365 に登録申請するまで。認証は **S2S（サービスプリンシパル）** を使う。同じエージェントを **Teams の Activity Protocol** と **Copilot Studio から呼び出せる Agent2Agent（A2A）v1** の両方で公開する。
+自前ホストの LLM（Qwen）で動く**独自エージェント**をコードから作って Azure にデプロイし、Agent 365 に登録申請するまで。認証は **S2S（サービスプリンシパル）** を使う。同じエージェントを **Teams の Activity Protocol** と **Copilot Studio から呼び出せる Agent2Agent（A2A）v0.3** の両方で公開する。
 
 > 💡 ノーコード／ローコードで手早く作りたいなら **[第1部 A：Copilot Studio で作る](./part1a-copilot-studio.md)** や **第1部 B：Microsoft Foundry で作る** もある。本ファイル（C）は「フルコードで自前ホスト」を学ぶ上級ルート。
 
@@ -40,7 +40,7 @@ Agent365-Training/
     ├── agent/                       # (1) エージェント本体（App Service にデプロイ）= a365 setup all のプロジェクトルート
     │   ├── app.py                   #     Teams の受信処理（/api/messages）
     │   ├── agent_service.py         #     Teams / A2A 共通の LLM 実行と Agent 365 計装
-    │   ├── a2a_server.py            #     A2A v1、Agent Card、API キー認証
+    │   ├── a2a_server.py            #     A2A v0.3、Agent Card、API キー認証
     │   ├── llm.py                   #     AI（自前ホストの Qwen）に質問して答えをもらう（ツール呼び出しなしのシンプルな chat completion）
     │   ├── start_server.py          #     FastAPI で Teams / A2A を同じポートに公開。モデル準備と S2S トークン更新も担当
     │   ├── observability_setup.py   #     観測の初期化の入口（現行 distro use_microsoft_opentelemetry、S2S エンドポイント）
@@ -164,6 +164,8 @@ $a2aKey = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+','-').Replac
 Add-Content ".env" @"
 A2A_API_KEY=$a2aKey
 A2A_PUBLIC_BASE_URL=https://$APP.azurewebsites.net
+A2A_AGENT_NAME=Agent 365 Training Assistant
+A2A_AGENT_DESCRIPTION=Agent 365 の学習と検証を支援し、Microsoft Teams と Agent2Agent (A2A) 経由の質問に日本語で回答する汎用アシスタントです。
 WEBSITES_CONTAINER_START_TIME_LIMIT=600
 "@
 ```
@@ -181,7 +183,7 @@ WEBSITES_CONTAINER_START_TIME_LIMIT=600
 ```mermaid
 flowchart LR
   Teams["Microsoft Teams / Copilot"] -->|"Activity Protocol<br/>/api/messages"| Agent
-  CopilotStudio["Copilot Studio<br/>呼び出し元エージェント"] -->|"A2A v1 + API key<br/>/a2a"| Agent
+  CopilotStudio["Copilot Studio<br/>呼び出し元エージェント"] -->|"A2A v0.3 + API key<br/>/a2a"| Agent
 
     subgraph AppSvc["App Service（Linux, マルチコンテナ）"]
         direction LR
@@ -357,14 +359,27 @@ az webapp restart -n $APP -g $RG
 ```powershell
 $baseUrl = "https://$APP.azurewebsites.net"
 $a2aKey = ((Get-Content .env | Where-Object { $_ -like "A2A_API_KEY=*" }) -split "=", 2)[1]
-$body = '{"message":{"messageId":"check","role":"ROLE_USER","parts":[{"text":"接続確認"}]}}'
+$body = @{
+  jsonrpc = "2.0"
+  id = [guid]::NewGuid().ToString()
+  method = "message/send"
+  params = @{
+    message = @{
+      role = "user"
+      parts = @(@{ kind = "text"; text = "接続確認" })
+      messageId = [guid]::NewGuid().ToString()
+      contextId = [guid]::NewGuid().ToString()
+      kind = "message"
+    }
+  }
+} | ConvertTo-Json -Depth 8
 
 (Invoke-WebRequest -Uri "$baseUrl/a2a").StatusCode
-$response = Invoke-RestMethod -Method Post -Uri "$baseUrl/a2a/message:send" `
-  -Headers @{ "X-A2A-API-Key" = $a2aKey; "A2A-Version" = "1.0" } `
+$response = Invoke-RestMethod -Method Post -Uri "$baseUrl/a2a" `
+  -Headers @{ "X-A2A-API-Key" = $a2aKey; "A2A-Version" = "0.3" } `
   -ContentType "application/json" -Body $body
-$response.message.role
-$response.message.parts[0].text
+$response.result.role
+$response.result.parts[0].text
 ```
 
 ## 6. Teams App Package（manifest.json / m365agents.yml）を作る
@@ -421,7 +436,7 @@ Agent 365トレーニング用の独自S2Sエージェントへ、A2Aで処理�
 
 ```text
 Agent 365、S2S、独自エージェント、A2A に関する質問は、
-必ず A365 Training Child に委譲すること。委譲先の回答をそのまま利用者へ返すこと。
+必ず Agent 365 Training Assistant に委譲すること。委譲先の回答をそのまま利用者へ返すこと。
 ```
 
 ### 7-2. 独自エージェントを Agent2Agent で接続する
@@ -434,8 +449,8 @@ Agent 365、S2S、独自エージェント、A2A に関する質問は、
 | 項目 | 設定値 |
 |---|---|
 | エージェント エンドポイント URL | `https://<APP>.azurewebsites.net/a2a` |
-| 名前 | `A365 Training Child` |
-| 説明 | `Agent 365のトレーニングに関する質問へ日本語で回答するS2Sエージェント` |
+| 名前 | `Agent 365 Training Assistant` |
+| 説明 | `Agent 365 の学習と検証を支援し、Microsoft Teams と Agent2Agent (A2A) 経由の質問に日本語で回答する汎用アシスタントです。` |
 | 認証 | **API キー** |
 | タイプ | **ヘッダー** |
 | ヘッダー名 | `X-A2A-API-Key` |
@@ -451,12 +466,12 @@ Agent 365、S2S、独自エージェント、A2A に関する質問は、
 送信する質問は、7-1 で指定した委譲条件に一致させる。
 
 ```text
-A365 Training Agentを使って、Agent 365のS2Sとは何か一文で説明して。
+Agent 365 Training Assistantを使って、Agent 365のS2Sとは何か一文で説明して。
 ```
 
 1. Copilot Studio のテストペインを開く
 2. 上記の質問を送る
-3. アクティビティマップで `A365 Training Agent` への委譲が発生したことを確認する
+3. アクティビティマップで `Agent 365 Training Assistant` への委譲が発生したことを確認する
 
 ### 7-4. 公開して組織に申請する
 
