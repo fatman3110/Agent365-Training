@@ -42,10 +42,13 @@ async def _help(ctx: TurnContext, _: TurnState):
 async def _on_message(ctx: TurnContext, _: TurnState):
     user_text = ctx.activity.text or ""
     conversation = ctx.activity.conversation
+    sender = ctx.activity.from_property
     reply = await asyncio.to_thread(
         run_agent_turn,
         user_text,
         getattr(conversation, "id", "") or "",
         ctx.activity.channel_id or "custom",
+        getattr(sender, "aad_object_id", None),
+        getattr(sender, "name", None),
     )
     await ctx.send_activity(reply)

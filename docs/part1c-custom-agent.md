@@ -45,7 +45,6 @@ Agent365-Training/
     │   ├── start_server.py          #     FastAPI で Teams / A2A を同じポートに公開。モデル準備と S2S トークン更新も担当
     │   ├── observability_setup.py   #     観測の初期化の入口（現行 distro use_microsoft_opentelemetry、S2S エンドポイント）
     │   ├── observability/           #     S2S 観測トークン取得（token_service.py）とキャッシュ（token_cache.py）
-    │   ├── tests/                   #     A2A HTTP 契約と Ollama 準備処理のテスト
     │   ├── requirements.txt         #     必要な Python ライブラリ
     │   ├── Dockerfile               #     コンテナ化の定義
     │   ├── a365.config.json         # (2) `a365 setup all` に渡す設定ファイル
@@ -95,14 +94,13 @@ pwsh --version   # PowerShell 7。無ければ: winget install Microsoft.PowerSh
 node --version   # 無ければ: winget install OpenJS.NodeJS.LTS
 az   version     # 無ければ: winget install Microsoft.AzureCLI
 a365 --version   # 無ければ: dotnet tool install -g Microsoft.Agents.A365.DevTools.Cli
-atk --version      # 1.1.12 を使用。無ければ: npm i -g @microsoft/m365agentstoolkit-cli@1.1.12
+atk --version   # 無ければ: npm i -g @microsoft/m365agentstoolkit-cli@1.1.12
 
 # Azure にサインイン
 az login
 
 # Agents Toolkit は az login とは別系統の M365 サインインを使う。az と同じ作業テナントのアカウントでログインしておく
 atk auth login m365
-atk auth list       # az account show と同じテナント/アカウントか確認
 ```
 
 ## 2. Agent 365 Skills を導入する
@@ -143,8 +141,6 @@ Skill が内部で `a365 setup all --agent-name a365-agent-xxxx --authmode s2s` 
 要件チェック ─▶ Blueprint 作成 ─▶ 資格情報 ─▶ 権限の継承 ─▶ Agent Identity 作成(UPN無し) ─▶ 登録 ─▶ ローカルの .env へ接続情報を書き込み
 ```
 
-- **成功の判定**：ローカルの`a365.generated.config.json`に`agentBlueprintId`が入り、`a365 query-entra inheritance --agent-name $A365NAME`の最後が`5 of 5 resource(s) have effective inheritance`になること。ローカルの`completed`だけでなく、Entra側の実効継承を確認する
-
 ## 4. エージェント本体を実装する
 
 `.env` にローカル LLM、A2A、モニタリング関連の設定を追記する。
@@ -161,7 +157,7 @@ ENABLE_A365_OBSERVABILITY=true
 ENABLE_A365_OBSERVABILITY_EXPORTER=true
 "@
 
-# A2A API キーを生成する（値は画面やログへ表示しない）
+# Agent to Agent （A2A）通信用の API キーを生成する
 $bytes = New-Object byte[] 32
 [System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
 $a2aKey = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+','-').Replace('/','_')
@@ -172,15 +168,15 @@ WEBSITES_CONTAINER_START_TIME_LIMIT=600
 "@
 ```
 
-観測の詳細配線は **Skill に任せる**。下の指示を AI チャットに送ると、Skill（`instrument-observability`）が現行ディストロ `use_microsoft_opentelemetry(...)` とスコープ（InvokeAgentScope 等）の配線コードを生成する。この AI チャットへの指示ですでに作成済みの場合も、二重命令にはならない。
+観測の詳細配線は **Skill に任せる**。下の指示を AI チャットに送ると、Skill がデータ送付経路を生成する。先述の AI チャットへの指示で作成済みの場合もあるが、二重命令しても AI チャット側で判断されるので、二重作成にはならない。
 
 ```text
-このエージェントに Agent 365 の観測を S2S（サービスプリンシパル）で追加して。
+このエージェントに Agent 365 の観測を S2S（サービスプリンシパル）で追加して。すでに追加済みの場合は経路に不備がないか確認して。
 ```
 
 ## 5. Azure にデプロイして「登録」する
 
-エージェント本体（(1)＋(2)）をコンテナにして App Service へ。LLM（Qwen）は隣に置く 
+エージェント本体（(1)＋(2)）をコンテナにして App Service へ配置
 
 ```mermaid
 flowchart LR
@@ -314,26 +310,7 @@ a365 setup permissions bot
 $settings = Get-Content ".env" | Where-Object { $_ -match '^[^#\s][^=]*=' }
 az webapp config appsettings set -n $APP -g $RG --settings $settings --output none
 az webapp restart -n $APP -g $RG
-
-# モデルの準備完了後、HTTP ステータスコード 200 を確認
-curl.exe -s -w "`nHTTP:%{http_code}`n" "https://$APP.azurewebsites.net/api/health"
 ```
-
-> **補足: `a365 setup all` のアクセス許可（Graph / Agent Tools / Messaging Bot API 等）の同意が失敗する場合**
-> **状況の確認：CLI 検証コマンド**
->
-> ```powershell
-> a365 query-entra inheritance --agent-name $A365NAME
-> ```
->
-> 最後の行が `Summary: 5 of 5 resource(s) have effective inheritance ...` になっていれば、実際には全リソースへの許可が揃っている。
->
-> **対応：Microsoft Entra 管理センター**
-> 1. [Microsoft Entra 管理センター](https://entra.microsoft.com/) を開く
-> 2. 左ナビで **Entra ID** > **Agents** > **Agent blueprints** を選択
-> 3. 対象のブループリント（例: `A365-Training-Agent Blueprint`）を選ぶ
-> 4. 左ナビ **Access** 配下の **Granted permissions (Preview)** を選択
-> 5. **管理者の同意** タブで、要求している全リソース（Microsoft Graph / Agent Tools / Messaging Bot API / Observability API / Power Platform API）の各行が付与済み になっていれば許可済み。付与されていない場合は、手動で付与を行う。
 
 ### 5-4. Bot App / Bot Service を作り Teams チャネルを有効化する
 

@@ -24,7 +24,13 @@ _AGENT_NAME = os.environ.get("AGENT365OBSERVABILITY__AGENTNAME", "A365 Handson A
 _AGENT_DESCRIPTION = os.environ.get("AGENT365OBSERVABILITY__AGENTDESCRIPTION", "")
 
 
-def run_agent_turn(user_text: str, session_id: str, channel_name: str) -> str:
+def run_agent_turn(
+    user_text: str,
+    session_id: str,
+    channel_name: str,
+    caller_user_id: str | None = None,
+    caller_user_name: str | None = None,
+) -> str:
     """Run one agent turn with Agent 365 semantic tracing when configured."""
     if not (_AGENT_ID and _TENANT_ID):
         return chat_complete(user_text)
@@ -48,14 +54,14 @@ def run_agent_turn(user_text: str, session_id: str, channel_name: str) -> str:
         conversation_id=session_id,
         channel=Channel(name=channel_name),
     )
-    caller_details = CallerDetails(
-        user_details=UserDetails(
-            user_id=os.environ.get("AGENT365OBSERVABILITY__SPONSORUSERID", "")
-            or os.environ.get("AGENT365OBSERVABILITY__CLIENTID", ""),
-            user_email=os.environ.get("AGENT365OBSERVABILITY__SPONSORUSEREMAIL", ""),
-            user_name=os.environ.get("AGENT365OBSERVABILITY__SPONSORUSERNAME", _AGENT_NAME),
-        ),
-    )
+    caller_details = None
+    if caller_user_id:
+        caller_details = CallerDetails(
+            user_details=UserDetails(
+                user_id=caller_user_id,
+                user_name=caller_user_name,
+            ),
+        )
 
     with InvokeAgentScope.start(request, scope_details, agent_details, caller_details) as scope:
         scope.record_input_messages([user_text])
