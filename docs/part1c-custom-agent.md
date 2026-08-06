@@ -408,8 +408,8 @@ atk publish --env dev --interactive false
 ### 7-1. 呼び出し元エージェントを作る
 
 1. [Copilot Studio](https://copilotstudio.microsoft.com/) を開き、画面上部で対象環境を確認する
-2. ホームページで **新しいエクスペリエンス（New experience）** をオフにする。切り替えが表示されない場合は **その他の作成方法（Other ways to build）** を選ぶ
-3. standard harness の作成画面で **空のエージェントを作成**を選ぶ
+2. 画面上部に **新しい Copilot Studio エクスペリエンス** と **今すぐ試す** が表示されている場合は、**今すぐ試す**を選ばずにそのまま進む
+3. 右上の **空のエージェントを作成する**を選ぶ
 4. 名前を `A2A Caller Agent` とする
 
 説明へ次を入力する。
