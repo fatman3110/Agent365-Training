@@ -22,6 +22,11 @@
     - [5-4. Bot App / Bot Service を作り Teams チャネルを有効化する](#5-4-bot-app--bot-service-を作り-teams-チャネルを有効化する)
     - [5-5. A2A endpoint と認証を検証する](#5-5-a2a-endpoint-と認証を検証する)
   - [6. Teams App Package（manifest.json / m365agents.yml）を作る](#6-teams-app-packagemanifestjson--m365agentsymlを作る)
+  - [7. Copilot Studio に A2A 呼び出し元エージェントを作る](#7-copilot-studio-に-a2a-呼び出し元エージェントを作る)
+    - [7-1. 呼び出し元エージェントを作る](#7-1-呼び出し元エージェントを作る)
+    - [7-2. 独自エージェントを Agent2Agent で接続する](#7-2-独自エージェントを-agent2agent-で接続する)
+    - [7-3. A2A 委譲をテストする](#7-3-a2a-委譲をテストする)
+    - [7-4. 公開して組織に申請する](#7-4-公開して組織に申請する)
 
 完了後は **[第2部 C：承認と観測データ作成](./part2-1c-custom.md)** で承認・Teams 接続・観測データ作成を行い、その後 Observe / Govern / Secure に進む。
 
@@ -142,33 +147,36 @@ Skill が内部で `a365 setup all --agent-name a365-agent-xxxx --authmode s2s` 
 
 ## 4. エージェント本体を実装する
 
-1. `.env` に ローカル LLM 関連の設定とモニタリング関連の設定を追記。
-   ```powershell
-   Add-Content ".env" @"
-   OLLAMA_BASE_URL=http://localhost:11434/v1
-   OLLAMA_MODEL=qwen2.5:3b-instruct-q4_K_M
-  OLLAMA_KEEP_ALIVE=24h
-  OLLAMA_MAX_TOKENS=64
-  OLLAMA_TIMEOUT_SECONDS=90
-  OLLAMA_WARMUP_TIMEOUT_SECONDS=300
-   ENABLE_A365_OBSERVABILITY=true
-   ENABLE_A365_OBSERVABILITY_EXPORTER=true
-   "@
+`.env` にローカル LLM、A2A、モニタリング関連の設定を追記する。
 
-  # A2A API キーを生成する（値は画面やログへ表示しない）
-  $bytes = New-Object byte[] 32
-  [System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
-  $a2aKey = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+','-').Replace('/','_')
-  Add-Content ".env" @"
-  A2A_API_KEY=$a2aKey
-  A2A_PUBLIC_BASE_URL=https://$APP.azurewebsites.net
-  WEBSITES_CONTAINER_START_TIME_LIMIT=600
-  "@
-   ```
-2. 観測の詳細配線は **Skill に任せる**。下の指示を AI チャットに送ると、Skill（`instrument-observability`）が現行ディストロ `use_microsoft_opentelemetry(...)` とスコープ（InvokeAgentScope 等）の配線コードを生成する。戦術の AI チャットへの指示ですでに作成済みの場合もあるが２重命令となっても LLM が判断してくれるので問題ない：
-   ```text
-   このエージェントに Agent 365 の観測を S2S（サービスプリンシパル）で追加して。
-   ```
+```powershell
+Add-Content ".env" @"
+OLLAMA_BASE_URL=http://localhost:11434/v1
+OLLAMA_MODEL=qwen2.5:3b-instruct-q4_K_M
+OLLAMA_KEEP_ALIVE=24h
+OLLAMA_MAX_TOKENS=64
+OLLAMA_TIMEOUT_SECONDS=90
+OLLAMA_WARMUP_TIMEOUT_SECONDS=300
+ENABLE_A365_OBSERVABILITY=true
+ENABLE_A365_OBSERVABILITY_EXPORTER=true
+"@
+
+# A2A API キーを生成する（値は画面やログへ表示しない）
+$bytes = New-Object byte[] 32
+[System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+$a2aKey = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+','-').Replace('/','_')
+Add-Content ".env" @"
+A2A_API_KEY=$a2aKey
+A2A_PUBLIC_BASE_URL=https://$APP.azurewebsites.net
+WEBSITES_CONTAINER_START_TIME_LIMIT=600
+"@
+```
+
+観測の詳細配線は **Skill に任せる**。下の指示を AI チャットに送ると、Skill（`instrument-observability`）が現行ディストロ `use_microsoft_opentelemetry(...)` とスコープ（InvokeAgentScope 等）の配線コードを生成する。この AI チャットへの指示ですでに作成済みの場合も、二重命令にはならない。
+
+```text
+このエージェントに Agent 365 の観測を S2S（サービスプリンシパル）で追加して。
+```
 
 ## 5. Azure にデプロイして「登録」する
 
@@ -278,7 +286,7 @@ az acr build -r $ACR -t ollama-sidecar:latest ../ollama-sidecar
   - **追加 → カスタム コンテナー** を選択すると、右側に「コンテナーの追加」ペインが開く。**種類** は自動的に「**サイドカー**」に設定される（選択不要）
   - ペインの入力項目：
     - **名前**：任意（例: `ollama`）
-    - **イメージのソース**：**Azure Container Registry**（
+    - **イメージのソース**：**Azure Container Registry**
     - **認証**：**マネージド ID**（メインコンテナに付与済みの AcrPull 権限をそのまま使う）
     - **イメージ**：`ollama-sidecar`
     - **タグ**：`latest`
@@ -313,14 +321,16 @@ curl.exe -s -w "`nHTTP:%{http_code}`n" "https://$APP.azurewebsites.net/api/healt
 
 > **補足: `a365 setup all` のアクセス許可（Graph / Agent Tools / Messaging Bot API 等）の同意が失敗する場合**
 > **状況の確認：CLI 検証コマンド**
+>
 > ```powershell
 > a365 query-entra inheritance --agent-name $A365NAME
 > ```
+>
 > 最後の行が `Summary: 5 of 5 resource(s) have effective inheritance ...` になっていれば、実際には全リソースへの許可が揃っている。
 >
 > **対応：Microsoft Entra 管理センター**
 > 1. [Microsoft Entra 管理センター](https://entra.microsoft.com/) を開く
-> 2. 左ナビで **Entra ID** > **Agents** > **Agent blueprints** を選択（
+> 2. 左ナビで **Entra ID** > **Agents** > **Agent blueprints** を選択
 > 3. 対象のブループリント（例: `A365-Training-Agent Blueprint`）を選ぶ
 > 4. 左ナビ **Access** 配下の **Granted permissions (Preview)** を選択
 > 5. **管理者の同意** タブで、要求している全リソース（Microsoft Graph / Agent Tools / Messaging Bot API / Observability API / Power Platform API）の各行が付与済み になっていれば許可済み。付与されていない場合は、手動で付与を行う。
@@ -454,7 +464,85 @@ atk provision --env dev --interactive false
 #    再公開する場合は必ず appPackage/manifest.json の version を上げること
 atk publish --env dev --interactive false
 ```
+
 ここまでで Teams App の公開（提出）は完了。**実際の承認は [第2部 C 1-1](./part2-1c-custom.md#1-1-teams-app-の公開申請を管理者が承認する)** で行う。
+
+## 7. Copilot Studio に A2A 呼び出し元エージェントを作る
+
+この節は **Copilot Studio でエージェントを作成・編集できる開発者**が実施する。独自エージェントを作り直すのではなく、処理を委譲する呼び出し元エージェントを新しく作る。
+
+### 7-1. 呼び出し元エージェントを作る
+
+1. [Copilot Studio](https://copilotstudio.microsoft.com/) を開き、画面上部で対象環境を確認する
+2. 左ペイン **エージェント**から **空のエージェントを作成**を選ぶ
+3. 名前を `A2A Caller Agent` とする
+
+説明へ次を入力する。
+
+```text
+Agent 365トレーニング用の独自S2Sエージェントへ、A2Aで処理を委譲するエージェント
+```
+
+指示へ次を入力し、説明と指示を保存する。
+
+```text
+Agent 365、S2S、独自エージェント、A2A に関する質問は、
+必ず A365 Training Agent に委譲すること。委譲先の回答をそのまま利用者へ返すこと。
+```
+
+### 7-2. 独自エージェントを Agent2Agent で接続する
+
+1. 呼び出し元エージェントの **エージェント**ページで **エージェントを追加**を選ぶ
+2. **外部エージェントに接続 > Agent2Agent**を選ぶ
+
+次の値を設定する。
+
+| 項目 | 設定値 |
+|---|---|
+| エージェント エンドポイント URL | `https://<APP>.azurewebsites.net/a2a` |
+| 名前 | `A365 Training Agent` |
+| 説明 | `Agent 365のトレーニングに関する質問へ日本語で回答するS2Sエージェント` |
+| 認証 | **API キー** |
+| タイプ | **ヘッダー** |
+| ヘッダー名 | `X-A2A-API-Key` |
+
+設定後、接続を作成する。
+
+1. **作成**を選ぶ。この画面では API キーの値を入力しない
+2. 次の接続選択画面で **新しい接続を作成**を選び、API キー値を貼り付けて接続を作成する
+3. 作成した接続を選択し、**追加して構成**を選ぶ
+
+API キー値は、App Service から直接クリップボードへ取得する。画面、チャット、ファイルへ平文表示しない。
+
+```powershell
+$settings = az webapp config appsettings list -n $APP -g $RG -o json | ConvertFrom-Json
+$a2aKey = ($settings | Where-Object name -eq "A2A_API_KEY" | Select-Object -First 1).value
+Set-Clipboard -Value $a2aKey
+```
+
+### 7-3. A2A 委譲をテストする
+
+送信する質問は、7-1 で指定した委譲条件に一致させる。
+
+```text
+A365 Training Agentを使って、Agent 365のS2Sとは何か一文で説明して。
+```
+
+1. Copilot Studio のテストペインを開く
+2. 上記の質問を送る
+3. アクティビティマップで `A365 Training Agent` への委譲が発生したことを確認する
+
+### 7-4. 公開して組織に申請する
+
+呼び出し元エージェントを公開し、組織カタログへ申請する。管理者による承認は第2部で行う。
+
+1. 右上の **公開**を選び、最新バージョンを公開する
+2. 上部タブ **チャネル**から **Microsoft 365 と Microsoft Teams**を開く
+3. **Microsoft 365 をオンにする**を有効にして、チャネルを追加する
+4. **可用性オプション**を開き、**組織内の全員に表示する**を選ぶ
+5. 要件を確認して **組織カタログに送信**し、確認画面で **はい**を選ぶ
+
+ここまでで Copilot Studio の呼び出し元エージェントの作成と申請は完了。**実際の承認は [第2部 C 1-2](./part2-1c-custom.md#1-2-a2a-呼び出し元エージェントの申請を管理者が承認する)** で行う。
 
 ---
 
